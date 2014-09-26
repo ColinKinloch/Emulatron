@@ -13,7 +13,7 @@
   <property name="default-width">600</property>
   <property name="default-height">400</property>
   <property name="can_focus">False</property>
-  <property name="icon">logo.png</property>
+  <property name="icon">logo-512.png</property>
   <signal name="delete-event" handler="main_window_destroy_cb" swapped="no"/>
   <child type="titlebar">
     <object class="GtkHeaderBar" id="header">
@@ -61,7 +61,7 @@
             <object class="GtkImage" id="test_button_image">
               <property name="visible">True</property>
               <property name="can_focus">False</property>
-              <property name="resource">/org/colinkinloch/emulatron/logo.png</property>
+              <property name="resource">/org/colinkinloch/emulatron/dino_down.png</property>
               <property name="icon_size">1</property>
             </object>
           </child>
@@ -253,7 +253,7 @@
   <property name="type_hint">dialog</property>
   <property name="program_name">Emulatron</property>
   <property name="logo_icon_name">input-gaming-symbolic</property>
-  <property name="logo">logo.png</property>
+  <property name="logo">logo-large.svg</property>
   <child internal-child="vbox">
     <object class="GtkBox" id="aboutdialog_vbox">
       <property name="can_focus">False</property>

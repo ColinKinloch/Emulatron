@@ -4,6 +4,12 @@
     <file compressed="true">emulatron.ui</file>
     <file compressed="true">gtk/menus.ui</file>
     <file compressed="true">emu-header-bar.ui</file>
+    <file>logo.svg</file>
+    <file>logo-large.svg</file>
     <file preprocess="to-pixdata">logo.png</file>
+    <file preprocess="to-pixdata">logo-128.png</file>
+    <file preprocess="to-pixdata">logo-256.png</file>
+    <file preprocess="to-pixdata">logo-512.png</file>
+    <file preprocess="to-pixdata">dino_down.png</file>
   </gresource>
 </gresources>
