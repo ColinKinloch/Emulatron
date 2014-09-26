@@ -1,0 +1,3 @@
+[submodule "src/libretro-cores/Dinothawr"]
+	path = src/libretro-cores/Dinothawr
+	url = https://github.com/libretro/Dinothawr
