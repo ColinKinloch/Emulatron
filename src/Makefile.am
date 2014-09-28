@@ -6,10 +6,12 @@ bin_PROGRAMS = emulatron
 BUILT_SOURCES = emu-resources.h emu-resources.c
 EXTRA_DIST = emu.gresource.xml emu-header-bar.ui emulatron.ui
 
-emu-resources.h: emu.gresource.xml
+RESOURCE_LIST = $(shell $(GLIB_COMPILE_RESOURCES) --generate-dependencies emu.gresource.xml)
+
+emu-resources.h: emu.gresource.xml $(RESOURCE_LIST)
 	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) $(srcdir)/emu.gresource.xml \
 		--target=$@ --sourcedir=$(srcdir) --c-name _emulatron --generate-header
-emu-resources.c: $(EXTRA_DIST) emu.gresource.xml
+emu-resources.c: $(EXTRA_DIST) emu.gresource.xml $(RESOURCE_LIST)
 	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) $(srcdir)/emu.gresource.xml \
 		--target=$@ --sourcedir=$(srcdir) --c-name _emulatron --generate-source
 
