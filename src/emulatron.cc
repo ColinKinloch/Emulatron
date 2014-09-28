@@ -34,6 +34,7 @@ int main(int argc, char **argv)
 
 Gtk::ApplicationWindow* mainWindow = nullptr;
 Gtk::Window* prefWindow = nullptr;
+Gtk::AboutDialog* aboutDialog = nullptr;
 
 
 int main(int argc, char **argv)
@@ -42,36 +43,11 @@ int main(int argc, char **argv)
   
   Glib::RefPtr<Gtk::Builder> refBuilder = Gtk::Builder::create();
 
-  //Gtk::Widget* header = Glib::wrap(emu_header_bar_new());
-
   Glib::RefPtr<Gtk::Settings> settings = Gtk::Settings::get_default();
   settings->property_gtk_application_prefer_dark_theme() = true;
 
-  /*GtkWidget* header = g_object_new(EMU_TYPE_HEADER_BAR,
-                                   "show-search-button", TRUE,
-                                   "show-select-button", TRUE,
-                                   "show-close-button", TRUE,
-                                   "title", _("Video"),
-                                   NULL);
-*/
-
-  //Gtk::Widget* header = Gtk::Widget(emu_header_bar_new());
-
-
-  /*Gtk::Widget* header = Glib::Object(Glib::ConstructParams(Glib::Class(EMU_TYPE_HEADER_BAR),
-                                     "show-search-button", TRUE,
-                                     "show-select-button", TRUE,
-                                     "show-close-button", TRUE,
-                                     "title", _("Video"),
-                                     static_cast<char*>(0)));*/
-  //Glib::ConstructParams()
-
-  Gtk::Widget* header = new Emu::HeaderBar();
-
   try
   {
-    //gtk_widget_class_set_template_from_resource(, "./res/EmuMainToolbar.ui");
-    //refBuilder->add_from_file("./res/EmuMainToolbar.ui");
     refBuilder->add_from_resource("/org/colinkinloch/emulatron/emulatron.ui");
   }
   catch(const Gio::ResourceError& ex)
@@ -92,12 +68,25 @@ int main(int argc, char **argv)
 
   refBuilder->get_widget("emu_main_window", mainWindow);
   refBuilder->get_widget("emu_pref_window", prefWindow);
-  if(mainWindow && prefWindow)
+  refBuilder->get_widget("emu_about_dialog", aboutDialog);
+  if(mainWindow)
   {
-    //Get the GtkBuilder-instantiated Button, and connect a signal handler:
     
-    //emuWindow->set_titlebar(*header);
-      app->get_menu_by_id("appmenu");
+    const std::vector<Glib::ustring> authors = {
+      "Colin Kinloch <colin@kinlo.ch>"
+    };
+    const std::vector<Glib::ustring> artists = {
+      "Colin Kinloch <colin@kinlo.ch>"
+    };
+    
+    aboutDialog->set_authors(authors);
+    aboutDialog->set_artists(artists);
+    aboutDialog->set_copyright("© 2014 Colin Kinloch");
+    aboutDialog->set_version(VERSION);
+    
+    aboutDialog->set_transient_for(*mainWindow);
+
+    app->get_menu_by_id("app-menu");
 
     app->run(*mainWindow);
   }

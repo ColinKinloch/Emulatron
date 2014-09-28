@@ -13,7 +13,7 @@
   <property name="default-width">600</property>
   <property name="default-height">400</property>
   <property name="can_focus">False</property>
-  <property name="icon">logo-512.png</property>
+  <property name="icon">img/joy-angle-256.png</property>
   <signal name="delete-event" handler="main_window_destroy_cb" swapped="no"/>
   <child type="titlebar">
     <object class="GtkHeaderBar" id="header">
@@ -61,7 +61,7 @@
             <object class="GtkImage" id="test_button_image">
               <property name="visible">True</property>
               <property name="can_focus">False</property>
-              <property name="resource">/org/colinkinloch/emulatron/dino_down.png</property>
+              <property name="resource">/org/colinkinloch/emulatron/img/dino_down.png</property>
               <property name="icon_size">1</property>
             </object>
           </child>
@@ -247,13 +247,16 @@
   </child>
 </object>
 
-<object class="GtkAboutDialog" id="aboutdialog">
+
+<object class="GtkAboutDialog" id="emu_about_dialog">
   <property name="visible">True</property>
   <property name="can_focus">False</property>
   <property name="type_hint">dialog</property>
   <property name="program_name">Emulatron</property>
   <property name="logo_icon_name">input-gaming-symbolic</property>
-  <property name="logo">logo-large.svg</property>
+  <property name="logo">img/joy-angle-256.png</property>
+  <property name="comments">A front end for libRetro emulators.</property>
+  <property name="website">https://github.com/ColinKinloch/Emulatron</property>
   <child internal-child="vbox">
     <object class="GtkBox" id="aboutdialog_vbox">
       <property name="can_focus">False</property>
@@ -282,6 +285,7 @@
     </object>
   </child>
 </object>
+
 
 <object class="GtkWindow" id="emu_pref_window">
   <property name="visible">True</property>
@@ -393,6 +397,13 @@
     </object>
   </child>
 </object>
+
+<object class="GtkTreeStore" id="emu-tree-store">
+  <columns>
+    <column type="gchararray"/>
+  </columns>
+</object>
+
 
 <object class="GtkListStore" id="emu-list-store">
   <columns>
