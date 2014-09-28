@@ -2,7 +2,7 @@
 <interface>
 <requires lib="gtk+" version="3.12"/>
 
-<menu id="appmenu">
+<menu id="app-menu">
   <section>
     <item>
       <attribute name="label" translatable="yes">Prefere_nces</attribute>
@@ -22,6 +22,18 @@
       <attribute name="accel">&lt;Ctrl&gt;Q</attribute>
     </item>
   </section>
+</menu>
+
+<menu id="menubar">
+  <submenu>
+    <attribute name="label" translatable="yes">_Edit</attribute>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Capy</attribute>
+        <attribute name="action">win.copy</attribute>
+      </item>
+    </section>
+  </submenu>
 </menu>
 
 <menu id="addmenu">
