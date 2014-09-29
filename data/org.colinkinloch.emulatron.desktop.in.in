@@ -1,0 +1,12 @@
+[Desktop Entry]
+_Name=emulatron
+_GenericName=Retro Video Game System Emulator
+_Comment=User interface for libRetro emulators
+Exec=emulatron %U
+Terminal=false
+Type=Application
+StartupNotify=true
+Icon=emulatron
+Categories=GTK;Emulator;Game;
+Actions=Window;
+_Keywords=Game;Emulator;

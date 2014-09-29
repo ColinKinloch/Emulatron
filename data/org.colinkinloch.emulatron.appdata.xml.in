@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2014 Colin Kinloch <colin@kinlo.ch> -->
+<application>
+  <id type="desktop">org.colinkinloch.emulatron.desktop</id>
+  <description>
+    <_p>
+      GTK user interface for libRetro emulators.
+    </_p>
+  </description>
+  <url type="homepage">https://github.com/ColinKinloch/Emulatron</url>
+  <updatecontact>colin@kinlo.ch</updatecontact>
+</application>
