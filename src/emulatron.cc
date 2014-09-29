@@ -34,6 +34,7 @@ int main(int argc, char **argv)
 
 Gtk::ApplicationWindow* mainWindow = nullptr;
 Gtk::Window* prefWindow = nullptr;
+Gtk::Window* prefWindowTwo = nullptr;
 Gtk::AboutDialog* aboutDialog = nullptr;
 
 
@@ -68,23 +69,29 @@ int main(int argc, char **argv)
 
   refBuilder->get_widget("emu_main_window", mainWindow);
   refBuilder->get_widget("emu_pref_window", prefWindow);
+  refBuilder->get_widget("emu_pref_window_two", prefWindowTwo);
   refBuilder->get_widget("emu_about_dialog", aboutDialog);
   if(mainWindow)
   {
+    prefWindow->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
+    prefWindow->show();
+    
+    prefWindowTwo->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
+    prefWindowTwo->show();
     
     const std::vector<Glib::ustring> authors = {
       "Colin Kinloch <colin@kinlo.ch>"
     };
     const std::vector<Glib::ustring> artists = {
-      "Colin Kinloch <colin@kinlo.ch>"
     };
     
     aboutDialog->set_authors(authors);
-    aboutDialog->set_artists(artists);
+   //aboutDialog->set_artists(artists);
     aboutDialog->set_copyright("© 2014 Colin Kinloch");
     aboutDialog->set_version(VERSION);
     
     aboutDialog->set_transient_for(*mainWindow);
+    aboutDialog->show();
 
     app->get_menu_by_id("app-menu");
 
