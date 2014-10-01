@@ -29,13 +29,12 @@ int main(int argc, char **argv)
 #include <glib/gi18n.h>
 #include <gtkmm.h>
 #include "emu-resources.h"
-#include "emu-header-b.h"
-#include "emu-header-bar.hh"
 
 Gtk::ApplicationWindow* mainWindow = nullptr;
 Gtk::Window* prefWindow = nullptr;
 Gtk::Window* prefWindowTwo = nullptr;
 Gtk::AboutDialog* aboutDialog = nullptr;
+//Glib::RefPtr<Gio::MenuModel> appMenu = nullptr;
 
 
 int main(int argc, char **argv)
@@ -49,6 +48,7 @@ int main(int argc, char **argv)
 
   try
   {
+    refBuilder->add_from_resource("/org/colinkinloch/emulatron/gtk/menus.ui");
     refBuilder->add_from_resource("/org/colinkinloch/emulatron/emulatron.ui");
   }
   catch(const Gio::ResourceError& ex)
@@ -71,8 +71,11 @@ int main(int argc, char **argv)
   refBuilder->get_widget("emu_pref_window", prefWindow);
   refBuilder->get_widget("emu_pref_window_two", prefWindowTwo);
   refBuilder->get_widget("emu_about_dialog", aboutDialog);
+  
+  //appMenu = refBuilder->get_object("app-menu");
   if(mainWindow)
   {
+    
     prefWindow->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     prefWindow->show();
     
@@ -94,6 +97,8 @@ int main(int argc, char **argv)
     aboutDialog->show();
 
     app->get_menu_by_id("app-menu");
+    
+    //app->set_app_menu(*appMenu);
 
     app->run(*mainWindow);
   }

@@ -29,7 +29,7 @@
     <attribute name="label" translatable="yes">_Edit</attribute>
     <section>
       <item>
-        <attribute name="label" translatable="yes">_Capy</attribute>
+        <attribute name="label" translatable="yes">_Copy</attribute>
         <attribute name="action">win.copy</attribute>
       </item>
     </section>
@@ -48,6 +48,29 @@
       <attribute name="action">app.add-collection</attribute>
     </item>
   </section>
+</menu>
+
+
+<menu id="view-menu">
+  <section>
+    <item>
+      <attribute name="label" translatable="yes">Zoom In</attribute>
+      <attribute name="action">game-icon-view.zoom_in</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Zoom Out</attribute>
+      <attribute name="action">game-icon-view.zoom_out</attribute>
+    </item>
+  </section>
+  <submenu>
+    <attribute name="label" translatable="yes">_Edit</attribute>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Copy</attribute>
+        <attribute name="action">win.copy</attribute>
+      </item>
+    </section>
+  </submenu>
 </menu>
 
 </interface>

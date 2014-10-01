@@ -4,10 +4,6 @@
 <interface>
 <requires lib="gtk+" version="3.12"/>
 
-<object class="GtkSettings" id="emu_settings">
-  <property name="gtk-application-prefer-dark-theme">True</property>
-</object>
-
 <object class="GtkApplicationWindow" id="emu_main_window">
   <property name="title" translatable="yes">Emulatron</property>
   <property name="default-width">600</property>
@@ -109,6 +105,7 @@
           <child>
             <object class="GtkMenuButton" id="view_menu_button">
               <property name="visible">True</property>
+              <property name="menu-model">view-menu</property>s
               <style>
                 <class name="image-button"/>
               </style>
@@ -648,4 +645,5 @@
     </object>
   </child>
 </object>
+
 </interface>
