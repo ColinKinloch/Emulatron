@@ -34,7 +34,7 @@ Gtk::ApplicationWindow* mainWindow = nullptr;
 Gtk::Window* prefWindow = nullptr;
 Gtk::Window* prefWindowTwo = nullptr;
 Gtk::AboutDialog* aboutDialog = nullptr;
-//Glib::RefPtr<Gio::MenuModel> appMenu = nullptr;
+//Glib::RefPtr<Gio::MenuModel> appMenu;
 
 
 int main(int argc, char **argv)
@@ -42,14 +42,17 @@ int main(int argc, char **argv)
   Glib::RefPtr<Gtk::Application> app = Gtk::Application::create(argc, argv, "org.colinkinloch.emulator");
   
   Glib::RefPtr<Gtk::Builder> refBuilder = Gtk::Builder::create();
-
+  refBuilder->set_application(app);
+  
   Glib::RefPtr<Gtk::Settings> settings = Gtk::Settings::get_default();
   settings->property_gtk_application_prefer_dark_theme() = true;
 
   try
   {
     refBuilder->add_from_resource("/org/colinkinloch/emulatron/gtk/menus.ui");
-    refBuilder->add_from_resource("/org/colinkinloch/emulatron/emulatron.ui");
+    refBuilder->add_from_resource("/org/colinkinloch/emulatron/ui/emu-view-actions.ui");
+    refBuilder->add_from_resource("/org/colinkinloch/emulatron/ui/emu-preference-dialog.ui");
+    refBuilder->add_from_resource("/org/colinkinloch/emulatron/ui/emu-main-window.ui");
   }
   catch(const Gio::ResourceError& ex)
   {
@@ -69,7 +72,7 @@ int main(int argc, char **argv)
 
   refBuilder->get_widget("emu_main_window", mainWindow);
   refBuilder->get_widget("emu_pref_window", prefWindow);
-  refBuilder->get_widget("emu_pref_window_two", prefWindowTwo);
+  //refBuilder->get_widget("emu_pref_window_two", prefWindowTwo);
   refBuilder->get_widget("emu_about_dialog", aboutDialog);
   
   //appMenu = refBuilder->get_object("app-menu");
@@ -79,8 +82,8 @@ int main(int argc, char **argv)
     prefWindow->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     prefWindow->show();
     
-    prefWindowTwo->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
-    prefWindowTwo->show();
+    //prefWindowTwo->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
+    //prefWindowTwo->show();
     
     const std::vector<Glib::ustring> authors = {
       "Colin Kinloch <colin@kinlo.ch>"
@@ -94,7 +97,7 @@ int main(int argc, char **argv)
     aboutDialog->set_version(VERSION);
     
     aboutDialog->set_transient_for(*mainWindow);
-    aboutDialog->show();
+    //aboutDialog->show();
 
     app->get_menu_by_id("app-menu");
     

@@ -16,4 +16,4 @@ CLEANFILES +=	 			\
 	$(data_appdata_DATA)
 
 DISTCLEANFILES +=	 		\
-	$(data_desktop_DATA)		\
+	$(data_desktop_DATA)

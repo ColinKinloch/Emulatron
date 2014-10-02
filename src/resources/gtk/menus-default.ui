@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-<requires lib="gtk+" version="3.12"/>
+<!-- interface-requires gtk+ 3.0 -->
 
 <menu id="app-menu">
   <section>
+    <attribute name="id">preferencen-section</attribute>
     <item>
-      <attribute name="label" translatable="yes">Prefere_nces</attribute>
+      <attribute name="label" translatable="yes">_Preferences</attribute>
       <attribute name="action">app.preferences</attribute>
     </item>
   </section>
@@ -53,6 +54,20 @@
 
 <menu id="view-menu">
   <section>
+    <attribute name="id">junction-section</attribute>
+    <attribute name="display-hint">horizontal-buttons</attribute>
+    <item>
+      <attribute name="label" translatable="yes">_Reload</attribute>
+      <attribute name="action">game-icon-view.reload</attribute>
+      <attribute name="verb-icon">view-refresh-symbolic</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">_Fullscreen</attribute>
+      <attribute name="action">game-icon-view.fullscreen</attribute>
+      <attribute name="verb-icon">view-fullscreen-symbolic</attribute>
+    </item>
+  </section>
+  <section>
     <item>
       <attribute name="label" translatable="yes">Zoom In</attribute>
       <attribute name="action">game-icon-view.zoom_in</attribute>
@@ -61,16 +76,29 @@
       <attribute name="label" translatable="yes">Zoom Out</attribute>
       <attribute name="action">game-icon-view.zoom_out</attribute>
     </item>
+    <item>
+      <attribute name="label" translatable="yes">Normal Size</attribute>
+      <attribute name="action">game-icon-view.zoom_none</attribute>
+    </item>
   </section>
-  <submenu>
-    <attribute name="label" translatable="yes">_Edit</attribute>
-    <section>
-      <item>
-        <attribute name="label" translatable="yes">_Copy</attribute>
-        <attribute name="action">win.copy</attribute>
-      </item>
-    </section>
-  </submenu>
+  <section>
+    <item>
+      <attribute name="label" translatable="yes">By Name</attribute>
+      <attribute name="action">game-icon-view.by_name</attribute>
+      <attribute name="group">radio</attribute>
+    </item>
+  </section>
+  <section>
+    <submenu>
+      <attribute name="label" translatable="yes">_Edit</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Copy</attribute>
+          <attribute name="action">win.copy</attribute>
+        </item>
+      </section>
+    </submenu>
+  </section>
 </menu>
 
 </interface>

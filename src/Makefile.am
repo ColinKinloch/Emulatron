@@ -1,38 +1,50 @@
-SUBDIRS = libretro-cores/Dinothawr
+SUBDIRS += src/libretro-cores/Dinothawr
 
-bin_PROGRAMS = emulatron
+bin_PROGRAMS += src/emulatron
 
 
-BUILT_SOURCES = emu-resources.h emu-resources.c
-EXTRA_DIST = emu.gresource.xml emu-header-bar.ui emulatron.ui
+EXTRA_DIST += src/resources/emu.gresource.xml.in
 
-RESOURCE_LIST = $(shell $(GLIB_COMPILE_RESOURCES) --generate-dependencies emu.gresource.xml)
+emu_resource_deps = $(shell $(GLIB_COMPILE_RESOURCES) --generate-dependencies --sourcedir $(srcdir)/src/resources --sourcedir $(builddir)/src/resources $(builddir)/src/resources/emu.gresource.xml)
 
-emu-resources.h: emu.gresource.xml $(RESOURCE_LIST)
-	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) $(srcdir)/emu.gresource.xml \
-		--target=$@ --sourcedir=$(srcdir) --c-name _emulatron --generate-header
-emu-resources.c: $(EXTRA_DIST) emu.gresource.xml $(RESOURCE_LIST)
-	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) $(srcdir)/emu.gresource.xml \
-		--target=$@ --sourcedir=$(srcdir) --c-name _emulatron --generate-source
+emu_resource_c_deps = $(builddir)/src/resources/emu.gresource.xml $(emu_resource_deps)
 
-emulatron_LDADD = \
+$(info $(emu_resource_deps))
+
+src/emu-resources.c: $(emu_resource_c_deps)
+	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) \
+		--target="$@" \
+		--sourcedir="$(srcdir)/src/resources" \
+		--sourcedir="$(builddir)/src/resources" \
+		--generate-source "$(builddir)/src/resources/emu.gresource.xml"
+
+emu_dist_resource_deps = \
+	$(filter-out src/resources/css/emu-style-os.css,$(filter-out src/resources/gtk/menu.ui,$(gedit_resource_deps))) \
+	src/resources/gtk/menus-default.ui \
+	src/resources/gtk/menus-default.ui \
+	src/resources/gtk/menus-osx.ui
+
+EXTRA_DIST += \
+	$(emu_dist_resource_deps)
+
+src_emulatron_LDADD = \
 	$(PLAYER_LIBS)
 
-emulatron_CFLAGS = \
+src_emulatron_CFLAGS = \
 	$(PLAYER_CFLAGS) \
 	$(AM_CPPFLAGS)
 
-emulatron_CPPFLAGS = \
+src_emulatron_CPPFLAGS = \
 	$(PLAYER_CFLAGS) \
 	$(AM_CFLAGS)
 
-emulatron_SOURCES = \
-	emulatron.cc \
-	emulatron.hh \
-	emu-window.cc \
-	emu-window.hh \
-	emu-header-bar.cc \
-	emu-header-bar.hh \
-	emu-resources.h \
-	emu-resources.c
+src_emulatron_SOURCES = \
+	src/emulatron.cc \
+	src/emulatron.hh \
+	src/emu-window.cc \
+	src/emu-window.hh \
+	src/emu-header-bar.cc \
+	src/emu-header-bar.hh \
+	src/emu-resources.c
 
+BUILT_SOURCES += $(emu_built_sources) src/emu-resources.c

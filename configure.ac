@@ -15,7 +15,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 
-AM_INIT_AUTOMAKE([foreign -Wall -Werror -Wno-portability])
+AM_INIT_AUTOMAKE([foreign -Wall -Werror -Wno-portability subdir-objects])
 
 GETTEXT_PACKAGE=emulatron
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, ["$GETTEXT_PACKAGE"], [Define to the Gettext package name])
@@ -31,6 +31,7 @@ AC_LANG([C++])
 AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11
 
+AC_SUBST(ACLOCAL_AMFLAGS, "$ACLOCAL_FLAGS -I m4")
 
 # Initialize libtool
 LT_PREREQ([2.2])
@@ -40,6 +41,7 @@ m4_ifdef([LT_OUTPUT], [LT_OUTPUT])
 PKG_PROG_PKG_CONFIG
 
 AC_PATH_PROG([GLIB_MKENUMS],[glib-mkenums])
+
 
 # Requirements
 GLIB_REQS=2.35.0
@@ -57,15 +59,35 @@ AC_SUBST(EMULATRON_VERSION_MAJOR)
 AC_SUBST(EMULATRON_VERSION_MINOR)
 AC_SUBST(EMULATRON_VERSION_MICRO)
 
-
 #LIBRETRO_CORES=""
 
 #PKG_CHECK_MODULES(LIBRETRO, $LIBRETRO_CORES)
 
-PKG_CHECK_MODULES(PLAYER, gtkmm-3.0 glib-2.0 >= $GLIB_REQS gio-2.0 >= $GIO_REQS gtk+-3.0 >= $GTK_REQS gdk-x11-3.0 >= $GTK_REQS gmodule-2.0 gnome-desktop-3.0)
+PKG_CHECK_MODULES(PLAYER, gtkmm-3.0)
+
+AC_PATH_PROG(GLIB_COMPILE_RESOURCES, glib-compile-resources)
+
+if test "$os_osx" = "yes"; then
+	os_menus_ui=menus-osx.ui
+	os_style_css=emu-style-osx.css
+else
+	os_menus_ui=menus-default.ui
+	os_style_css=
+
+	OS_DEPENDENT_RESOURCE_FILES='<file compressed="true">gtk/menus-traditional.ui</file>'
+fi
+
+if test "x$os_style_css" != "x"; then
+	OS_DEPENDENT_RESOURCE_FILES+="<file>css/emu-style-os.css</file>"
+	AC_CONFIG_LINKS(src/resources/css/emu-style-os.css:src/resources/css/$os_style_css)
+fi
+
+AC_SUBST(OS_DEPENDENT_RESOURCE_FILES)
+AC_CONFIG_LINKS(src/resources/gtk/menus.ui:src/resources/gtk/$os_menus_ui)
 
 AC_CONFIG_FILES([
-  Makefile
-  src/Makefile
+	Makefile
+	src/resources/emu.gresource.xml
 ])
+#	data/Makefile
 AC_OUTPUT

@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+<requires lib="gtk+" version="3.12"/>
+
+<object class="GtkWindow" id="emu_pref_window">
+  <child type="titlebar">
+    <object class="GtkHeaderBar" id="pref_header">
+      <property name="visible">True</property>
+      <property name="show-close-button">True</property>
+      <child type="title">
+        <object class="GtkLabel" id="pref_header_label">
+          <property name="visible">True</property>
+          <property name="label">Preferences</property>
+        </object>
+      </child>
+    </object>
+  </child>
+  <child>
+    <object class="GtkNotebook">
+      <property name="visible">True</property>
+      <property name="can_focus">True</property>
+      <property name="border_width">0</property>
+      <property name="show_border">False</property>
+      <child>
+        <object class="GtkGrid" id="pref-library-content">
+          <property name="visible">True</property>
+          <property name="can_focus">False</property>
+          <property name="border-width">12</property>
+          <property name="row_spacing">18</property>
+          <property name="orientation">vertical</property>
+          <child>
+            <object class="GtkGrid">
+              <property name="visible">True</property>
+              <property name="can_focus">False</property>
+              <property name="row_spacing">6</property>
+              <property name="orientation">vertical</property>
+              <child>
+                <object class="GtkLabel">
+                  <property name="visible">True</property>
+                  <property name="can_focus">False</property>
+                  <property name="xalign">0</property>
+                  <property name="label">Game Library Folder Location</property>
+                  <attributes>
+                    <attribute name="weight" value="bold"/>
+                  </attributes>
+                </object>
+                <packing>
+                  <property name="left_attach">0</property>
+                  <property name="top_attach">0</property>
+                  <property name="width">1</property>
+                  <property name="height">1</property>
+                </packing>
+              </child>
+              <child>
+                <object class="GtkGrid">
+                  <property name="visible">True</property>
+                  <property name="can_focus">False</property>
+                  <property name="hexpand">True</property>
+                  <property name="margin">12</property>
+                  <property name="row_spacing">6</property>
+                  <property name="column_spacing">6</property>
+                  <property name="orientation">vertical</property>
+                  <child>
+                    <object class="GtkEntry">
+                      <property name="visible">True</property>
+                      <property name="can_focus">True</property>
+                      <property name="halign">fill</property>
+                      <property name="hexpand">True</property>
+                    </object>
+                  </child>
+                  <child>
+                    <object class="GtkHBox">
+                      <property name="visible">True</property>
+                      <property name="halign">end</property>
+                      <child>
+                        <object class="GtkFileChooserButton">
+                          <property name="visible">True</property>
+                          <property name="title">Game Library Folder Location</property>
+                          <property name="action">GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkButton">
+                          <property name="visible">True</property>
+                          <property name="label">Reset</property>
+                        </object>
+                      </child>
+                    </object>
+                  </child>
+                </object>
+              </child>
+              
+              <child>
+                <object class="GtkHBox">
+                  <property name="visible">True</property>
+                  <child>
+                    <object class="GtkLabel">
+                      <property name="visible">True</property>
+                      <property name="label">Reset all dialog warnings</property>
+                      <attributes>
+                        <attribute name="weight" value="bold"/>
+                      </attributes>
+                    </object>
+                  </child>
+                  <child>
+                    <object class="GtkButton">
+                      <property name="visible">True</property>
+                      <property name ="label">Reset warnings</property>
+                    </object>
+                  </child>
+                </object>
+              </child>
+              <child>
+                <object class="GtkLabel">
+                  <property name="visible">True</property>
+                  <property name="label">Organisation Methods</property>
+                  <attributes>
+                    <attribute name="weight" value="bold"/>
+                  </attributes>
+                </object>
+              </child>
+              <child>
+                <object class="GtkAlignment">
+                  <property name="visible">True</property>
+                  <child>
+                    <object class="GtkGrid">
+                      <property name="visible">True</property>
+                      <property name="orientation">vertical</property>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Keep games organised</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name ="label">Copy files to Game Library folder when adding to library</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name ="label">Automatically lookup game information and artwork</property>
+                        </object>
+                      </child>
+                    </object>
+                  </child>
+                </object>
+              </child>
+              <child>
+                <object class="GtkLabel">
+                  <property name="visible">True</property>
+                  <property name="label">Available Libraries</property>
+                  <attributes>
+                    <attribute name="weight" value="bold"/>
+                  </attributes>
+                </object>
+              </child>
+              <child>
+                <object class="GtkScrolledWindow">
+                  <property name="visible">True</property>
+                  <property name="shadow_type">etched-in</property>
+                  <property name="vexpand">True</property>
+                  <child>
+                    <object class="GtkGrid">
+                      <property name="visible">True</property>
+                      <property name="orientation">vertical</property>
+                      <property name="border_width">10</property>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Hi</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Hi</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Hi</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Hi</property>
+                        </object>
+                      </child>
+                    </object>
+                  </child>
+                </object>
+              </child>
+            </object>
+          </child>
+        </object>
+        <packing>
+          <property name="tab-label">Library</property>
+          <property name="tab-expand">True</property>
+        </packing>
+      </child>
+      <child type="tab">
+        <object class="GtkVBox">
+          <property name="visible">True</property>
+          <child>
+            <object class="GtkImage">
+              <property name="visible">True</property>
+              <property name="icon_name">accessories-dictionary-symbolic</property>
+            </object>
+          </child>
+          <child>
+            <object class="GtkLabel" id="pref-library-tab">
+              <property name="visible">True</property>
+              <property name="label">Library</property>
+            </object>
+          </child>
+        </object>
+      </child>
+      <child>
+        <object class="GtkGrid" id="pref-gameplay-content">
+          <property name="visible">True</property>
+          <property name="can_focus">False</property>
+          <property name="border-width">12</property>
+          <property name="row_spacing">18</property>
+          <property name="orientation">vertical</property>
+          <child>
+            <object class="GtkGrid">
+              <property name="visible">True</property>
+              <property name="can_focus">False</property>
+              <property name="row_spacing">6</property>
+              <property name="orientation">vertical</property>
+            </object>
+          </child>
+        
+        </object>
+        <packing>
+          <property name="tab-label">Gameplay</property>
+          <property name="tab-expand">True</property>
+        </packing>
+      </child>
+      <child type="tab">
+        <object class="GtkVBox">
+          <property name="visible">True</property>
+          <child>
+            <object class="GtkImage">
+              <property name="visible">True</property>
+              <property name="icon_name">computer-symbolic</property>
+            </object>
+          </child>
+          <child>
+            <object class="GtkLabel" id="pref-gameplay-tab">
+              <property name="visible">True</property>
+              <property name="label">Gameplay</property>
+            </object>
+          </child>
+        </object>
+      </child>
+      <child>
+        <object class="GtkLabel" id="pref-control-content">
+          <property name="visible">True</property>
+          <property name="label">Controls here</property>
+        </object>
+        <packing>
+          <property name="tab-label">Controls</property>
+          <property name="tab-expand">True</property>
+        </packing>
+      </child>
+      <child type="tab">
+        <object class="GtkVBox">
+          <property name="visible">True</property>
+          <child>
+            <object class="GtkImage">
+              <property name="visible">True</property>
+              <property name="icon_name">input-gaming-symbolic</property>
+            </object>
+          </child>
+          <child>
+        <object class="GtkLabel" id="pref-control-tab">
+          <property name="visible">True</property>
+          <property name="label">Controls</property>
+        </object>
+          </child>
+        </object>
+      </child>
+      <child>
+        <object class="GtkBox">
+          <property name="visible">True</property>
+          <property name="orientation">vertical</property>
+          <child>
+            <object class="GtkTreeView" id="core-tree-view-two">
+              <property name="visible">True</property>
+              <property name="model">core-store</property>
+              <child>
+                <object class="GtkTreeViewColumn" id="core-name-column-two">
+                  <property name="title">Core</property>
+                  <child>
+                    <object class="GtkCellRendererText" id="core-name-renderer-two"/>
+                    <attributes>
+                      <attribute name="text">0</attribute>
+                    </attributes>
+                  </child>
+                </object>
+              </child>
+              <child>
+                <object class="GtkTreeViewColumn" id="core-version-column-two">
+                  <property name="title">Version</property>
+                  <child>
+                    <object class="GtkCellRendererText" id="core-version-renderer-two"/>
+                    <attributes>
+                      <attribute name="text">1</attribute>
+                    </attributes>
+                  </child>
+                </object>
+              </child>
+            </object>
+          </child>
+        </object>
+        <packing>
+          <property name="tab-label">Cores</property>
+          <property name="tab-expand">True</property>
+        </packing>
+      </child>
+      <child type="tab">
+        <object class="GtkVBox">
+          <property name="visible">True</property>
+          <child>
+            <object class="GtkImage">
+              <property name="visible">True</property>
+              <property name="icon_name">application-x-appliance-symbolic</property>
+            </object>
+          </child>
+          <child>
+            <object class="GtkLabel" id="pref-core-tab">
+              <property name="visible">True</property>
+              <property name="label">Cores</property>
+            </object>
+          </child>
+        </object>
+      </child>
+    </object>
+  </child>
+</object>
+
+</interface>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/colinkinloch/emulatron">
+    <file compressed="true">gtk/menus.ui</file>
+    <file compressed="true">gtk/menus-common.ui</file>
+    <file compressed="true">ui/emu-main-window.ui</file>
+    <file compressed="true">ui/emu-preference-dialog.ui</file>
+    <file compressed="true">ui/emu-view-actions.ui</file>
+    <file compressed="true">ui/emu-header-bar.ui</file>
+    <file>img/logo.svg</file>
+    <file>img/logo-large.svg</file>
+    <file preprocess="to-pixdata">img/logo.png</file>
+    <file preprocess="to-pixdata">img/logo-128.png</file>
+    <file preprocess="to-pixdata">img/logo-256.png</file>
+    <file preprocess="to-pixdata">img/logo-512.png</file>
+    <file preprocess="to-pixdata">img/joy-256.png</file>
+    <file preprocess="to-pixdata">img/joy-512.png</file>
+    <file preprocess="to-pixdata">img/joy-angle-256.png</file>
+    <file preprocess="to-pixdata">img/joy-angle-512.png</file>
+    <file preprocess="to-pixdata">img/dino_down.png</file>
+    
+    @OS_DEPENDENT_RESOURCE_FILES@
+  </gresource>
+</gresources>
