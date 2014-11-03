@@ -22,11 +22,11 @@
       <property name="border_width">0</property>
       <property name="show_border">False</property>
       <child>
-        <object class="GtkGrid" id="pref-library-content">
+        <object class="GtkBox" id="pref-library-content">
           <property name="visible">True</property>
           <property name="can_focus">False</property>
           <property name="border-width">12</property>
-          <property name="row_spacing">18</property>
+          <property name="spacing">18</property>
           <property name="orientation">vertical</property>
           <child>
             <object class="GtkGrid">
@@ -91,28 +91,39 @@
               </child>
               
               <child>
-                <object class="GtkHBox">
+                <object class="GtkLabel">
                   <property name="visible">True</property>
-                  <child>
-                    <object class="GtkLabel">
-                      <property name="visible">True</property>
-                      <property name="label">Reset all dialog warnings</property>
-                      <attributes>
-                        <attribute name="weight" value="bold"/>
-                      </attributes>
-                    </object>
-                  </child>
+                  <property name="can_focus">False</property>
+                  <property name="xalign">0</property>
+                  <property name="label">Reset Warnings</property>
+                  <attributes>
+                    <attribute name="weight" value="bold"/>
+                  </attributes>
+                </object>
+              </child>
+              <child>
+                <object class="GtkGrid">
+                  <property name="visible">True</property>
+                  <property name="can_focus">False</property>
+                  <property name="hexpand">True</property>
+                  <property name="margin">12</property>
+                  <property name="row_spacing">6</property>
+                  <property name="column_spacing">6</property>
+                  <property name="orientation">horizontal</property>
                   <child>
                     <object class="GtkButton">
                       <property name="visible">True</property>
-                      <property name ="label">Reset warnings</property>
+                      <property name ="label">Reset dialog warnings</property>
                     </object>
                   </child>
                 </object>
               </child>
+              
               <child>
                 <object class="GtkLabel">
                   <property name="visible">True</property>
+                  <property name="can_focus">False</property>
+                  <property name="xalign">0</property>
                   <property name="label">Organisation Methods</property>
                   <attributes>
                     <attribute name="weight" value="bold"/>
@@ -120,8 +131,11 @@
                 </object>
               </child>
               <child>
-                <object class="GtkAlignment">
+                <object class="GtkBox">
                   <property name="visible">True</property>
+                  <property name="can_focus">False</property>
+                  <property name="margin">6</property>
+                  <property name="orientation">vertical</property>
                   <child>
                     <object class="GtkGrid">
                       <property name="visible">True</property>
@@ -151,6 +165,8 @@
               <child>
                 <object class="GtkLabel">
                   <property name="visible">True</property>
+                  <property name="can_focus">False</property>
+                  <property name="xalign">0</property>
                   <property name="label">Available Libraries</property>
                   <attributes>
                     <attribute name="weight" value="bold"/>
@@ -162,33 +178,97 @@
                   <property name="visible">True</property>
                   <property name="shadow_type">etched-in</property>
                   <property name="vexpand">True</property>
+                  <property name="hscrollbar-policy">never</property>
+                  <property name="min-content-height">100</property>
                   <child>
-                    <object class="GtkGrid">
+                    <object class="GtkFlowBox">
                       <property name="visible">True</property>
-                      <property name="orientation">vertical</property>
+                      <property name="orientation">horizontal</property>
                       <property name="border_width">10</property>
+                      <property name="column_spacing">10</property>
+                      <property name="valign">start</property>
                       <child>
                         <object class="GtkCheckButton">
                           <property name="visible">True</property>
-                          <property name="label">Hi</property>
+                          <property name="label">3DO</property>
                         </object>
                       </child>
                       <child>
                         <object class="GtkCheckButton">
                           <property name="visible">True</property>
-                          <property name="label">Hi</property>
+                          <property name="label">PC-FX</property>
                         </object>
                       </child>
                       <child>
                         <object class="GtkCheckButton">
                           <property name="visible">True</property>
-                          <property name="label">Hi</property>
+                          <property name="label">SG-1000</property>
                         </object>
                       </child>
                       <child>
                         <object class="GtkCheckButton">
                           <property name="visible">True</property>
-                          <property name="label">Hi</property>
+                          <property name="label">Arcade</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Atari 2600</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Sega Master System</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Atari 5200</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Sega Mega Drive</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Sega Mega Drive 32x</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Atari 7800</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Atari Jaguar</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Sega Mega-CD</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Atari Lynx</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Sega Saturn</property>
                         </object>
                       </child>
                     </object>
@@ -233,6 +313,85 @@
               <property name="can_focus">False</property>
               <property name="row_spacing">6</property>
               <property name="orientation">vertical</property>
+              <child>
+                <object class="GtkLabel">
+                  <property name="visible">True</property>
+                  <property name="can_focus">False</property>
+                  <property name="xalign">0</property>
+                  <property name="label">Display Mode</property>
+                  <attributes>
+                    <attribute name="weight" value="bold"/>
+                  </attributes>
+                </object>
+                <packing>
+                  <property name="left_attach">0</property>
+                  <property name="top_attach">0</property>
+                  <property name="width">1</property>
+                  <property name="height">1</property>
+                </packing>
+              </child>
+              <child>
+                <object class="GtkGrid">
+                  <property name="visible">True</property>
+                  <property name="can_focus">False</property>
+                  <property name="hexpand">True</property>
+                  <property name="margin">12</property>
+                  <property name="row_spacing">6</property>
+                  <property name="column_spacing">6</property>
+                  <property name="orientation">horizontal</property>
+                  <child>
+                    <object class="GtkLabel">
+                      <property name="visible">True</property>
+                      <property name="label">Filter</property>
+                    </object>
+                  </child>
+                  <child>
+                    <object class="GtkComboBox">
+                      <property name="visible">True</property>
+                    </object>
+                  </child>
+                </object>
+              </child>
+              <child>
+                <object class="GtkLabel">
+                  <property name="visible">True</property>
+                  <property name="can_focus">False</property>
+                  <property name="xalign">0</property>
+                  <property name="label">Window Management</property>
+                  <attributes>
+                    <attribute name="weight" value="bold"/>
+                  </attributes>
+                </object>
+              </child>
+              <child>
+                <object class="GtkAlignment">
+                  <property name="visible">True</property>
+                  <child>
+                    <object class="GtkGrid">
+                      <property name="visible">True</property>
+                      <property name="orientation">vertical</property>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name="label">Always launch games fullscreen</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name ="label">Always use popout gameplay window</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkCheckButton">
+                          <property name="visible">True</property>
+                          <property name ="label">Always pause gameplay when in background</property>
+                        </object>
+                      </child>
+                    </object>
+                  </child>
+                </object>
+              </child>
             </object>
           </child>
         
@@ -306,12 +465,23 @@
                 </object>
               </child>
               <child>
+                <object class="GtkTreeViewColumn" id="core-console-column-two">
+                  <property name="title">Console</property>
+                  <child>
+                    <object class="GtkCellRendererText" id="core-console-renderer-two"/>
+                    <attributes>
+                      <attribute name="text">1</attribute>
+                    </attributes>
+                  </child>
+                </object>
+              </child>
+              <child>
                 <object class="GtkTreeViewColumn" id="core-version-column-two">
                   <property name="title">Version</property>
                   <child>
                     <object class="GtkCellRendererText" id="core-version-renderer-two"/>
                     <attributes>
-                      <attribute name="text">1</attribute>
+                      <attribute name="text">2</attribute>
                     </attributes>
                   </child>
                 </object>
