@@ -17,6 +17,7 @@
     <file preprocess="to-pixdata">img/joy-512.png</file>
     <file preprocess="to-pixdata">img/joy-angle-256.png</file>
     <file preprocess="to-pixdata">img/joy-angle-512.png</file>
+    <file preprocess="to-pixdata">img/controller_n64.png</file>
     <file preprocess="to-pixdata">img/dino_down.png</file>
     
     @OS_DEPENDENT_RESOURCE_FILES@

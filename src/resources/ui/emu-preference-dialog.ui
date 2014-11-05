@@ -301,11 +301,11 @@
         </object>
       </child>
       <child>
-        <object class="GtkGrid" id="pref-gameplay-content">
+        <object class="GtkBox" id="pref-gameplay-content">
           <property name="visible">True</property>
           <property name="can_focus">False</property>
           <property name="border-width">12</property>
-          <property name="row_spacing">18</property>
+          <property name="spacing">18</property>
           <property name="orientation">vertical</property>
           <child>
             <object class="GtkGrid">
@@ -419,9 +419,115 @@
         </object>
       </child>
       <child>
-        <object class="GtkLabel" id="pref-control-content">
+        <object class="GtkBox" id="pref-control-content">
           <property name="visible">True</property>
-          <property name="label">Controls here</property>
+          <property name="orientation">horizontal</property>
+          <child>
+            <object class="GtkImage">
+              <property name="visible">True</property>
+              <property name="valign">start</property>
+              <property name="resource">/org/colinkinloch/emulatron/img/controller_n64.png</property>
+              <child>
+                <object class="GdkPixbuf">
+                </object>
+              </child>
+            </object>
+          </child>
+          <child>
+            <object class="GtkBox">
+              <property name="visible">True</property>
+              <property name="orientation">vertical</property>
+              <property name="hexpand">True</property>
+              <property name="halign">fill</property>
+              <property name="spacing">6</property>
+              <child>
+                <object class="GtkComboBox">
+                  <property name="visible">True</property>
+                </object>
+              </child>
+              <child>
+                <object class="GtkFrame">
+                  <property name="visible">True</property>
+                  <property name="shadow_type">etched-in</property>
+                  <child>
+                    <object class="GtkBox">
+                      <property name="visible">True</property>
+                      <property name="orientation">vertical</property>
+                      <child>
+                        <object class="GtkComboBox">
+                          <property name="visible">True</property>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkScrolledWindow">
+                          <property name="visible">True</property>
+                          <property name="vexpand">True</property>
+                          <child>
+                            <object class="GtkBox">
+                              <property name="visible">True</property>
+                              <property name="orientation">vertical</property>
+                              <child>
+                                <object class="GtkExpander">
+                                  <property name="valign">start</property>
+                                  <property name="visible">True</property>
+                                  <property name="expanded">True</property>
+                                  <property name="label">Gameplay Buttons</property>
+                                  <child>
+                                    <object class="GtkGrid">
+                                      <property name="visible">True</property>
+                                      <child>
+                                        <object class="GtkLabel">
+                                          <property name="visible">True</property>
+                                          <property name="label">A</property>
+                                        </object>
+                                      </child>
+                                      <child>
+                                        <object class="GtkEntry">
+                                          <property name="visible">True</property>
+                                        </object>
+                                      </child>
+                                    </object>
+                                  </child>
+                                </object>
+                              </child>
+                              <child>
+                                <object class="GtkExpander">
+                                  <property name="valign">start</property>
+                                  <property name="visible">True</property>
+                                  <property name="label">Special Keys</property>
+                                  <child>
+                                    <object class="GtkGrid">
+                                      <property name="visible">True</property>
+                                      <child>
+                                        <object class="GtkLabel">
+                                          <property name="visible">True</property>
+                                          <property name="label">Quick Save:</property>
+                                        </object>
+                                      </child>
+                                      <child>
+                                        <object class="GtkEntry">
+                                          <property name="visible">True</property>
+                                        </object>
+                                      </child>
+                                    </object>
+                                  </child>
+                                </object>
+                              </child>
+                            </object>
+                          </child>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkComboBox">
+                          <property name="visible">True</property>
+                        </object>
+                      </child>
+                    </object>
+                  </child>
+                </object>
+              </child>
+            </object>
+          </child>
         </object>
         <packing>
           <property name="tab-label">Controls</property>
