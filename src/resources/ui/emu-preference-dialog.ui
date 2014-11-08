@@ -178,6 +178,7 @@
                   <property name="visible">True</property>
                   <property name="shadow_type">etched-in</property>
                   <property name="vexpand">True</property>
+                  <property name="margin">6</property>
                   <property name="hscrollbar-policy">never</property>
                   <property name="min-content-height">100</property>
                   <child>
@@ -367,8 +368,9 @@
                 <object class="GtkAlignment">
                   <property name="visible">True</property>
                   <child>
-                    <object class="GtkGrid">
+                    <object class="GtkBox">
                       <property name="visible">True</property>
+                      <property name="margin">6</property>
                       <property name="orientation">vertical</property>
                       <child>
                         <object class="GtkCheckButton">
@@ -427,10 +429,6 @@
               <property name="visible">True</property>
               <property name="valign">start</property>
               <property name="resource">/org/colinkinloch/emulatron/img/controller_n64.png</property>
-              <child>
-                <object class="GdkPixbuf">
-                </object>
-              </child>
             </object>
           </child>
           <child>
@@ -440,6 +438,8 @@
               <property name="hexpand">True</property>
               <property name="halign">fill</property>
               <property name="spacing">6</property>
+              <property name="margin">6</property>
+              <property name="width-request">200</property>
               <child>
                 <object class="GtkComboBox">
                   <property name="visible">True</property>

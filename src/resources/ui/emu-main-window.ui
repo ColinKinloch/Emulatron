@@ -171,37 +171,105 @@
             <object class="GtkScrolledWindow">
               <property name="visible">True</property>
               <property name="can_focus">False</property>
+              <property name="hscrollbar-policy">never</property>
               <child>
-                <object class="GtkTreeView" id="emu_list_tree_view">
+                <object class="GtkBox">
                   <property name="visible">True</property>
-                  <property name="width-request">200</property>
-                  <property name="model">emu-list-store</property>
+                  <property name="orientation">vertical</property>
                   <child>
-                    <object class="GtkTreeViewColumn" id="test_column">
-                      <property name="title">Consoles</property>
+                    <object class="GtkExpander">
+                      <property name="visible">True</property>
+                      <property name="expanded">True</property>
+                      <property name="label">Consoles</property>
                       <child>
-                        <object class="GtkCellRendererText" id="test-renderer"/>
-                        <attributes>
-                          <attribute name="text">0</attribute>
-                        </attributes>
+                        <object class="GtkTreeView" id="console_selector">
+                          <property name="visible">True</property>
+                          <property name="headers-visible">False</property>
+                          <child>
+                            <object class="GtkTreeViewColumn">
+                              <property name="spacing">6</property>
+                              <property name="resizable">True</property>
+                              <property name="sizing">autosize</property>
+                              <child>
+                                <object class="GtkCellRendererPixbuf"/>
+                                <attributes>
+                                  <attribute name="pixbuf">1</attribute>
+                                </attributes>
+                              </child>
+                              <child>
+                                <object class="GtkCellRendererText">
+                                  <property name="ellipsize">end</property>
+                                </object>
+                                <attributes>
+                                  <attribute name="text">0</attribute>
+                                </attributes>
+                              </child>
+                            </object>
+                          </child>
+                          <child internal-child="selection">
+                            <object class="GtkTreeSelection" id="console_selection">
+                              <!--property name="mode">browse</property>-->
+                            </object>
+                          </child>
+                        </object>
                       </child>
                     </object>
                   </child>
-                  <child internal-child="selection">
-                    <object class="GtkTreeSelection" id="tree_selection">
-                      <!--property name="mode">browse</property>-->
+                  <child>
+                    <object class="GtkExpander">
+                      <property name="visible">True</property>
+                      <property name="expanded">True</property>
+                      <property name="label">Collections</property>
+                      <child>
+                        <object class="GtkTreeView" id="collection_selector">
+                          <property name="visible">True</property>
+                          <!--<property name="width-request">200</property>-->
+                          <property name="headers-visible">False</property>
+                          <child>
+                            <object class="GtkTreeViewColumn">
+                              <property name="spacing">6</property>
+                              <property name="resizable">True</property>
+                              <property name="sizing">autosize</property>
+                              <child>
+                                <object class="GtkCellRendererPixbuf"/>
+                                <attributes>
+                                  <attribute name="pixbuf">1</attribute>
+                                </attributes>
+                              </child>
+                              <child>
+                                <object class="GtkCellRendererText">
+                                  <property name="ellipsize">end</property>
+                                </object>
+                                <attributes>
+                                  <attribute name="text">0</attribute>
+                                </attributes>
+                              </child>
+                            </object>
+                          </child>
+                          <child internal-child="selection">
+                            <object class="GtkTreeSelection" id="collection_selection">
+                              <!--property name="mode">browse</property>-->
+                            </object>
+                          </child>
+                        </object>
+                      </child>
                     </object>
                   </child>
                 </object>
               </child>
             </object>
+            <packing>
+              <property name="shrink">False</property>
+            </packing>
           </child>
           <child>
             <object class="GtkBox">
               <property name="visible">True</property>
+              <property name="orientation">vertical</property>
               <child>
                 <object class="GtkSearchBar" id="searchbar">
                   <property name="visible">True</property>
+                  <!--<property name="search-mode-enabled">True</property>-->
                   <child>
                     <object class="GtkSearchEntry" id="searchentry">
                       <property name="visible">True</property>
@@ -211,9 +279,15 @@
                 </object>
               </child>
               <child>
-                <object class="GtkIconView" id="game_selector">
+                <object class="GtkScrolledWindow">
                   <property name="visible">True</property>
-                  <property name="model">game-store</property>
+                  <child>
+                    <object class="GtkIconView" id="game_selector">
+                      <property name="visible">True</property>
+                      <!--<property name="model">game-store</property>-->
+                      <property name="vexpand">True</property>
+                    </object>
+                  </child>
                 </object>
               </child>
               <!--<child>
