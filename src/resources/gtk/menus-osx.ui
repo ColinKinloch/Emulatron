@@ -1,0 +1,11 @@
+<menu id="menubar">
+  <submenu>
+    <attribute name="label" translatable="yes">_Edit</attribute>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Copy</attribute>
+        <attribute name="action">win.copy</attribute>
+      </item>
+    </section>
+  </submenu>
+</menu>

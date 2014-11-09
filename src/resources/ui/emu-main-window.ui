@@ -7,7 +7,6 @@
   <property name="default-width">600</property>
   <property name="default-height">400</property>
   <property name="can_focus">False</property>
-  <property name="icon">img/joy-angle-256.png</property>
   <signal name="delete-event" handler="main_window_destroy_cb" swapped="no"/>
   <child type="titlebar">
     <object class="GtkHeaderBar" id="header">
@@ -180,7 +179,15 @@
                     <object class="GtkExpander">
                       <property name="visible">True</property>
                       <property name="expanded">True</property>
-                      <property name="label">Consoles</property>
+                      <child type="label">
+                        <object class="GtkLabel">
+                          <property name="visible">True</property>
+                          <property name="label">Consoles</property>
+                          <attributes>
+                            <attribute name="variant" value="small-caps"/>
+                          </attributes>
+                        </object>
+                      </child>
                       <child>
                         <object class="GtkTreeView" id="console_selector">
                           <property name="visible">True</property>
@@ -208,7 +215,7 @@
                           </child>
                           <child internal-child="selection">
                             <object class="GtkTreeSelection" id="console_selection">
-                              <!--property name="mode">browse</property>-->
+                              <property name="mode">browse</property>
                             </object>
                           </child>
                         </object>
@@ -219,7 +226,15 @@
                     <object class="GtkExpander">
                       <property name="visible">True</property>
                       <property name="expanded">True</property>
-                      <property name="label">Collections</property>
+                      <child type="label">
+                        <object class="GtkLabel">
+                          <property name="visible">True</property>
+                          <property name="label">Collections</property>
+                          <attributes>
+                            <attribute name="variant" value="small-caps"/>
+                          </attributes>
+                        </object>
+                      </child>
                       <child>
                         <object class="GtkTreeView" id="collection_selector">
                           <property name="visible">True</property>
@@ -248,7 +263,7 @@
                           </child>
                           <child internal-child="selection">
                             <object class="GtkTreeSelection" id="collection_selection">
-                              <!--property name="mode">browse</property>-->
+                              <property name="mode">browse</property>
                             </object>
                           </child>
                         </object>
@@ -286,6 +301,7 @@
                       <property name="visible">True</property>
                       <!--<property name="model">game-store</property>-->
                       <property name="vexpand">True</property>
+                      <property name="item-width">0</property>
                     </object>
                   </child>
                 </object>
@@ -371,9 +387,14 @@
   <property name="type_hint">dialog</property>
   <property name="program_name">Emulatron</property>
   <property name="logo_icon_name">input-gaming-symbolic</property>
-  <property name="logo">../img/joy-angle-256.png</property>
+  <property name="logo">/org/colinkinloch/emulatron/img/joy-angle-256.png</property>
   <property name="comments">A front end for libRetro emulators.</property>
   <property name="website">https://github.com/ColinKinloch/Emulatron</property>
+  <child type="logo">
+    <object class="GtkImage">
+      <property name="resource">/org/colinkinloch/emulatron/img/joy-angle-256.png</property>
+    </object>
+  </child>
   <child internal-child="vbox">
     <object class="GtkBox" id="aboutdialog_vbox">
       <property name="can_focus">False</property>
