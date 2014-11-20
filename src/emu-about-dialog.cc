@@ -10,8 +10,7 @@ EmuAboutDialog::EmuAboutDialog(BaseObjectType* cobject, const Glib::RefPtr<Gtk::
   const std::vector<Glib::ustring> authors = {
     "Colin Kinloch <colin@kinlo.ch>"
   };
-  const std::vector<Glib::ustring> artists = {
-  };
+  //const std::vector<Glib::ustring> artists = {};
   set_authors(authors);
   //aboutDialog->set_artists(artists);
   set_logo(Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/joy-angle-256.png"));
