@@ -19,4 +19,11 @@
   </child>
 </object>-->
 
+<!--<object class="GSimpleAction">
+  <property name="name">layout</property>
+  <property name="state-type">string</property>
+  <property name="state">grid</property>
+</object>-->
+
+
 </interface>

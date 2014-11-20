@@ -280,7 +280,6 @@
           </child>
         </object>
         <packing>
-          <property name="tab-label">Library</property>
           <property name="tab-expand">True</property>
         </packing>
       </child>
@@ -399,7 +398,6 @@
         
         </object>
         <packing>
-          <property name="tab-label">Gameplay</property>
           <property name="tab-expand">True</property>
         </packing>
       </child>
@@ -530,7 +528,6 @@
           </child>
         </object>
         <packing>
-          <property name="tab-label">Controls</property>
           <property name="tab-expand">True</property>
         </packing>
       </child>
@@ -558,7 +555,7 @@
           <child>
             <object class="GtkTreeView" id="core-tree-view-two">
               <property name="visible">True</property>
-              <property name="model">core-store</property>
+              <!--<property name="model">core-store</property>-->
               <child>
                 <object class="GtkTreeViewColumn" id="core-name-column-two">
                   <property name="title">Core</property>
@@ -596,7 +593,6 @@
           </child>
         </object>
         <packing>
-          <property name="tab-label">Cores</property>
           <property name="tab-expand">True</property>
         </packing>
       </child>

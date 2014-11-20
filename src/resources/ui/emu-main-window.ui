@@ -19,8 +19,9 @@
         </object>
       </child>
       <child>
-        <object class="GtkButton" id="add_button">
+        <object class="GtkMenuButton" id="add_button">
           <property name="visible">True</property>
+          <property name="menu-model">add-menu</property>
           <child internal-child="accessible">
             <object class="AtkObject" id="add-button-atkobject">
               <property name="AtkObject::accessible-name" translatable="yes">Add</property>
@@ -69,8 +70,8 @@
           <child>
             <object class="GtkToggleButton" id="view_list_button">
               <property name="visible">True</property>
-              <property name="related_action">view-list-action</property>
-              <property name="active">True</property>
+              <property name="action-name">view.layout</property>
+              <property name="action-target">list</property>
               <style>
                 <class name="image-button"/>
               </style>
@@ -86,7 +87,8 @@
           <child>
             <object class="GtkToggleButton" id="view_grid_button">
             <property name="visible">True</property>
-            <property name="related_action">view-grid-action</property>
+            <property name="action-name">view.layout</property>
+            <property name="action-target">grid</property>
             <style>
               <class name="image-button"/>
             </style>
@@ -102,7 +104,7 @@
           <child>
             <object class="GtkMenuButton" id="view_menu_button">
               <property name="visible">True</property>
-              <property name="menu-model">view-menu</property>s
+              <property name="menu-model">view-menu</property>
               <style>
                 <class name="image-button"/>
               </style>
@@ -282,7 +284,7 @@
               <property name="visible">True</property>
               <property name="orientation">vertical</property>
               <child>
-                <object class="GtkSearchBar" id="searchbar">
+                <object class="GtkSearchBar" id="search_bar">
                   <property name="visible">True</property>
                   <!--<property name="search-mode-enabled">True</property>-->
                   <child>
@@ -387,14 +389,8 @@
   <property name="type_hint">dialog</property>
   <property name="program_name">Emulatron</property>
   <property name="logo_icon_name">input-gaming-symbolic</property>
-  <property name="logo">/org/colinkinloch/emulatron/img/joy-angle-256.png</property>
   <property name="comments">A front end for libRetro emulators.</property>
   <property name="website">https://github.com/ColinKinloch/Emulatron</property>
-  <child type="logo">
-    <object class="GtkImage">
-      <property name="resource">/org/colinkinloch/emulatron/img/joy-angle-256.png</property>
-    </object>
-  </child>
   <child internal-child="vbox">
     <object class="GtkBox" id="aboutdialog_vbox">
       <property name="can_focus">False</property>

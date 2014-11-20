@@ -7,10 +7,18 @@
 class Emulatron: public Gtk::Application
 {
 protected:
-  EmuWindow* emuWindow;
   Glib::RefPtr<Gtk::Builder> refBuilder;
   Glib::RefPtr<Gtk::Settings> settings;
   
+  void on_preferences();
+  
+  void on_about();
+  void on_quit();
+  
 public:
-  Emulatron(int& argc, char**& argv, const Glib::ustring& application_id=Glib::ustring(), Gio::ApplicationFlags flags=Gio::APPLICATION_FLAGS_NONE);
+  EmuWindow* emuWindow;
+  EmuPreferenceWindow* prefWindow;
+  EmuAboutDialog* aboutDialog;
+  
+  Emulatron(int& argc, char**& argv);
 };
