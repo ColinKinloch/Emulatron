@@ -1,37 +1,19 @@
 #include "emu-window.hh"
 #include <iostream>
+#include <sqlite3.h>
+#include <libgdamm.h>
+using namespace Gnome;
 
-EmuWindow::EmuWindow()
-{
-  
-}
 EmuWindow::EmuWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& refBuilder)
   : Gtk::ApplicationWindow(cobject)
 {
   set_icon(Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/joy-angle-256.png"));
   
+  Gda::init();
+  
+  
   gameList = GameStore::create(gameCols);
   
-  Gtk::TreeModel::Row gameRow = *(gameList->append());
-  gameRow[gameCols.title] = "The Legend of Zelda: A Link to the Past";
-  gameRow[gameCols.filename] = "/dev/null";
-  gameRow[gameCols.thumbnail] = Gdk::Pixbuf::create_from_resource(
-   "/org/colinkinloch/emulatron/img/lttp.jpg", 200, 200);
-  gameRow = *(gameList->append());
-  gameRow[gameCols.title] = "Other game";
-  gameRow[gameCols.filename] = "/dev/null";
-  gameRow[gameCols.thumbnail] = Gdk::Pixbuf::create_from_resource(
-   "/org/colinkinloch/emulatron/img/dino_down.png", 200, 200);
-  gameRow = *(gameList->append());
-  gameRow[gameCols.title] = "Game number 3";
-  gameRow[gameCols.filename] = "/dev/null";
-  gameRow[gameCols.thumbnail] = Gdk::Pixbuf::create_from_resource(
-   "/org/colinkinloch/emulatron/img/logo.png", 200, 200);
-  gameRow = *(gameList->append());
-  gameRow[gameCols.title] = "Silly big game";
-  gameRow[gameCols.filename] = "/dev/null";
-  gameRow[gameCols.thumbnail] = Gdk::Pixbuf::create_from_resource(
-   "/org/colinkinloch/emulatron/img/joy-angle-1024.png", 200, 200);
   
   consoleList = ConsoleStore::create(consoleCols);
   
@@ -149,6 +131,7 @@ void EmuWindow::on_game_activated(const Gtk::TreeModel::Path& path)
   {
     Gtk::TreeModel::Row row = *iter;
     std::cout<<"Begin game: "<<row[gameCols.filename]<<std::endl;
+    
   }
 }
 void EmuWindow::on_game_search_mode()
@@ -171,15 +154,86 @@ void EmuWindow::on_game_drag_data_received(const Glib::RefPtr<Gdk::DragContext>&
 {
   Gtk::TreeModel::Row gameRow;
   auto uris = selection_data.get_uris();
+  
+  std::string dbPath = "openvgdb.sqlite";
+  Glib::RefPtr<Gda::Connection> openVGDB;
+  try
+  {
+    openVGDB = Gda::Connection::open_from_string(
+     "SQLite",
+     "DB_DIR=.;DB_NAME=openvgdb.sqlite",
+     "",
+     Gda::CONNECTION_OPTIONS_READ_ONLY);
+  }
+  catch(const Glib::Error& err)
+  {
+    std::cerr<<err.what()<<std::endl;
+  }
+  
+  
+  
   for(auto it = uris.begin(); it != uris.end(); ++it)
   {
-    std::cout<<"Data: "<<*it<<std::endl;
+    Glib::RefPtr<Gio::File> file = Gio::File::create_for_uri(*it);
+    std::string contents = Glib::file_get_contents(file->get_path());
+    std::string sha1 = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_SHA1, contents);
+    std::string md5 = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_MD5, contents);
+    std::cout<<"Data: "<<*it<<": "<<md5<<std::endl;
+    
+    std::string query = "SELECT RELEASES.releaseTitleName, RELEASES.releaseCoverFront FROM RELEASES, ROMs WHERE RELEASES.RomID = ROMs.RomID AND (LOWER(ROMs.romHashMD5)='"+md5+"' OR LOWER(ROMs.romHashSHA1)='"+sha1+"');";
+    
+    std::string romTitle;
+    std::string romCoverUrl;
+    
+    Glib::RefPtr<Gda::DataModel> data;
+    
+    try
+    {
+      data = openVGDB->statement_execute_select(query);
+    }
+    catch(const Glib::Error& err)
+    {
+      std::cerr<<"Select error"<<err.what()<<std::endl;
+    }
+    
+    romTitle = data->get_value_at(0, 0).get_string();
+    romCoverUrl = data->get_value_at(1, 0).get_string();
+    
     gameRow = *(gameList->append());
-    gameRow[gameCols.title] = *it;
     gameRow[gameCols.filename] = *it;
+    
+    if(romTitle.size() == 0)
+    {
+      romTitle = file->get_basename();
+    }
+    
+    Glib::RefPtr<Gdk::Pixbuf> cover = Gdk::Pixbuf::create_from_stream(Gio::File::create_for_uri(romCoverUrl)->read());
+    int cw = cover->get_width();
+    int ch = cover->get_height();
+    int mw = 200;
+    int mh = mw*1.25;
+    float s;
+    if(cw>ch)
+    {
+      s = (float)mw/cw;
+    }
+    else
+    {
+      s = (float)mh/ch;
+    }
+    Glib::RefPtr<Gdk::Pixbuf> cover200 = cover->scale_simple(cw*s, ch*s, Gdk::INTERP_BILINEAR);
+    
+    gameRow[gameCols.title] = romTitle;
     //gameRow[gameCols.thumbnail] = Gdk::Pixbuf::create_from_resource(
      //"/org/colinkinloch/emulatron/img/lttp.jpg", 200, 200);
+    gameRow[gameCols.thumbnail] = cover200;
+    //"SELECT RELEASES.releaseTitleName, ROMs.romHashMD5, RELEASES.releaseCoverFront\
+       FROM RELEASES, ROMs\
+       WHERE RELEASES.RomID = ROMs.RomID\
+       AND (LOWER(ROMs.romHashMD5)='"+md5+"'\
+        OR LOWER(ROMs.romHashSHA1)='"+sha1+"');"
   }
+  openVGDB->close();
 }
 bool EmuWindow::on_game_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time)
 {
@@ -194,3 +248,4 @@ bool EmuWindow::on_game_drag_motion(const Glib::RefPtr<Gdk::DragContext>& contex
   //std::cout<<"motion"<<std::endl;
   return false;
 }
+

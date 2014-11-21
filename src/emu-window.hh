@@ -5,14 +5,15 @@
 #include <gtkmm/iconview.h>
 #include <gtkmm/treeview.h>
 
-#include "game-store.h"
+#include <libgdamm.h>
+
+#include "game-store.hh"
 #include "emu-about-dialog.hh"
 #include "emu-preference-window.hh"
 
 class EmuWindow: public Gtk::ApplicationWindow
 {
 public:
-  EmuWindow();
   EmuWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& refBuilder);
   virtual ~EmuWindow();
   
@@ -22,6 +23,8 @@ public:
   void on_layout_change(const Glib::ustring& value);
   
 protected:
+  Glib::RefPtr<Gnome::Gda::Connection> openVGDB;
+  
   type_signal_search_mode m_signal_search_mode;
   
   Gtk::IconView* gameSelector = nullptr;
