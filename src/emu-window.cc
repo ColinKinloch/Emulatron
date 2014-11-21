@@ -170,6 +170,8 @@ void EmuWindow::on_game_drag_data_received(const Glib::RefPtr<Gdk::DragContext>&
     std::cerr<<err.what()<<std::endl;
   }
   
+  
+  
   for(auto it = uris.begin(); it != uris.end(); ++it)
   {
     Glib::RefPtr<Gio::File> file = Gio::File::create_for_uri(*it);
