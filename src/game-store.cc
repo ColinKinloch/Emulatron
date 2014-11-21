@@ -1,4 +1,4 @@
-#include "game-store.h"
+#include "game-store.hh"
 
 GameStore::GameStore(const GameStore::ColumnRecord& columns): Gtk::TreeStore()
 {

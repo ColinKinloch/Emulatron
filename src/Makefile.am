@@ -44,7 +44,7 @@ src_emulatron_SOURCES = \
 	src/emu-window.cc \
 	src/emu-window.hh \
 	src/game-store.cc \
-	src/game-store.h \
+	src/game-store.hh \
 	src/emu-about-dialog.cc \
 	src/emu-about-dialog.hh \
 	src/emu-preference-window.cc \
