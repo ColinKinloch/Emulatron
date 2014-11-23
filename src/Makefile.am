@@ -43,8 +43,12 @@ src_emulatron_SOURCES = \
 	src/emulatron.hh \
 	src/emu-window.cc \
 	src/emu-window.hh \
+	src/game-view.cc \
+	src/game-view.hh \
 	src/game-store.cc \
 	src/game-store.hh \
+	src/game-model.cc \
+	src/game-model.hh \
 	src/emu-about-dialog.cc \
 	src/emu-about-dialog.hh \
 	src/emu-preference-window.cc \

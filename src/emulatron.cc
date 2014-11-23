@@ -17,6 +17,8 @@
 Emulatron::Emulatron(int& argc, char**& argv):
   Gtk::Application(argc, argv, "org.colinkinloch.emulatron", Gio::APPLICATION_FLAGS_NONE)
 {
+  Glib::init();
+  Gio::init();
   refBuilder = Gtk::Builder::create();
   refBuilder->set_application(Glib::RefPtr<Emulatron>(this));
   

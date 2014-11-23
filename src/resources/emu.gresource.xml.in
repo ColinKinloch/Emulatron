@@ -21,6 +21,8 @@
     <file preprocess="to-pixdata">img/controller_n64.png</file>
     <file preprocess="to-pixdata">img/lttp.jpg</file>
     <file preprocess="to-pixdata">img/dino_down.png</file>
+    <file preprocess="to-pixdata">systems/nes/famicom_library.png</file>
+    <file preprocess="to-pixdata">systems/nes/famicom_library@2x.png</file>
     
     @OS_DEPENDENT_RESOURCE_FILES@
   </gresource>

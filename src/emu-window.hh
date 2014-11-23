@@ -7,6 +7,7 @@
 
 #include <libgdamm.h>
 
+#include "game-view.hh"
 #include "game-store.hh"
 #include "emu-about-dialog.hh"
 #include "emu-preference-window.hh"
@@ -27,13 +28,12 @@ protected:
   
   type_signal_search_mode m_signal_search_mode;
   
-  Gtk::IconView* gameSelector = nullptr;
+  GameView* gameSelector = nullptr;
   Gtk::TreeView* consoleSelector = nullptr;
   Gtk::TreeView* collectionSelector = nullptr;
   
-  GameStore::ColumnRecord gameCols;
+  GameModel::ColumnRecord gameCols;
   ConsoleStore::ColumnRecord consoleCols;
-  Glib::RefPtr<Gtk::TreeStore> gameList;
   Glib::RefPtr<Gtk::TreeStore> consoleList;
   Glib::RefPtr<Gtk::TreeStore> collectionList;
   
