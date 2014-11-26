@@ -3,6 +3,8 @@
 #include <gtkmm/builder.h>
 
 #include "emu-window.hh"
+#include "emu-about-dialog.hh"
+#include "emu-preference-window.hh"
 
 class Emulatron: public Gtk::Application
 {

@@ -1,9 +1,13 @@
 #pragma once
 
 #include <gtkmm/window.h>
+#include <gtkmm/box.h>
 #include <gtkmm/builder.h>
 
-class EmuPreferenceWindow: public Gtk::Window
+#include "control-pref-panel.hh"
+
+class EmuPreferenceWindow:
+  public Gtk::Window
 {
 public:
   EmuPreferenceWindow();
@@ -11,4 +15,9 @@ public:
   virtual ~EmuPreferenceWindow();
   
 protected:
+  
+  Gtk::Box* libraryPanel;
+  Gtk::Box* gameplayPanel;
+  ControlPrefPanel* controlPanel;
+  Gtk::Box* corePanel;
 };

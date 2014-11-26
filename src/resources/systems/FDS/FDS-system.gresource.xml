@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/colinkinloch/emulatron/systems/FDS">
+    <file compressed="true" preprocess="to-pixdata">controller.png</file>
+    <file compressed="true" preprocess="to-pixdata">controller_mask.png</file>
+    <file compressed="true" preprocess="to-pixdata">library.png</file>
+    <file compressed="true" preprocess="to-pixdata">library@2x.png</file>
+  </gresource>
+</gresources>

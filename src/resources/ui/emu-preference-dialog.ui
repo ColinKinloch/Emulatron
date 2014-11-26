@@ -420,13 +420,16 @@
       </child>
       <child>
         <object class="GtkBox" id="pref-control-content">
+          <style>
+            <class name="wood"/>
+          </style>
           <property name="visible">True</property>
           <property name="orientation">horizontal</property>
           <child>
-            <object class="GtkImage">
+            <object class="GtkImage" id="control-image">
               <property name="visible">True</property>
               <property name="valign">start</property>
-              <property name="resource">/org/colinkinloch/emulatron/img/controller_n64.png</property>
+              <property name="resource">/org/colinkinloch/emulatron/systems/Default/controller.png</property>
             </object>
           </child>
           <child>
@@ -439,8 +442,20 @@
               <property name="margin">6</property>
               <property name="width-request">200</property>
               <child>
-                <object class="GtkComboBox">
+                <object class="GtkComboBox" id="control-console-combo">
                   <property name="visible">True</property>
+                  <child>
+                    <object class="GtkCellRendererPixbuf"/>
+                    <attributes>
+                      <attribute name="pixbuf">3</attribute>
+                    </attributes>
+                  </child>
+                  <child>
+                    <object class="GtkCellRendererText"/>
+                    <attributes>
+                      <attribute name="text">1</attribute>
+                    </attributes>
+                  </child>
                 </object>
               </child>
               <child>
@@ -451,8 +466,9 @@
                     <object class="GtkBox">
                       <property name="visible">True</property>
                       <property name="orientation">vertical</property>
+                      <property name="margin">3</property>
                       <child>
-                        <object class="GtkComboBox">
+                        <object class="GtkComboBox" id="control-player-combo">
                           <property name="visible">True</property>
                         </object>
                       </child>
@@ -460,6 +476,7 @@
                         <object class="GtkScrolledWindow">
                           <property name="visible">True</property>
                           <property name="vexpand">True</property>
+                          <property name="margin">3</property>
                           <child>
                             <object class="GtkBox">
                               <property name="visible">True</property>
@@ -516,7 +533,7 @@
                         </object>
                       </child>
                       <child>
-                        <object class="GtkComboBox">
+                        <object class="GtkComboBox" id="control-controller-combo">
                           <property name="visible">True</property>
                         </object>
                       </child>

@@ -9,8 +9,8 @@
 
 #include "game-view.hh"
 #include "game-store.hh"
-#include "emu-about-dialog.hh"
-#include "emu-preference-window.hh"
+#include "console-store.hh"
+#include "collection-store.hh"
 
 class EmuWindow: public Gtk::ApplicationWindow
 {
@@ -32,10 +32,8 @@ protected:
   Gtk::TreeView* consoleSelector = nullptr;
   Gtk::TreeView* collectionSelector = nullptr;
   
-  GameModel::ColumnRecord gameCols;
-  ConsoleStore::ColumnRecord consoleCols;
-  Glib::RefPtr<Gtk::TreeStore> consoleList;
-  Glib::RefPtr<Gtk::TreeStore> collectionList;
+  Glib::RefPtr<ConsoleStore> consoleList;
+  Glib::RefPtr<CollectionStore> collectionList;
   
   Gtk::SearchBar* searchBar;
   Gtk::ToggleButton* searchButton;

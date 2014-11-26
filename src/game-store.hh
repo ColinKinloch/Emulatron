@@ -46,16 +46,3 @@ public:
   };
 };
 
-class ConsoleStore:
-  public Gtk::TreeStore
-{
-public:
-  class ColumnRecord: public Gtk::TreeModel::ColumnRecord
-  {
-  public:
-    Gtk::TreeModelColumn<Glib::ustring> title;
-    Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> icon;
-    Gtk::TreeModelColumn<Glib::RefPtr<GameStore>> games;
-    ColumnRecord() { add(title); add(icon); }
-  };
-};

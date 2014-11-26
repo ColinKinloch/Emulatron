@@ -7,6 +7,8 @@
 #include <gtkmm.h>
 #include <gdkmm/pixbuf.h>
 
+#include <SDL.h>
+
 #include "emulatron.hh"
 #include "emu-window.hh"
 
@@ -19,11 +21,26 @@ Emulatron::Emulatron(int& argc, char**& argv):
 {
   Glib::init();
   Gio::init();
+  
+  if(SDL_Init(SDL_INIT_HAPTIC|SDL_INIT_GAMECONTROLLER) != 0)
+  {
+    std::cerr<<SDL_GetError()<<std::endl;
+  }
+  
   refBuilder = Gtk::Builder::create();
   refBuilder->set_application(Glib::RefPtr<Emulatron>(this));
   
   settings = Gtk::Settings::get_default();
   settings->property_gtk_application_prefer_dark_theme() = true;
+  
+  Glib::RefPtr<Gdk::Screen> screen = Gdk::Screen::get_default();
+  Glib::RefPtr<Gtk::CssProvider> css = Gtk::CssProvider::create();
+  
+  css->load_from_file(Gio::File::create_for_uri("resource:///org/colinkinloch/emulatron/ui/emulatron.css"));
+  
+  Glib::RefPtr<Gtk::StyleContext> styleContext = Gtk::StyleContext::create();
+  
+  styleContext->add_provider_for_screen(screen,css,GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   
   try
   {

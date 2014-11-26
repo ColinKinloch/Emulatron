@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/colinkinloch/emulatron/systems/SG1000">
+    <file compressed="true" preprocess="to-pixdata">library.png</file>
+  </gresource>
+</gresources>

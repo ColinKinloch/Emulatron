@@ -1,0 +1,31 @@
+.wood
+{
+  background: -gtk-gradient(linear, 0 0, 0 1, from(alpha(#fff,0.2)), color-stop(0.6,alpha(#000, 0)), to(alpha(#000, 0.3)));
+  background-image: url("resource:///org/colinkinloch/emulatron/img/controls_background@2x.jpg");
+}
+.wood GtkToggleButton
+{
+  background: -gtk-gradient(linear, 0 0, 0 1, from(alpha(#fff,0.2)), color-stop(0.6,alpha(#000, 0)), to(alpha(#000, 0.3)));
+  color: black;
+  text-shadow: 0 1 alpha(white, 0.6);
+}
+.wood GtkCellView
+{
+  color: black;
+  text-shadow: 0 1 alpha(white, 0.6);
+}
+.wood GtkEntry
+{
+  background: alpha(#fff, 0.1)-gtk-gradient(linear, 0 0, 0 1, to(alpha(#fff,0.1)), color-stop(0.2,alpha(#000, 0)), color-stop(0.8,alpha(#000, 0)), from(alpha(#000, 0.3)));
+  color: black;
+  text-shadow: 0 1 alpha(white, 0.6);
+}
+.wood GtkLabel
+{
+  color: black;
+  text-shadow: 0 1 alpha(white, 0.6);
+}
+.wood GtkTreeMenu
+{
+  background:url("resource:///org/colinkinloch/emulatron/img/controls_background@2x.jpg");
+}

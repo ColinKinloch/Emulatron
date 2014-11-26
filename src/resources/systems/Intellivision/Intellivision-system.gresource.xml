@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/colinkinloch/emulatron/systems/Intellivision">
+    <file compressed="true" preprocess="to-pixdata">library.png</file>
+    <file compressed="true" preprocess="to-pixdata">library@2x.png</file>
+  </gresource>
+</gresources>

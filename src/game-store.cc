@@ -24,101 +24,12 @@ bool GameStore::add(std::string uri)
   
   row[col.filename] = uri;
   row[col.title] = "Loading...";
-  row[col.cover] = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/dino_down.png");
-  row[col.thumbnail] = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/dino_down.png", 200, 200);
+  row[col.cover] = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
+  row[col.thumbnail] = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
   
   Glib::RefPtr<Gio::File> file = Gio::File::create_for_uri(uri);
   file->load_contents_async(sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>>(sigc::mem_fun(this, &GameStore::on_rom_lookup), row, file));
   
-  /*
-  std::string romTitle;
-  std::string romCoverUrl;
-  
-  Glib::RefPtr<Gio::File> file = Gio::File::create_for_uri(uri);
-  std::string contents;
-  try
-  {
-    contents = Glib::file_get_contents(file->get_path());
-  }
-  catch(Glib::Error &err)
-  {
-    std::cerr<<"File error: "<<err.what()<<std::endl;
-    return false;
-  }
-  std::string sha1 = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_SHA1, contents);
-  std::string md5 = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_MD5, contents);
-  
-  std::string query = "SELECT ROMs.romID, SYSTEMS.systemID, RELEASES.releaseTitleName, RELEASES.releaseCoverFront FROM SYSTEMS, RELEASES, ROMs WHERE SYSTEMS.systemID=ROMs.systemID AND RELEASES.RomID=ROMs.RomID AND (LOWER(ROMs.romHashMD5)='"+md5+"' OR LOWER(ROMs.romHashSHA1)='"+sha1+"');";
-  
-  Glib::RefPtr<Gda::DataModel> data;
-  
-  try
-  {
-    data = openVGDB->statement_execute_select(query);
-  }
-  catch(const Glib::Error& err)
-  {
-    std::cerr<<"Select error: "<<err.what()<<std::endl;
-    return false;
-  }
-  
-  try
-  {
-    if(data->get_n_rows())
-    {
-      romTitle = data->get_value_at(2, 0).get_string();
-      romCoverUrl = data->get_value_at(3, 0).get_string();
-    }
-    else
-    {
-      romTitle = "unknown";
-      return false;
-    }
-  }
-  catch(const Glib::Error& err)
-  {
-    std::cerr<<"Select error: "<<err.what()<<std::endl;
-    return false;
-  }
-  
-  if(romTitle.size() == 0)
-  {
-    romTitle = file->get_basename();
-  }
-  
-  Glib::RefPtr<Gdk::Pixbuf> cover;
-  try
-  {
-    //read_async
-    //Glib::RefPtr<Gio::File> file = Gio::File::create_for_uri(romCoverUrl);
-    //file->read_async(sigc::mem_fun(*this, &GameStore::thumb_callback));
-    cover = Gdk::Pixbuf::create_from_stream(Gio::File::create_for_uri(romCoverUrl)->read());
-  }
-  catch(const Glib::Error& err)
-  {
-    std::cerr<<"Thumbnail from URL error: "<<err.what()<<std::endl;
-    cover = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/dino_down.png");
-  }
-  int cw = cover->get_width();
-  int ch = cover->get_height();
-  int mw = 200;
-  int mh = mw*1.25;
-  float s;
-  if(cw>ch)
-  {
-    s = (float)mw/cw;
-  }
-  else
-  {
-    s = (float)mh/ch;
-  }
-  
-  Glib::RefPtr<Gdk::Pixbuf> cover200 = cover->scale_simple(cw*s, ch*s, Gdk::INTERP_BILINEAR);
-  
-  row[col.filename] = uri;
-  row[col.title] = romTitle;
-  row[col.cover] = cover;
-  row[col.thumbnail] = cover200;*/
   return true;
 }
 
@@ -135,6 +46,7 @@ void GameStore::on_rom_lookup(const Glib::RefPtr<Gio::AsyncResult>& result,
  GameModel::Row row, Glib::RefPtr<Gio::File> file)
 {
   Glib::ustring md5;
+  Glib::ustring sha1;
   try
   {
     //Glib::RefPtr<Gio::InputStream> stream = file->read_finish(result);
@@ -142,6 +54,7 @@ void GameStore::on_rom_lookup(const Glib::RefPtr<Gio::AsyncResult>& result,
     gsize size;
     file->load_contents_finish(result, contents, size);
     md5 = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_MD5, (guchar*)contents, size);
+    sha1 = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_SHA1, (guchar*)contents, size);
     row[col.md5] = md5;
   }
   catch(Glib::Error &err)
@@ -149,7 +62,7 @@ void GameStore::on_rom_lookup(const Glib::RefPtr<Gio::AsyncResult>& result,
     std::cerr<<"Stream Callback fail: "<<err.what()<<std::endl;
   }
   
-  const std::string query = "SELECT ROMs.romID, SYSTEMS.systemID, RELEASES.releaseTitleName, RELEASES.releaseCoverFront FROM SYSTEMS, RELEASES, ROMs WHERE SYSTEMS.systemID=ROMs.systemID AND RELEASES.RomID=ROMs.RomID AND LOWER(ROMs.romHashMD5)='"+md5+"';";
+  const std::string query = "SELECT DISTINCT ROMs.romID, SYSTEMS.systemID, RELEASES.releaseTitleName, RELEASES.releaseCoverFront FROM SYSTEMS, RELEASES, ROMs WHERE SYSTEMS.systemID=ROMs.systemID AND RELEASES.RomID=ROMs.RomID AND (LOWER(ROMs.romHashMD5)='"+md5+"' OR LOWER(ROMs.romHashSHA1)='"+sha1+"');";
   
   Glib::RefPtr<Gda::DataModel> data;
   try
@@ -198,7 +111,7 @@ void GameStore::on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& result,
   catch(const Glib::Error& err)
   {
     std::cerr<<"Thumbnail from URL error: "<<err.what()<<std::endl;
-    cover = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/dino_down.png");
+    cover = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
   }
   int cw = cover->get_width();
   int ch = cover->get_height();

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/colinkinloch/emulatron/systems/2600">
+    <file compressed="true" preprocess="to-pixdata">controller.png</file>
+    <file compressed="true" preprocess="to-pixdata">controller_mask.png</file>
+    <file compressed="true" preprocess="to-pixdata">library.png</file>
+  </gresource>
+</gresources>

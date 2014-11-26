@@ -11,26 +11,22 @@ EmuWindow::EmuWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& 
   
   Gda::init();
   
-  consoleList = ConsoleStore::create(consoleCols);
+  consoleList = ConsoleStore::create();
   
+  /*
   Gtk::TreeModel::Row consoleRow = *(consoleList->append());
-  consoleRow[consoleCols.title] = "Super Nintendo (SNES)";
+  consoleRow[consoleCols.name] = "Super Nintendo (SNES)";
     consoleRow[consoleCols.icon] = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/systems/nes/famicom_library.png");
   consoleRow = *(consoleList->append());
-  consoleRow[consoleCols.title] = "MAME";
+  consoleRow[consoleCols.name] = "MAME";
   consoleRow[consoleCols.icon] = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/joy-angle-256.png", 16, 16);
   consoleRow = *(consoleList->append());
-  consoleRow[consoleCols.title] = "Nintendo 64 (NES)";
+  consoleRow[consoleCols.name] = "Nintendo 64 (NES)";
   consoleRow[consoleCols.icon] = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/controller_n64.png", 16, 16);
+  */
   
-  collectionList = ConsoleStore::create(consoleCols);
-  
-  Gtk::TreeModel::Row collectionRow = *(collectionList->append());
-  collectionRow[consoleCols.title] = "All Games";
-  collectionRow[consoleCols.icon] = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/dino_down.png")->scale_simple(16, 16, Gdk::INTERP_NEAREST);
-  collectionRow = *(collectionList->append());
-  collectionRow[consoleCols.title] = "Recently Added";
-  collectionRow[consoleCols.icon] = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/dino_down.png")->scale_simple(16, 16, Gdk::INTERP_NEAREST);
+  collectionList = CollectionStore::create();
+  collectionList->add("MegaMan");
   
   refBuilder->get_widget("collection_selector", collectionSelector);
   refBuilder->get_widget("console_selector", consoleSelector);
@@ -38,6 +34,7 @@ EmuWindow::EmuWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& 
   
   consoleSelector->set_model(consoleList);
   collectionSelector->set_model(collectionList);
+  //collectionSelector->set_entry_text_column(consoleList->col.name);
   
   Gtk::ToggleButton* viewGridButton;
   Gtk::ToggleButton* viewListButton;
@@ -93,7 +90,6 @@ void EmuWindow::on_change_collection(const Gtk::TreeModel::Path& path)
   if(iter)
   {
     Gtk::TreeModel::Row row = *iter;
-    std::cout<<row[consoleCols.title]<<" selected"<<std::endl;
   }
 }
 void EmuWindow::on_game_search_mode()
