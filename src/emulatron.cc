@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-#include <glib-object.h>
-#include <glib/gi18n.h>
 #include <gtkmm.h>
 #include <gdkmm/pixbuf.h>
 

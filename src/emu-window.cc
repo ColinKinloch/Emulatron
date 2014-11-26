@@ -1,6 +1,5 @@
 #include "emu-window.hh"
 #include <iostream>
-#include <sqlite3.h>
 #include <libgdamm.h>
 using namespace Gnome;
 
