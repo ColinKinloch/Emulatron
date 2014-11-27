@@ -67,6 +67,7 @@
           <style>
             <class name="linked"/>
           </style>
+          <!--
           <child>
             <object class="GtkToggleButton" id="view_list_button">
               <property name="visible">True</property>
@@ -99,6 +100,12 @@
                 <property name="icon-size">1</property>
               </object>
             </child>
+            </object>
+          </child>-->
+          <child>
+            <object class="GtkStackSwitcher">
+              <property name="visible">True</property>
+              <property name="stack">layout_stack</property>
             </object>
           </child>
           <child>
@@ -299,11 +306,51 @@
                 <object class="GtkScrolledWindow">
                   <property name="visible">True</property>
                   <child>
-                    <object class="GtkIconView" id="game_selector">
+                    <object class="GtkStack" id="layout_stack">
                       <property name="visible">True</property>
-                      <!--<property name="model">game-store</property>-->
-                      <property name="vexpand">True</property>
-                      <property name="item-width">0</property>
+                      <child>
+                        <object class="GtkTreeView" id="game_tree_view">
+                          <property name="visible">True</property>
+                          <property name="headers-visible">False</property>
+                          <child>
+                            <object class="GtkTreeViewColumn">
+                              <property name="spacing">6</property>
+                              <property name="resizable">True</property>
+                              <property name="sizing">autosize</property>
+                              <child>
+                                <object class="GtkCellRendererPixbuf"/>
+                                <attributes>
+                                  <attribute name="pixbuf">4</attribute>
+                                </attributes>
+                              </child>
+                              <child>
+                                <object class="GtkCellRendererText">
+                                  <property name="ellipsize">end</property>
+                                </object>
+                                <attributes>
+                                  <attribute name="text">2</attribute>
+                                </attributes>
+                              </child>
+                            </object>
+                          </child>
+                        </object>
+                        <packing>
+                          <property name="icon-name">view-list-symbolic</property>
+                          <property name="title">List</property>
+                        </packing>
+                      </child>
+                      <child>
+                        <object class="GtkIconView" id="game_icon_view">
+                          <property name="visible">True</property>
+                          <!--<property name="model">game-store</property>-->
+                          <property name="vexpand">True</property>
+                          <property name="item-width">0</property>
+                        </object>
+                        <packing>
+                          <property name="icon-name">view-grid-symbolic</property>
+                          <property name="title">Grid</property>
+                        </packing>
+                      </child>
                     </object>
                   </child>
                 </object>

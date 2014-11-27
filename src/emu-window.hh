@@ -28,7 +28,8 @@ protected:
   
   type_signal_search_mode m_signal_search_mode;
   
-  GameView* gameSelector = nullptr;
+  GameView* gameIconView = nullptr;
+  Gtk::TreeView* gameTreeView = nullptr;
   Gtk::TreeView* consoleSelector = nullptr;
   Gtk::TreeView* collectionSelector = nullptr;
   
