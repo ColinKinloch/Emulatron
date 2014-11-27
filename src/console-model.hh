@@ -17,9 +17,6 @@ public:
     Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> icon;
     ColumnRecord() { add(id); add(name); add(shortName); add(icon); }
   };
-  
-  ConsoleModel();
-  ~ConsoleModel();
 };
 
 

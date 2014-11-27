@@ -9,6 +9,8 @@
 #include <gtkmm/liststore.h>
 
 #include "console-store.hh"
+#include "controller-store.hh"
+#include "player-store.hh"
 
 class ControlPrefPanel:
   public Gtk::Box
@@ -21,6 +23,9 @@ protected:
   Gtk::Image* image;
   
   Glib::RefPtr<ConsoleStore> consoles;
+  Glib::RefPtr<ControllerStore> controllers;
+  Glib::RefPtr<PlayerStore> players;
+  
   Gtk::ComboBox* consoleCombo;
   Gtk::ComboBox* playerCombo;
   Gtk::ComboBox* controllerCombo;

@@ -12,6 +12,8 @@ ControlPrefPanel::ControlPrefPanel(BaseObjectType* cobject, const Glib::RefPtr<G
   ControlPrefPanel();
   
   consoles = ConsoleStore::create();
+  controllers = ControllerStore::create();
+  players = PlayerStore::create(4);
   
   refBuilder->get_widget("control-image", image);
   refBuilder->get_widget("control-console-combo", consoleCombo);
@@ -20,6 +22,13 @@ ControlPrefPanel::ControlPrefPanel(BaseObjectType* cobject, const Glib::RefPtr<G
   
   consoleCombo->set_model(consoles);
   consoleCombo->set_id_column(consoles->col.id.index());
+  consoleCombo->set_active(0);
+  
+  playerCombo->set_model(players);
+  playerCombo->set_active(0);
+  
+  controllerCombo->set_model(controllers);
+  controllerCombo->set_active(0);
   
   consoleCombo->signal_changed().connect(sigc::mem_fun(this, &ControlPrefPanel::on_console_changed));
 }

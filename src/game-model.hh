@@ -18,7 +18,4 @@ public:
     Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> thumbnail;
     ColumnRecord() { add(filename); add(md5); add(title); add(cover); add(thumbnail); }
   };
-  
-  GameModel();
-  ~GameModel();
 };

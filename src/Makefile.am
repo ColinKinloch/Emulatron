@@ -87,16 +87,19 @@ src_emulatron_SOURCES = \
 	src/game-view.hh \
 	src/game-store.cc \
 	src/game-store.hh \
-	src/game-model.cc \
 	src/game-model.hh \
 	src/console-store.cc \
 	src/console-store.hh \
-	src/console-model.cc \
 	src/console-model.hh \
 	src/collection-store.cc \
 	src/collection-store.hh \
-	src/collection-model.cc \
 	src/collection-model.hh \
+	src/controller-store.cc \
+	src/controller-store.hh \
+	src/controller-model.hh \
+	src/player-store.cc \
+	src/player-store.hh \
+	src/player-model.hh \
 	src/emu-about-dialog.cc \
 	src/emu-about-dialog.hh \
 	src/emu-preference-window.cc \

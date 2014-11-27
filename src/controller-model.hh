@@ -1,9 +1,9 @@
 #pragma once
 
 #include <gtkmm/treemodel.h>
-#include <gdkmm/pixbuf.h>
+#include <SDL.h>
 
-class CollectionModel:
+class ControllerModel:
   public Gtk::TreeModel
 {
 public:
@@ -11,8 +11,9 @@ public:
     public Gtk::TreeModel::ColumnRecord
   {
   public:
+    Gtk::TreeModelColumn<SDL_GameController*> sdl;
     Gtk::TreeModelColumn<Glib::ustring> name;
-    Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> icon;
-    ColumnRecord() { add(name); add(icon); };
+    Gtk::TreeModelColumn<bool> attached;
+    ColumnRecord() { add(sdl); add(name); add(attached);};
   };
 };

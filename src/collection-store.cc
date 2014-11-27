@@ -9,12 +9,12 @@ CollectionStore::CollectionStore(const CollectionModel::ColumnRecord& columns):
   userIcon = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/collections-user.png");
   autoIcon = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/collections-auto.png");
   
-  Gtk::TreeModel::Row collectionRow = *(append());
-  collectionRow[col.name] = "All Games";
-  collectionRow[col.icon] = autoIcon;
-  collectionRow = *(append());
-  collectionRow[col.name] = "Recently Added";
-  collectionRow[col.icon] = autoIcon;
+  Gtk::TreeModel::Row row = *(append());
+  row[col.name] = "All Games";
+  row[col.icon] = autoIcon;
+  row = *(append());
+  row[col.name] = "Recently Added";
+  row[col.icon] = autoIcon;
 }
 CollectionStore::CollectionStore():
   CollectionStore::CollectionStore(col)
