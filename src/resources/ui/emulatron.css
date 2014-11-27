@@ -12,7 +12,7 @@
 {
   background: alpha(#fff, 0.1) -gtk-gradient(linear, 0 0, 0 1, from(alpha(#fff,0.2)), color-stop(0.6,alpha(#000, 0)), to(alpha(#000, 0.3)));
   color: black;
-  text-shadow: 0 1 alpha(white, 0.4);
+  text-shadow: 0 1px alpha(white, 0.4);
 }
 .wood GtkToggleButton:hover
 {
@@ -21,7 +21,7 @@
 .wood GtkCellView
 {
   color: black;
-  text-shadow: 0 1 alpha(white, 0.4);
+  text-shadow: 0 1px alpha(white, 0.4);
 }
 .wood GtkMenuItem
 {
@@ -35,7 +35,7 @@
 {
   background: alpha(#fff, 0.1) -gtk-gradient(linear, 0 0, 0 1, to(alpha(#fff,0.1)), color-stop(0.2,alpha(#000, 0)), color-stop(0.8,alpha(#000, 0)), from(alpha(#000, 0.3)));
   color: black;
-  text-shadow: 0 1 alpha(white, 0.4);
+  text-shadow: 0 1px alpha(white, 0.4);
 }
 .wood GtkEntry:focus
 {
@@ -44,7 +44,7 @@
 .wood GtkLabel
 {
   color: black;
-  text-shadow: 0 1 alpha(white, 0.4);
+  text-shadow: 0 1px alpha(white, 0.4);
 }
 .wood GtkTreeMenu
 {
@@ -56,4 +56,18 @@
 {
   border-radius: 5px;
   box-shadow: inset 0 0 4px alpha(black, 0.5);
+}
+.wood .face-button
+{
+  border-radius: 100%;
+  background:alpha(#fff, 0);
+  border-color:alpha(#fff, 0.3);
+}
+.wood .face-button:hover
+{
+  background:alpha(#fff, 0.1);
+}
+.wood .face-button:active
+{
+  background:alpha(#fff, 0.2);
 }

@@ -421,16 +421,37 @@
       </child>
       <child>
         <object class="GtkBox" id="pref-control-content">
+          <property name="visible">True</property>
+          <property name="orientation">horizontal</property>
           <style>
             <class name="wood"/>
           </style>
-          <property name="visible">True</property>
-          <property name="orientation">horizontal</property>
           <child>
-            <object class="GtkImage" id="control-image">
+            <object class="GtkFixed" id="control-area">
               <property name="visible">True</property>
-              <property name="valign">start</property>
-              <property name="resource">/org/colinkinloch/emulatron/systems/Default/controller.png</property>
+              <child>
+                <object class="GtkImage" id="control-image">
+                  <property name="visible">True</property>
+                  <property name="valign">start</property>
+                  <property name="resource">/org/colinkinloch/emulatron/systems/Default/controller.png</property>
+                </object>
+              </child>
+              <child>
+                <object class="GtkButton">
+                  <property name="visible">True</property>
+                  <property name="expand">True</property>
+                  <property name="width-request">25</property>
+                  <property name="height-request">25</property>
+                  <property name="tooltip-text">A</property>
+                  <style>
+                    <class name="face-button"/>
+                  </style>
+                </object>
+                <packing>
+                  <property name="x">100</property>
+                  <property name="y">100</property>
+                </packing>
+              </child>
             </object>
           </child>
           <child>

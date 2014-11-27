@@ -2,6 +2,9 @@
 src/emulatron
 src/emu-resources.c
 src/emu-resources.h
+src/*-system-resources.c
+src/resources/emu.gresource.xml
+src/resources/gtk/menus.ui
 m4
 libtool
 config.h
