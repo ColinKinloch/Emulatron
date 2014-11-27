@@ -7,11 +7,19 @@ ConsoleStore::ConsoleStore(const ConsoleModel::ColumnRecord& columns):
   Gtk::ListStore()
 {
   set_column_types(columns);
-  openVGDB = Gda::Connection::open_from_string(
-   "SQLite",
-   "DB_DIR=.;DB_NAME=openvgdb.sqlite",
-   "",
-   Gda::CONNECTION_OPTIONS_READ_ONLY);
+  try
+  {
+    //TODO improve openVGDB locating
+    openVGDB = Gda::Connection::open_from_string(
+     "SQLite",
+    "DB_DIR=.;DB_NAME=openvgdb.sqlite",
+     "",
+     Gda::CONNECTION_OPTIONS_READ_ONLY);
+  }
+  catch(const Glib::Error& err)
+  {
+    std::cerr<<"DB Connection Error: "<<err.what()<<std::endl;
+  }
   
   const std::string query = "SELECT systemID, systemName, systemShortName FROM SYSTEMS;";
   

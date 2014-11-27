@@ -20,6 +20,17 @@ Emulatron::Emulatron(int& argc, char**& argv):
   Glib::init();
   Gio::init();
   
+  Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path("./openvgdb.sqlite");
+  if(!openVGDBFile->query_exists())
+  {
+    std::cout<<"Downloading OpenVGDB"<<std::endl;
+    //TODO Github releases api and glib-json
+    //Glib::RefPtr<Gio::File> openVGDBUrl = Gio::File::create_for_uri("https://github.com/OpenVGDB/OpenVGDB/releases/latest");
+    Glib::RefPtr<Gio::File> openVGDBUrl = Gio::File::create_for_uri("https://github.com/OpenVGDB/OpenVGDB/releases/download/v21.0/openvgdb.zip");
+    //TODO Deal with zip
+    //openVGDBFile->create_file()->splice(openVGDBUrl->read());
+  }
+  
   if(SDL_Init(SDL_INIT_HAPTIC|SDL_INIT_GAMECONTROLLER) != 0)
   {
     std::cerr<<SDL_GetError()<<std::endl;
