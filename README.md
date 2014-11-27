@@ -12,7 +12,8 @@ Dependencies
 
 Screenshots
 -----------
-![Main Window](https://raw.githubusercontent.com/wiki/ColinKinloch/Emulatron/window.png "Rom selection.")
+![mainwin](https://raw.githubusercontent.com/wiki/ColinKinloch/Emulatron/window.png "Main Window")
+![controlpref](https://raw.githubusercontent.com/wiki/ColinKinloch/Emulatron/window.png "Control Preferences")
 
 Build
 -----
