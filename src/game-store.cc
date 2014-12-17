@@ -105,14 +105,23 @@ void GameStore::on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& result,
   Glib::RefPtr<Gdk::Pixbuf> cover;
   try
   {
-    //Glib::RefPtr<Gio::InputStream> stream = file->read_finish(result);
-    cover = Gdk::Pixbuf::create_from_stream(file->read_finish(result));
+    Glib::RefPtr<Gio::InputStream> stream = file->read_finish(result);
+    try
+    {
+      cover = Gdk::Pixbuf::create_from_stream(stream);
+    }
+    catch(const Glib::Error& err)
+    {
+      std::cerr<<"Thumbnail image error: "<<err.what()<<std::endl;
+      cover = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
+    }
   }
-  catch(const Glib::Error& err)
+  catch(const Gio::Error& err)
   {
-    std::cerr<<"Thumbnail from URL error: "<<err.what()<<std::endl;
+    std::cerr<<"Thumbnail file error: "<<err.what()<<std::endl;
     cover = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
   }
+  
   int cw = cover->get_width();
   int ch = cover->get_height();
   int mw = 200;

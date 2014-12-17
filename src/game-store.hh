@@ -11,10 +11,10 @@ class GameStore:
 {
 public:
   
-  bool add(std::string uri);
-  
   static Glib::RefPtr<GameStore> create(const GameModel::ColumnRecord& columns);
   static Glib::RefPtr<GameStore> create();
+  
+  bool add(std::string uri);
   
   GameModel::ColumnRecord col;
   

@@ -7,7 +7,8 @@
 
 #include <libgdamm.h>
 
-#include "game-view.hh"
+#include "game-icon-view.hh"
+#include "game-tree-view.hh"
 #include "game-store.hh"
 #include "console-store.hh"
 #include "collection-store.hh"
@@ -28,8 +29,8 @@ protected:
   
   type_signal_search_mode m_signal_search_mode;
   
-  GameView* gameIconView = nullptr;
-  Gtk::TreeView* gameTreeView = nullptr;
+  GameIconView* gameIconView = nullptr;
+  GameTreeView* gameTreeView = nullptr;
   Gtk::TreeView* consoleSelector = nullptr;
   Gtk::TreeView* collectionSelector = nullptr;
   

@@ -1,15 +1,18 @@
 #pragma once
 
-#include <gtkmm.h>
+#include <gtkmm/treeview.h>
 
 #include "game-store.hh"
 
-class GameView:
-    public Gtk::IconView
+class GameTreeView:
+  public Gtk::TreeView
 {
 public:
-  GameView(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& refBuilder);
-  ~GameView();
+  GameTreeView(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& refBuilder);
+  ~GameTreeView();
+  
+  void set_model(Glib::RefPtr<GameStore> model);
+  Glib::RefPtr<GameStore> get_model();
 protected:
   Glib::RefPtr<GameStore> store;
   

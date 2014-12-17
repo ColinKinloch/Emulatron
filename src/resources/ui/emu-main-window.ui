@@ -21,7 +21,9 @@
       <child>
         <object class="GtkMenuButton" id="add_button">
           <property name="visible">True</property>
-          <property name="menu-model">add-menu</property>
+          <!--<property name="menu-model">add-menu</property>-->
+          <property name="popover">view_menu_widget</property>
+          
           <child internal-child="accessible">
             <object class="AtkObject" id="add-button-atkobject">
               <property name="AtkObject::accessible-name" translatable="yes">Add</property>
@@ -102,12 +104,6 @@
             </child>
             </object>
           </child>-->
-          <child>
-            <object class="GtkStackSwitcher">
-              <property name="visible">True</property>
-              <property name="stack">layout_stack</property>
-            </object>
-          </child>
           <child>
             <object class="GtkMenuButton" id="view_menu_button">
               <property name="visible">True</property>
@@ -302,59 +298,72 @@
                   </child>
                 </object>
               </child>
-              <child>
-                <object class="GtkScrolledWindow">
-                  <property name="visible">True</property>
-                  <child>
-                    <object class="GtkStack" id="layout_stack">
-                      <property name="visible">True</property>
-                      <child>
-                        <object class="GtkTreeView" id="game_tree_view">
-                          <property name="visible">True</property>
-                          <property name="headers-visible">False</property>
-                          <child>
-                            <object class="GtkTreeViewColumn">
-                              <property name="spacing">6</property>
-                              <property name="resizable">True</property>
-                              <property name="sizing">autosize</property>
-                              <child>
-                                <object class="GtkCellRendererPixbuf"/>
-                                <attributes>
-                                  <attribute name="pixbuf">4</attribute>
-                                </attributes>
-                              </child>
-                              <child>
-                                <object class="GtkCellRendererText">
-                                  <property name="ellipsize">end</property>
-                                </object>
-                                <attributes>
-                                  <attribute name="text">2</attribute>
-                                </attributes>
-                              </child>
-                            </object>
-                          </child>
-                        </object>
-                        <packing>
-                          <property name="icon-name">view-list-symbolic</property>
-                          <property name="title">List</property>
-                        </packing>
-                      </child>
-                      <child>
-                        <object class="GtkIconView" id="game_icon_view">
-                          <property name="visible">True</property>
-                          <!--<property name="model">game-store</property>-->
-                          <property name="vexpand">True</property>
-                          <property name="item-width">0</property>
-                        </object>
-                        <packing>
-                          <property name="icon-name">view-grid-symbolic</property>
-                          <property name="title">Grid</property>
-                        </packing>
-                      </child>
-                    </object>
-                  </child>
-                </object>
-              </child>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="visible">True</property>
+                    <child>
+                      <object class="GtkTreeView" id="game_tree_view">
+                        <property name="visible">True</property>
+                        <property name="headers-visible">False</property>
+                        <child>
+                          <object class="GtkTreeViewColumn">
+                            <property name="spacing">6</property>
+                            <property name="resizable">True</property>
+                            <property name="sizing">autosize</property>
+                            <child>
+                              <object class="GtkCellRendererPixbuf"/>
+                              <attributes>
+                                <attribute name="pixbuf">4</attribute>
+                              </attributes>
+                            </child>
+                            <child>
+                              <object class="GtkCellRendererText">
+                                <property name="ellipsize">end</property>
+                              </object>
+                              <attributes>
+                                <attribute name="text">2</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="visible">True</property>
+                    <child>
+                      <object class="GtkIconView" id="game_icon_view">
+                        <property name="visible">True</property>
+                        <!--<property name="model">game-store</property>-->
+                        <property name="vexpand">True</property>
+                        <property name="item-width">0</property>
+                        <child>
+                          <object class="GtkCellRendererSpinner">
+                            <property name="height">100</property>
+                          </object>
+                          <attributes>
+                            <!--<attribute name="visible">4</attribute>-->
+                            <attribute name="cell-background">4</attribute>
+                          </attributes>
+                        </child>
+                        <child>
+                          <object class="GtkCellRendererPixbuf"/>
+                          <attributes>
+                            <attribute name="pixbuf">4</attribute>
+                          </attributes>
+                        </child>
+                        <child>
+                          <object class="GtkCellRendererText"/>
+                          <attributes>
+                            <attribute name="text">2</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               <!--<child>
                 <object class="GtkStack" id="emuview_main_stack">
                   <property name="visible">True</property>
@@ -473,46 +482,13 @@
   </columns>
 </object>
 
-
-<object class="GtkListStore" id="emu-list-store">
-  <columns>
-    <column type="gchararray"/>
-  </columns>
-  <data>
-    <row>
-      <col id="0">SNES</col>
-    </row>
-    <row>
-      <col id="0">N64</col>
-    </row>
-    <row>
-      <col id="0">SNES</col>
-    </row>
-    <row>
-      <col id="0">N64</col>
-    </row>
-  </data>
-</object>
-<object class="GtkListStore" id="core-store">
-  <columns>
-    <column type="gchararray"/>
-    <column type="gchararray"/>
-  </columns>
-  <data>
-    <row>
-      <col id="0">snes9x</col>
-      <col id="1">1.53</col>
-    </row>
-    <row>
-      <col id="0">Mupen64Plus</col>
-      <col id="1">2.0</col>
-    </row>
-  </data>
-</object>
-
 <object class="GtkTreeStore" id="game-store">
   <columns>
-    <column type="gchararray"/>
+    <column type="gchararray"/><!--filename-->
+    <column type="gchararray"/><!--md5-->
+    <column type="gchararray"/><!--title-->
+    <column type="GdkPixbuf"/><!--cover-->
+    <column type="GdkPixbuf"/><!--thumbnail-->
   </columns>
 </object>
 

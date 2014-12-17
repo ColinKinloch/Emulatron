@@ -30,7 +30,7 @@ EmuWindow::EmuWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& 
   refBuilder->get_widget("collection_selector", collectionSelector);
   refBuilder->get_widget("console_selector", consoleSelector);
   refBuilder->get_widget_derived("game_icon_view", gameIconView);
-  refBuilder->get_widget("game_tree_view", gameTreeView);
+  refBuilder->get_widget_derived("game_tree_view", gameTreeView);
   
   gameTreeView->set_model(gameIconView->get_model());
   

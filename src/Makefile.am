@@ -83,8 +83,10 @@ src_emulatron_SOURCES = \
 	src/emulatron.hh \
 	src/emu-window.cc \
 	src/emu-window.hh \
-	src/game-view.cc \
-	src/game-view.hh \
+	src/game-icon-view.cc \
+	src/game-icon-view.hh \
+	src/game-tree-view.cc \
+	src/game-tree-view.hh \
 	src/game-store.cc \
 	src/game-store.hh \
 	src/game-model.hh \
