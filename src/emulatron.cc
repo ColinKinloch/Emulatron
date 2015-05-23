@@ -6,6 +6,7 @@
 #include <gdkmm/pixbuf.h>
 
 #include <SDL.h>
+#include <GL/gl.h>
 
 #include "emulatron.hh"
 #include "emu-window.hh"
@@ -13,6 +14,13 @@
 #include "emu-resources.h"
 
 
+static gboolean
+render (GtkGLArea *area, GdkGLContext *context)
+{
+  glClearColor (0, 1, 0, 0);
+  glClear (GL_COLOR_BUFFER_BIT);
+  return true;
+};
 
 Emulatron::Emulatron(int& argc, char**& argv):
   Gtk::Application(argc, argv, "org.colinkinloch.emulatron", Gio::APPLICATION_FLAGS_NONE)
@@ -76,6 +84,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     refBuilder->get_widget_derived("emu_main_window", emuWindow);
     refBuilder->get_widget_derived("emu_pref_window", prefWindow);
     refBuilder->get_widget_derived("emu_about_dialog", aboutDialog);
+    refBuilder->get_widget("game_area", gameArea);
     //add_window(*emuWindow);
   }
   catch(const Gtk::BuilderError& ex)
@@ -87,6 +96,15 @@ Emulatron::Emulatron(int& argc, char**& argv):
     std::cerr << "runtime_error: " << ex.what() << std::endl;
   }
   
+  GtkWidget* glAreaWidget = gameArea->gobj();
+  GtkGLArea* glArea = GTK_GL_AREA(glAreaWidget);
+  gtk_gl_area_make_current(glArea);
+
+  glClearColor(0,1,0,0);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  g_signal_connect(glArea, "render", G_CALLBACK(render), NULL);
+
   prefWindow->set_transient_for(*emuWindow);
   aboutDialog->set_transient_for(*emuWindow);
   

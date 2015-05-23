@@ -147,6 +147,8 @@ src_emulatron_SOURCES = \
 	src/Vectrex-system-resources.c \
 	src/VMU-system-resources.c \
 	src/WonderSwan-system-resources.c
+#	src/game-area.cc \
+#	src/game-area.hh \
 #	src/$(systems)-system-resources.c
 #	$(addprefix src/,$(addsuffix -system-resources.c,$(notdir $(wildcard src/resources/systems/*))))
 #	src/Default-system-resources.h

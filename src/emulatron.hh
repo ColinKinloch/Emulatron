@@ -21,6 +21,7 @@ public:
   EmuWindow* emuWindow;
   EmuPreferenceWindow* prefWindow;
   EmuAboutDialog* aboutDialog;
+  Gtk::Widget* gameArea;
   
   Emulatron(int& argc, char**& argv);
 };
