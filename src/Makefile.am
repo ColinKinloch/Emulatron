@@ -81,6 +81,8 @@ src_emulatron_CPPFLAGS = \
 src_emulatron_SOURCES = \
 	src/emulatron.cc \
 	src/emulatron.hh \
+	src/libretro-core.cc \
+	src/libretro-core.hh \
 	src/emu-window.cc \
 	src/emu-window.hh \
 	src/game-icon-view.cc \

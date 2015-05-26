@@ -1,3 +1,9 @@
 [submodule "src/libretro-cores/Dinothawr"]
 	path = src/libretro-cores/Dinothawr
 	url = https://github.com/libretro/Dinothawr
+[submodule "src/libretro-common"]
+	path = src/libretro-common
+	url = git@github.com:libretro/libretro-common.git
+[submodule "src/libretro-arb"]
+	path = src/libretro-arb
+	url = git@github.com:libretro/libretro-arb.git
