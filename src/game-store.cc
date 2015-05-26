@@ -16,16 +16,19 @@ GameStore::GameStore(const GameModel::ColumnRecord& columns): Gtk::TreeStore()
 
   builder->select_set_distinct(true);
 
+  //Return values
   auto rorid = builder->select_add_field("romID", "ROMs");
   auto ssid = builder->select_add_field("systemID", "SYSTEMS");
   auto rname = builder->select_add_field("releaseTitleName", "RELEASES");
   auto rcover = builder->select_add_field("releaseCoverFront", "RELEASES");
 
+  //Queried values
   auto rosid = builder->add_field_id("systemID", "ROMs");
   auto rrid = builder->add_field_id("romID", "RELEASES");
   auto romd5 = builder->add_field_id("romHashMD5", "ROMs");
   auto rosha1 = builder->add_field_id("romHashSHA1", "ROMs");
 
+  //Input values
   auto pmd5 = builder->add_param("md5", G_TYPE_STRING, true);
   auto psha1 = builder->add_param("sha1", G_TYPE_STRING, true);
 
@@ -38,18 +41,14 @@ GameStore::GameStore(const GameModel::ColumnRecord& columns): Gtk::TreeStore()
     builder->add_cond(Gda::SQL_OPERATOR_TYPE_EQ, rosid, ssid),
     builder->add_cond(Gda::SQL_OPERATOR_TYPE_EQ, rorid, rrid),
     builder->add_cond(Gda::SQL_OPERATOR_TYPE_OR,
-     builder->add_cond(Gda::SQL_OPERATOR_TYPE_EQ,
-      romd5,
-      pmd5
-     ),
-     builder->add_cond(Gda::SQL_OPERATOR_TYPE_EQ,
-      rosha1,
-      psha1
-     )
+     builder->add_cond(Gda::SQL_OPERATOR_TYPE_EQ, romd5, pmd5),
+     builder->add_cond(Gda::SQL_OPERATOR_TYPE_EQ, rosha1, psha1)
     )
    )
   );
 
+  //spinClock = Glib::TimeoutSource::create(128);
+  //spinClock->attach(Glib::MainContext::get_default());
 }
 GameStore::GameStore(): GameStore::GameStore(col)
 {}
@@ -71,10 +70,11 @@ bool GameStore::add(std::string uri)
   row[col.pulse] = 0;
   
   Glib::RefPtr<Glib::TimeoutSource> spinClock = Glib::TimeoutSource::create(128);
-  sigc::connection spin = spinClock->connect(sigc::bind<GameModel::Row>(sigc::mem_fun(this, &GameStore::on_spin), row));
   spinClock->attach(Glib::MainContext::get_default());
+  sigc::connection spin = spinClock->connect(sigc::bind<GameModel::Row>(sigc::mem_fun(this, &GameStore::on_spin), row));
+  //spin.disconnect();
 
-  file->load_contents_async(sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection*>(sigc::mem_fun(this, &GameStore::on_file_loaded), row, file, &spin));
+  file->load_contents_async(sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection>(sigc::mem_fun(this, &GameStore::on_file_loaded), row, file, spin));
   
   return true;
 }
@@ -95,7 +95,7 @@ bool GameStore::on_spin(GameModel::Row row) {
 
 
 void GameStore::doChecksum(char* contents, gsize size,
- GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection* spin)
+ GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin)
 {
   Glib::ustring md5;
   Glib::ustring sha1;
@@ -111,7 +111,7 @@ void GameStore::doChecksum(char* contents, gsize size,
 }
 
 void GameStore::on_file_loaded(const Glib::RefPtr<Gio::AsyncResult>& result,
- GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection* spin)
+ GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin)
 {
   std::cout<<"Rom lookup"<<std::endl;
 
@@ -120,8 +120,8 @@ void GameStore::on_file_loaded(const Glib::RefPtr<Gio::AsyncResult>& result,
     char* contents;
     gsize size;
     file->load_contents_finish(result, contents, size);
-    Glib::Threads::Thread* checksumThread = Glib::Threads::Thread::create(sigc::bind<char*, gsize, GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection*>(sigc::mem_fun(this, &GameStore::doChecksum), contents, size, row, file, spin));
-    checksumDone.connect(sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection*>(sigc::mem_fun(this, &GameStore::on_checksum_calculated), row, file, spin));
+    Glib::Threads::Thread* checksumThread = Glib::Threads::Thread::create(sigc::bind<char*, gsize, GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection>(sigc::mem_fun(this, &GameStore::doChecksum), contents, size, row, file, spin));
+    checksumDone.connect(sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection>(sigc::mem_fun(this, &GameStore::on_checksum_calculated), row, file, spin));
   }
   catch(Glib::Error &err)
   {
@@ -129,7 +129,7 @@ void GameStore::on_file_loaded(const Glib::RefPtr<Gio::AsyncResult>& result,
   }
 }
 
-void GameStore::on_checksum_calculated(GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection* spin)
+void GameStore::on_checksum_calculated(GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin)
 {
   Glib::ustring md5 = row[col.md5];
   Glib::ustring sha1 = row[col.sha1];
@@ -189,7 +189,7 @@ void GameStore::on_checksum_calculated(GameModel::Row row, Glib::RefPtr<Gio::Fil
     sigc::mem_fun(this, &GameStore::on_image_ready), row, image, spin));
 }
 void GameStore::on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& result,
- GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection* spin)
+ GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin)
 {
   std::cout<<"Image ready"<<std::endl;
   Glib::RefPtr<Gdk::Pixbuf> cover;
@@ -228,8 +228,9 @@ void GameStore::on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& result,
   
   Glib::RefPtr<Gdk::Pixbuf> cover200 = cover->scale_simple(cw*s, ch*s, Gdk::INTERP_BILINEAR);
   row[col.spinner] = false;
-  //spin->disconnect();
-  
+
+  spin.disconnect();
+
   row[col.cover] = cover;
   row[col.thumbnail] = cover200;
 }
