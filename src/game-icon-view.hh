@@ -5,7 +5,7 @@
 #include "game-store.hh"
 
 class GameIconView:
-    public Gtk::IconView
+  public Gtk::IconView
 {
 public:
   GameIconView(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& refBuilder);

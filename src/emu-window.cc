@@ -42,8 +42,8 @@ EmuWindow::EmuWindow(BaseObjectType* cobject, const Glib::RefPtr<Gtk::Builder>& 
   Gtk::ToggleButton* viewGridButton;
   Gtk::ToggleButton* viewListButton;
   
-  refBuilder->get_widget("view_grid_button", viewGridButton);
-  refBuilder->get_widget("view_list_button", viewListButton);
+  //refBuilder->get_widget("view_grid_button", viewGridButton);
+  //refBuilder->get_widget("view_list_button", viewListButton);
   
   
   auto view = Gio::SimpleActionGroup::create();

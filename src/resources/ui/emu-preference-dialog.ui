@@ -600,7 +600,7 @@
         </object>
       </child>
       <child>
-        <object class="GtkBox">
+        <object class="GtkBox" id="pref-core-content">
           <property name="visible">True</property>
           <property name="orientation">vertical</property>
           <child>

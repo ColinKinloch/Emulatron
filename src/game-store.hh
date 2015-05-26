@@ -17,19 +17,28 @@ public:
   bool add(std::string uri);
   
   GameModel::ColumnRecord col;
-  
 protected:
   GameStore();
   GameStore(const GameModel::ColumnRecord& columns);
   virtual ~GameStore();
   
   Glib::RefPtr<Gnome::Gda::Connection> openVGDB;
+  Glib::RefPtr<Gnome::Gda::SqlBuilder> builder;
   
-  void on_rom_lookup(const Glib::RefPtr<Gio::AsyncResult>& res, GameModel::Row row, Glib::RefPtr<Gio::File> file);
-  void on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& res, GameModel::Row row, Glib::RefPtr<Gio::File> file);
+  bool on_spin(GameModel::Row row);
+
+  void on_file_loaded(const Glib::RefPtr<Gio::AsyncResult>& res, GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection* spin);
+  void on_checksum_calculated(GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection* spin);
+  void doChecksum(char* contents, gsize size, GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection* spin);
+  void on_rom_data();
+  void on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& res, GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection* spin);
   
 private:
   
+  //Glib::RefPtr<Glib::TimeoutSource> spinClock;
+
+  Glib::Dispatcher checksumDone;
+
 };
 
 class EmulatorStore:

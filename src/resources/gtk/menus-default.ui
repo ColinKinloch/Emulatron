@@ -56,7 +56,7 @@
     </item>
     <item>
       <attribute name="label" translatable="yes">_Fullscreen</attribute>
-      <attribute name="action">game-icon-view.fullscreen</attribute>
+      <attribute name="action">app.fullscreen</attribute>
       <attribute name="verb-icon">view-fullscreen-symbolic</attribute>
     </item>
   </section>
@@ -73,6 +73,20 @@
       <attribute name="label" translatable="yes">Normal Size</attribute>
       <attribute name="action">game-icon-view.zoom_none</attribute>
     </item>
+  </section>
+  <section>
+    <item>
+      <attribute name="label">View GLArea</attribute>
+      <attribute name="action">app.view-gl</attribute>
+    </item>
+    <submenu>
+      <attribute name="label">Filter</attribute>
+      <section>
+        <item>
+          <attribute name="label">Nearest Neighbor</attribute>
+        </item>
+      </section>
+    </submenu>
   </section>
   <section>
     <item>

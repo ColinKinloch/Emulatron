@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <random>
 #include <iostream>
 
 #include <gtkmm.h>
@@ -13,14 +14,25 @@
 
 #include "emu-resources.h"
 
+std::default_random_engine generator;
+std::uniform_real_distribution<float> distribution(0,1);
+auto rng = std::bind(distribution, generator);
 
 static gboolean
 render (GtkGLArea *area, GdkGLContext *context)
 {
-  glClearColor (0, 1, 0, 0);
+  glClearColor (rng(), rng(), rng(), 0);
   glClear (GL_COLOR_BUFFER_BIT);
   return true;
 };
+
+static void
+resize (GtkGLArea *area, int width, int height)
+{
+  gtk_gl_area_make_current(area);
+  glViewport(0,0,width,height);
+};
+
 
 Emulatron::Emulatron(int& argc, char**& argv):
   Gtk::Application(argc, argv, "org.colinkinloch.emulatron", Gio::APPLICATION_FLAGS_NONE)
@@ -85,6 +97,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     refBuilder->get_widget_derived("emu_pref_window", prefWindow);
     refBuilder->get_widget_derived("emu_about_dialog", aboutDialog);
     refBuilder->get_widget("game_area", gameArea);
+    refBuilder->get_widget("emu_main_stack", emuMainStack);
     //add_window(*emuWindow);
   }
   catch(const Gtk::BuilderError& ex)
@@ -104,10 +117,19 @@ Emulatron::Emulatron(int& argc, char**& argv):
   glClear(GL_COLOR_BUFFER_BIT);
 
   g_signal_connect(glArea, "render", G_CALLBACK(render), NULL);
+  g_signal_connect(glArea, "resize", G_CALLBACK(resize), NULL);
 
   prefWindow->set_transient_for(*emuWindow);
   aboutDialog->set_transient_for(*emuWindow);
   
+  add_action("view-gl",
+    sigc::mem_fun(this, &Emulatron::view_gl));
+
+  add_action("fullscreen",
+    sigc::mem_fun(emuWindow, &EmuWindow::fullscreen));
+
+  add_action("open",
+    sigc::mem_fun(this, &Emulatron::on_open));
   
   add_action("quit",
     sigc::mem_fun(this, &Emulatron::on_quit));
@@ -130,6 +152,22 @@ Emulatron::Emulatron(int& argc, char**& argv):
   auto actions = list_actions();
   for(auto it = actions.begin(); it != actions.end() ;++it)
    std::cout<<*it<<std::endl;
+}
+
+void Emulatron::view_gl()
+{
+  std::string child = "";
+  if(emuMainStack->get_visible_child_name() == "game-selector") {
+    emuMainStack->set_visible_child("game-view", Gtk::STACK_TRANSITION_TYPE_OVER_RIGHT_LEFT);
+  }
+  else {
+    emuMainStack->set_visible_child("game-selector", Gtk::STACK_TRANSITION_TYPE_OVER_LEFT_RIGHT);
+  }
+}
+
+void Emulatron::on_open()
+{
+  std::cout<<"Open rom!"<<std::endl;
 }
 
 void Emulatron::on_preferences()

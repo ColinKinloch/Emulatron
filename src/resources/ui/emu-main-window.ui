@@ -21,8 +21,8 @@
       <child>
         <object class="GtkMenuButton" id="add_button">
           <property name="visible">True</property>
-          <!--<property name="menu-model">add-menu</property>-->
-          <property name="popover">view_menu_widget</property>
+          <property name="menu-model">add-menu</property>-->
+          <!--<property name="popover">view_menu_widget</property>-->
           
           <child internal-child="accessible">
             <object class="AtkObject" id="add-button-atkobject">
@@ -114,7 +114,7 @@
               <child>
                 <object class="GtkImage" id="view_menu_button_image">
                   <property name="visible">True</property>
-                  <property name="icon-name">go-down-symbolic</property>
+                  <property name="icon-name">open-menu-symbolic</property>
                   <property name="icon-size">1</property>
                 </object>
               </child>
@@ -313,7 +313,7 @@
                             <child>
                               <object class="GtkCellRendererPixbuf"/>
                               <attributes>
-                                <attribute name="pixbuf">4</attribute>
+                                <attribute name="pixbuf">5</attribute>
                               </attributes>
                             </child>
                             <child>
@@ -321,7 +321,7 @@
                                 <property name="ellipsize">end</property>
                               </object>
                               <attributes>
-                                <attribute name="text">2</attribute>
+                                <attribute name="text">3</attribute>
                               </attributes>
                             </child>
                           </object>
@@ -341,23 +341,25 @@
                         <property name="item-width">0</property>
                         <child>
                           <object class="GtkCellRendererSpinner">
-                            <property name="height">100</property>
+                            <property name="size">dialog</property>
+                            <property name="ypad">12</property>
                           </object>
                           <attributes>
+                            <attribute name="pulse">7</attribute>
+                            <attribute name="active">6</attribute>
                             <!--<attribute name="visible">4</attribute>-->
-                            <attribute name="cell-background">4</attribute>
                           </attributes>
                         </child>
                         <child>
                           <object class="GtkCellRendererPixbuf"/>
                           <attributes>
-                            <attribute name="pixbuf">4</attribute>
+                            <attribute name="pixbuf">5</attribute>
                           </attributes>
                         </child>
                         <child>
                           <object class="GtkCellRendererText"/>
                           <attributes>
-                            <attribute name="text">2</attribute>
+                            <attribute name="text">3</attribute>
                           </attributes>
                         </child>
                       </object>
@@ -418,21 +420,120 @@
         <object class="GtkVBox">
           <property name="visible">True</property>
           <child>
-            <object class="GtkGLArea" id="game_area">
+            <object class="GtkOverlay">
               <property name="visible">True</property>
-            </object>
-            <!--<object class="GtkOverlay">
-              <property name="visible">True</property>
+              <property name="can_focus">False</property>
               <child>
-                <object class="GtkRevealer">
+                <object class="GtkOverlay">
                   <property name="visible">True</property>
                   <child>
-                    <object class="GtkHeaderBar">
+                    <object class="GtkGLArea" id="game_area">
+                      <property name="visible">True</property>
+                    </object>
+                  </child>
+                  <child type="overlay">
+                    <object class="GtkToolbar">
+                      <property name="visible">True</property>
+                      <property name="margin">12</property>
+                      <property name="valign">end</property>
+                      <style>
+                        <class name="horizontal"/>
+                        <class name="toolbar"/>
+                        <class name="osd"/>
+                      </style>
+                      <child>
+                        <object class="GtkToolItem">
+                          <property name="visible">True</property>
+                          <child>
+                            <object class="GtkButton">
+                              <property name="visible">True</property>
+                              <style>
+                                <class name="image-button"/>
+                              </style>
+                              <child>
+                                <object class="GtkImage">
+                                  <property name="visible">True</property>
+                                  <property name="icon-name">media-playback-start-symbolic</property>
+                                  <property name="icon-size">1</property>
+                                </object>
+                              </child>
+                            </object>
+                          </child>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkToolItem">
+                          <property name="visible">True</property>
+                          <child>
+                            <object class="GtkButton">
+                              <property name="visible">True</property>
+                              <style>
+                                <class name="image-button"/>
+                              </style>
+                              <child>
+                                <object class="GtkImage">
+                                  <property name="visible">True</property>
+                                  <property name="icon-name">view-refresh-symbolic</property>
+                                  <property name="icon-size">1</property>
+                                </object>
+                              </child>
+                            </object>
+                          </child>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkToolItem">
+                          <property name="visible">True</property>
+                          <child>
+                            <object class="GtkMenuButton">
+                              <property name="visible">True</property>
+                              <style>
+                                <class name="image-button"/>
+                              </style>
+                              <child>
+                                <object class="GtkImage">
+                                  <property name="visible">True</property>
+                                  <property name="icon-name">media-floppy-symbolic<!--document-save-symbolic--></property>
+                                  <property name="icon-size">1</property>
+                                </object>
+                              </child>
+                            </object>
+                          </child>
+                        </object>
+                      </child>
+                      <child>
+                        <object class="GtkToolItem">
+                          <property name="visible">True</property>
+                          <child>
+                            <object class="GtkVolumeButton">
+                              <property name="visible">True</property>
+                            </object>
+                          </child>
+                        </object>
+                      </child>
                     </object>
                   </child>
                 </object>
               </child>
-            </object>-->
+              <child type="overlay">
+                <object class="GtkRevealer">
+                  <property name="halign">fill</property>
+                  <property name="valign">start</property>
+                  <property name="visible">True</property>
+                  <property name="no-show-all">True</property>
+                  <child>
+                    <object class="GtkHeaderBar">
+                      <property name="visible">True</property>
+                    </object>
+                  </child>
+                </object>
+              </child>
+            </object>
+            <packing>
+              <property name="expand">True</property>
+              <property name="fill">True</property>
+              <property name="position">0</property>
+            </packing>
           </child>
         </object>
         <packing>

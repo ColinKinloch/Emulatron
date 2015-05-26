@@ -26,9 +26,9 @@ GOBJECT_INTROSPECTION_CHECK([0.6.7])
 m4_define([glib_required_version], [2.23.0])
 AM_PATH_GLIB_2_0(glib_required_version)
 
-AC_PROG_CC
+AC_PROG_CC()
+AC_PROG_CXX()
 AC_LANG([C++])
-AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11
 
 AX_CHECK_GL
@@ -48,7 +48,7 @@ AC_PATH_PROG([GLIB_MKENUMS],[glib-mkenums])
 # Requirements
 GLIB_REQS=2.35.0
 GIO_REQS=2.27.92
-GTK_REQS=3.11.5
+GTK_REQS=3.16.0
 
 # Used in the pkg-config file for plugins
 AC_SUBST(GLIB_REQS)
