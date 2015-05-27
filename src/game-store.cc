@@ -182,36 +182,26 @@ void GameStore::on_checksum_calculated(GameModel::Row row, Glib::RefPtr<Gio::Fil
     std::cerr<<"Select error: "<<err.what()<<std::endl;
   }
   row[col.title] = romTitle;
-
+  //Big test image http://www.spitzer.caltech.edu/uploaded_files/images/0006/3034/ssc2008-11a12_Huge.jpg
   Glib::RefPtr<Gio::File> image = Gio::File::create_for_uri(romCoverUrl);
   image->read_async(
    sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File> >(
     sigc::mem_fun(this, &GameStore::on_image_ready), row, image, spin));
 }
-void GameStore::on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& result,
- GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin)
+void GameStore::streamImage(Glib::RefPtr<Gio::InputStream> stream, GameModel::Row row, sigc::connection spin)
 {
-  std::cout<<"Image ready"<<std::endl;
+
   Glib::RefPtr<Gdk::Pixbuf> cover;
   try
   {
-    Glib::RefPtr<Gio::InputStream> stream = file->read_finish(result);
-    try
-    {
-      cover = Gdk::Pixbuf::create_from_stream(stream);
-    }
-    catch(const Glib::Error& err)
-    {
-      std::cerr<<"Thumbnail image error: "<<err.what()<<std::endl;
-      cover = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
-    }
+    std::cout<<"Image streaming"<<std::endl;
+    cover = Gdk::Pixbuf::create_from_stream(stream);
   }
-  catch(const Gio::Error& err)
+  catch(const Glib::Error& err)
   {
-    std::cerr<<"Thumbnail file error: "<<err.what()<<std::endl;
+    std::cerr<<"Thumbnail image error: "<<err.what()<<std::endl;
     cover = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
   }
-
   int cw = cover->get_width();
   int ch = cover->get_height();
   int mw = 200;
@@ -227,10 +217,29 @@ void GameStore::on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& result,
   }
 
   Glib::RefPtr<Gdk::Pixbuf> cover200 = cover->scale_simple(cw*s, ch*s, Gdk::INTERP_BILINEAR);
+  std::cout<<"Image setting"<<std::endl;
   row[col.spinner] = false;
 
   spin.disconnect();
 
   row[col.cover] = cover;
   row[col.thumbnail] = cover200;
+}
+void GameStore::on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& result,
+ GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin)
+{
+  std::cout<<"Image ready"<<std::endl;
+  Glib::RefPtr<Gdk::Pixbuf> cover;
+  try
+  {
+    Glib::RefPtr<Gio::InputStream> stream = file->read_finish(result);
+    //TODO Thread better
+    Glib::Threads::Thread* imageStreamThread = Glib::Threads::Thread::create(
+    sigc::bind<Glib::RefPtr<Gio::InputStream>, GameModel::Row, sigc::connection>(sigc::mem_fun(this, &GameStore::streamImage), stream, row, spin));
+  }
+  catch(const Gio::Error& err)
+  {
+    std::cerr<<"Thumbnail file error: "<<err.what()<<std::endl;
+    cover = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
+  }
 }
