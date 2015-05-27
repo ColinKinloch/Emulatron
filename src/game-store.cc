@@ -59,7 +59,7 @@ GameStore::~GameStore()
 bool GameStore::add(std::string uri)
 {
   GameModel::Row row = *append();
-  
+
   Glib::RefPtr<Gio::File> file = Gio::File::create_for_uri(uri);
 
   row[col.filename] = uri;
@@ -68,14 +68,14 @@ bool GameStore::add(std::string uri)
   //row[col.thumbnail] = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
   row[col.spinner] = true;
   row[col.pulse] = 0;
-  
+
   Glib::RefPtr<Glib::TimeoutSource> spinClock = Glib::TimeoutSource::create(128);
   spinClock->attach(Glib::MainContext::get_default());
   sigc::connection spin = spinClock->connect(sigc::bind<GameModel::Row>(sigc::mem_fun(this, &GameStore::on_spin), row));
   //spin.disconnect();
 
   file->load_contents_async(sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection>(sigc::mem_fun(this, &GameStore::on_file_loaded), row, file, spin));
-  
+
   return true;
 }
 
@@ -152,7 +152,7 @@ void GameStore::on_checksum_calculated(GameModel::Row row, Glib::RefPtr<Gio::Fil
   //params->set_holder_value<Glib::ustring>("md5", md5.uppercase());
   //params->set_holder_value<Glib::ustring>("sha1", sha1.uppercase());
   //params->add_holder<Glib::ustring>("md5", md5.uppercase());
-  
+
   Glib::RefPtr<Gda::DataModel> data;
   try
   {
@@ -162,7 +162,7 @@ void GameStore::on_checksum_calculated(GameModel::Row row, Glib::RefPtr<Gio::Fil
   {
     std::cerr<<"Select error: "<<err.what()<<std::endl;
   }
-  
+
   Glib::ustring romTitle;
   Glib::ustring romCoverUrl;
   try
@@ -182,10 +182,10 @@ void GameStore::on_checksum_calculated(GameModel::Row row, Glib::RefPtr<Gio::Fil
     std::cerr<<"Select error: "<<err.what()<<std::endl;
   }
   row[col.title] = romTitle;
-  
+
   Glib::RefPtr<Gio::File> image = Gio::File::create_for_uri(romCoverUrl);
   image->read_async(
-   sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>>(
+   sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File> >(
     sigc::mem_fun(this, &GameStore::on_image_ready), row, image, spin));
 }
 void GameStore::on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& result,
@@ -211,7 +211,7 @@ void GameStore::on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& result,
     std::cerr<<"Thumbnail file error: "<<err.what()<<std::endl;
     cover = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
   }
-  
+
   int cw = cover->get_width();
   int ch = cover->get_height();
   int mw = 200;
@@ -225,7 +225,7 @@ void GameStore::on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& result,
   {
     s = (float)mh/ch;
   }
-  
+
   Glib::RefPtr<Gdk::Pixbuf> cover200 = cover->scale_simple(cw*s, ch*s, Gdk::INTERP_BILINEAR);
   row[col.spinner] = false;
 

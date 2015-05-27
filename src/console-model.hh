@@ -14,9 +14,7 @@ public:
     Gtk::TreeModelColumn<int> id;
     Gtk::TreeModelColumn<Glib::ustring> name;
     Gtk::TreeModelColumn<Glib::ustring> shortName;
-    Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> icon;
+    Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf> > icon;
     ColumnRecord() { add(id); add(name); add(shortName); add(icon); }
   };
 };
-
-

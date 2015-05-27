@@ -12,7 +12,7 @@ public:
   {
   public:
     Gtk::TreeModelColumn<Glib::ustring> name;
-    Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> icon;
+    Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf> > icon;
     ColumnRecord() { add(name); add(icon); };
   };
 };
