@@ -83,6 +83,8 @@ src_emulatron_SOURCES = \
 	src/emulatron.hh \
 	src/libretro-core.cc \
 	src/libretro-core.hh \
+	src/openvgdb.cc \
+	src/openvgdb.hh \
 	src/emu-window.cc \
 	src/emu-window.hh \
 	src/game-icon-view.cc \

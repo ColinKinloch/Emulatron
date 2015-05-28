@@ -25,20 +25,9 @@ protected:
   Glib::RefPtr<Gnome::Gda::Connection> openVGDB;
   Glib::RefPtr<Gnome::Gda::SqlBuilder> builder;
   
-  bool on_spin(GameModel::Row row);
+  void gatherROMData(GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection);
 
-  void on_file_loaded(const Glib::RefPtr<Gio::AsyncResult>& res, GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin);
-  void on_checksum_calculated(GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin);
-  void doChecksum(char* contents, gsize size, GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin);
-  void streamImage(Glib::RefPtr<Gio::InputStream> stream, GameModel::Row row, sigc::connection spin);
-  void on_rom_data();
-  void on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& res, GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin);
-  
-private:
-  
-  //Glib::RefPtr<Glib::TimeoutSource> spinClock;
-
-  Glib::Dispatcher checksumDone;
+  bool onSpin(GameModel::Row row);
 
 };
 

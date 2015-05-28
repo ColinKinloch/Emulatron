@@ -11,7 +11,6 @@ GameStore::GameStore(const GameModel::ColumnRecord& columns): Gtk::TreeStore()
    "DB_DIR=.;DB_NAME=openvgdb.sqlite",
    "",
    Gda::CONNECTION_OPTIONS_READ_ONLY);
-  //spinClock = Glib::TimeoutSource::create(128);
   builder = Gda::SqlBuilder::create(Gda::SQL_STATEMENT_SELECT);
 
   builder->select_set_distinct(true);
@@ -46,9 +45,6 @@ GameStore::GameStore(const GameModel::ColumnRecord& columns): Gtk::TreeStore()
     )
    )
   );
-
-  //spinClock = Glib::TimeoutSource::create(128);
-  //spinClock->attach(Glib::MainContext::get_default());
 }
 GameStore::GameStore(): GameStore::GameStore(col)
 {}
@@ -71,10 +67,9 @@ bool GameStore::add(std::string uri)
 
   Glib::RefPtr<Glib::TimeoutSource> spinClock = Glib::TimeoutSource::create(128);
   spinClock->attach(Glib::MainContext::get_default());
-  sigc::connection spin = spinClock->connect(sigc::bind<GameModel::Row>(sigc::mem_fun(this, &GameStore::on_spin), row));
-  //spin.disconnect();
+  sigc::connection spin = spinClock->connect(sigc::bind<GameModel::Row>(sigc::mem_fun(this, &GameStore::onSpin), row));
 
-  file->load_contents_async(sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection>(sigc::mem_fun(this, &GameStore::on_file_loaded), row, file, spin));
+  Glib::Threads::Thread* thread = Glib::Threads::Thread::create(sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection >(sigc::mem_fun(this, &GameStore::gatherROMData), row, file, spin));
 
   return true;
 }
@@ -88,59 +83,19 @@ Glib::RefPtr<GameStore> GameStore::create()
   return Glib::RefPtr<GameStore>(new GameStore());
 }
 
-bool GameStore::on_spin(GameModel::Row row) {
-  row[col.pulse] = row[col.pulse]+1;
-  return true;
-}
-
-
-void GameStore::doChecksum(char* contents, gsize size,
- GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin)
+void GameStore::gatherROMData(GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin)
 {
-  Glib::ustring md5;
-  Glib::ustring sha1;
+  char* contents;
+  gsize size;
+  Glib::RefPtr<Gio::Cancellable> cancel;
+  file->load_contents(cancel, contents, size);
 
-  std::cout<<"compute checksum"<<std::endl;
-  md5 = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_MD5, (guchar*)contents, size);
-  sha1 = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_SHA1, (guchar*)contents, size);
-  std::cout<<"checksum:"<<std::endl<<md5<<std::endl;
+  Glib::ustring md5 = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_MD5, (guchar*)contents, size);
+  Glib::ustring sha1 = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_SHA1, (guchar*)contents, size);
+  delete contents;
+
   row[col.md5] = md5;
   row[col.sha1] = sha1;
-  delete contents;
-  checksumDone();
-}
-
-void GameStore::on_file_loaded(const Glib::RefPtr<Gio::AsyncResult>& result,
- GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin)
-{
-  std::cout<<"Rom lookup"<<std::endl;
-
-  try
-  {
-    char* contents;
-    gsize size;
-    file->load_contents_finish(result, contents, size);
-    Glib::Threads::Thread* checksumThread = Glib::Threads::Thread::create(sigc::bind<char*, gsize, GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection>(sigc::mem_fun(this, &GameStore::doChecksum), contents, size, row, file, spin));
-    checksumDone.connect(sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection>(sigc::mem_fun(this, &GameStore::on_checksum_calculated), row, file, spin));
-  }
-  catch(Glib::Error &err)
-  {
-    std::cerr<<"Stream Callback fail: "<<err.what()<<std::endl;
-  }
-}
-
-void GameStore::on_checksum_calculated(GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin)
-{
-  Glib::ustring md5 = row[col.md5];
-  Glib::ustring sha1 = row[col.sha1];
-
-  /*const std::string query =
-  "SELECT DISTINCT\
-   ROMs.romID, SYSTEMS.systemID, RELEASES.releaseTitleName, RELEASES.releaseCoverFront\
-   FROM SYSTEMS, RELEASES, ROMs\
-   WHERE SYSTEMS.systemID=ROMs.systemID\
-   AND RELEASES.RomID=ROMs.RomID\
-   AND (LOWER(ROMs.romHashMD5)='"+md5+"' OR LOWER(ROMs.romHashSHA1)='"+sha1+"');";*/
 
   auto statement = builder->get_statement();
 
@@ -149,9 +104,6 @@ void GameStore::on_checksum_calculated(GameModel::Row row, Glib::RefPtr<Gio::Fil
 
   params->get_holder("md5")->set_value<Glib::ustring>(md5.uppercase());
   params->get_holder("sha1")->set_value<Glib::ustring>(sha1.uppercase());
-  //params->set_holder_value<Glib::ustring>("md5", md5.uppercase());
-  //params->set_holder_value<Glib::ustring>("sha1", sha1.uppercase());
-  //params->add_holder<Glib::ustring>("md5", md5.uppercase());
 
   Glib::RefPtr<Gda::DataModel> data;
   try
@@ -182,19 +134,14 @@ void GameStore::on_checksum_calculated(GameModel::Row row, Glib::RefPtr<Gio::Fil
     std::cerr<<"Select error: "<<err.what()<<std::endl;
   }
   row[col.title] = romTitle;
-  //Big test image http://www.spitzer.caltech.edu/uploaded_files/images/0006/3034/ssc2008-11a12_Huge.jpg
-  Glib::RefPtr<Gio::File> image = Gio::File::create_for_uri(romCoverUrl);
-  image->read_async(
-   sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File> >(
-    sigc::mem_fun(this, &GameStore::on_image_ready), row, image, spin));
-}
-void GameStore::streamImage(Glib::RefPtr<Gio::InputStream> stream, GameModel::Row row, sigc::connection spin)
-{
 
+  Glib::RefPtr<Gio::File> image = Gio::File::create_for_uri(romCoverUrl);
+
+  Glib::RefPtr<Gio::InputStream> stream;
   Glib::RefPtr<Gdk::Pixbuf> cover;
   try
   {
-    std::cout<<"Image streaming"<<std::endl;
+    stream = image->read();
     cover = Gdk::Pixbuf::create_from_stream(stream);
   }
   catch(const Glib::Error& err)
@@ -202,6 +149,9 @@ void GameStore::streamImage(Glib::RefPtr<Gio::InputStream> stream, GameModel::Ro
     std::cerr<<"Thumbnail image error: "<<err.what()<<std::endl;
     cover = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
   }
+
+  row[col.cover] = cover;
+
   int cw = cover->get_width();
   int ch = cover->get_height();
   int mw = 200;
@@ -216,30 +166,17 @@ void GameStore::streamImage(Glib::RefPtr<Gio::InputStream> stream, GameModel::Ro
     s = (float)mh/ch;
   }
 
+
   Glib::RefPtr<Gdk::Pixbuf> cover200 = cover->scale_simple(cw*s, ch*s, Gdk::INTERP_BILINEAR);
-  std::cout<<"Image setting"<<std::endl;
-  row[col.spinner] = false;
 
-  spin.disconnect();
-
-  row[col.cover] = cover;
   row[col.thumbnail] = cover200;
+
+  row[col.spinner] = false;
+  spin.disconnect();
 }
-void GameStore::on_image_ready(const Glib::RefPtr<Gio::AsyncResult>& result,
- GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin)
-{
-  std::cout<<"Image ready"<<std::endl;
-  Glib::RefPtr<Gdk::Pixbuf> cover;
-  try
-  {
-    Glib::RefPtr<Gio::InputStream> stream = file->read_finish(result);
-    //TODO Thread better
-    Glib::Threads::Thread* imageStreamThread = Glib::Threads::Thread::create(
-    sigc::bind<Glib::RefPtr<Gio::InputStream>, GameModel::Row, sigc::connection>(sigc::mem_fun(this, &GameStore::streamImage), stream, row, spin));
-  }
-  catch(const Gio::Error& err)
-  {
-    std::cerr<<"Thumbnail file error: "<<err.what()<<std::endl;
-    cover = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
-  }
+
+bool GameStore::onSpin(GameModel::Row row) {
+  row[col.pulse] = row[col.pulse]+1;
+  return true;
 }
+
