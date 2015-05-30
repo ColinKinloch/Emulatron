@@ -57,9 +57,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
   
   LibRetroCore core("./src/libretro-cores/Dinothawr/dinothawr_libretro.so");
 
-  retro_system_info sysinfo = core.getSystemInfo();
-
-  std::cout<<"Retro Core: "<<sysinfo.library_name<<":"<<sysinfo.library_version<<std::endl;
+  core.init();
 
   if(SDL_Init(SDL_INIT_HAPTIC|SDL_INIT_GAMECONTROLLER) != 0)
   {

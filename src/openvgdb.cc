@@ -8,12 +8,12 @@ OpenVGDB::OpenVGDB(Glib::RefPtr<Gio::File> f)
   file = f;
   Glib::ustring filestr = "DB_DIR="+f->get_parent()->get_path()+";DB_NAME="+f->get_basename();
   std::cout<<filestr<<std::endl;
+  Gda::init();
   connection = Gda::Connection::open_from_string("SQLite",
     filestr,//"DB_DIR="+f->get_path()+";DB_NAME="+f->get_basename(),
     "",
     Gda::CONNECTION_OPTIONS_READ_ONLY
   );
-  std::cout<<"hello"<<std::endl;
 
   builder = Gda::SqlBuilder::create(Gda::SQL_STATEMENT_SELECT);
 
