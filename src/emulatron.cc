@@ -12,6 +12,7 @@
 #include "emulatron.hh"
 #include "emu-window.hh"
 
+#include "libretro-core.hh"
 #include "openvgdb.hh"
 
 #include "emu-resources.h"
@@ -54,6 +55,12 @@ Emulatron::Emulatron(int& argc, char**& argv):
     //openVGDBFile->create_file()->splice(openVGDBUrl->read());
   }
   
+  LibRetroCore core("./src/libretro-cores/Dinothawr/dinothawr_libretro.so");
+
+  retro_system_info sysinfo = core.getSystemInfo();
+
+  std::cout<<"Retro Core: "<<sysinfo.library_name<<":"<<sysinfo.library_version<<std::endl;
+
   if(SDL_Init(SDL_INIT_HAPTIC|SDL_INIT_GAMECONTROLLER) != 0)
   {
     std::cerr<<SDL_GetError()<<std::endl;

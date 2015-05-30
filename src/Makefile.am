@@ -1,4 +1,4 @@
-#SUBDIRS += src/libretro-cores/Dinothawr
+SUBDIRS += src/libretro-cores/Dinothawr
 
 bin_PROGRAMS += src/emulatron
 
