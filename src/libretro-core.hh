@@ -1,15 +1,12 @@
 #pragma once
 
+#include <glibmm/module.h>
 #include "libretro-arb/libretro.h"
 
-typedef void *dylib_t;
-typedef void (*function_t)(void);
-
-class LibRetroCore
+class LibRetroCore: public Glib::Module
 {
 public:
   LibRetroCore(std::string path);
-  ~LibRetroCore();
-private:
-  dylib_t lib;
+
+  retro_system_info getSystemInfo();
 };

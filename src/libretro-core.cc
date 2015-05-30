@@ -1,34 +1,18 @@
 
-#include <string>
 #include "libretro-core.hh"
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <dlfcn.h>
-#endif
 
-dylib_t dylib_load(std::string path)
+LibRetroCore::LibRetroCore(std::string path):
+  Glib::Module(path, Glib::MODULE_BIND_LOCAL)
 {
-#ifdef _WIN32
-  dylib_t lib = LoadLibrary(path.c_str());
-#else
-  dylib_t lib = dlopen(path.c_str(), RTLD_LAZY);
-#endif
-  return lib;
-}
-void dylib_close(dylib_t lib)
-{
-#ifdef _WIN32
-  FreeLibrary((HMODULE)lib);
-#else
-#ifndef NO_DLCLOSE
-  dlclose(lib);
-#endif
-#endif
+
 }
 
-LibRetroCore::LibRetroCore(std::string path)
+retro_system_info LibRetroCore::getSystemInfo()
 {
-  lib = dylib_load(path);
+  void (*func)(retro_system_info*) = nullptr;
+  get_symbol("retro_get_system_info", (void *&)func);
+  retro_system_info info;
+  func(&info);
+  return info;
 }

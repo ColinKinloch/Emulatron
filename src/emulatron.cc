@@ -12,6 +12,8 @@
 #include "emulatron.hh"
 #include "emu-window.hh"
 
+#include "openvgdb.hh"
+
 #include "emu-resources.h"
 
 std::default_random_engine generator;
@@ -41,6 +43,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
   Gio::init();
   
   Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path("./openvgdb.sqlite");
+  OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
   if(!openVGDBFile->query_exists())
   {
     std::cout<<"Downloading OpenVGDB"<<std::endl;
