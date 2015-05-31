@@ -55,9 +55,16 @@ Emulatron::Emulatron(int& argc, char**& argv):
     //openVGDBFile->create_file()->splice(openVGDBUrl->read());
   }
   
-  LibRetroCore core("./src/libretro-cores/Dinothawr/dinothawr_libretro.so");
+  LibRetroCore dinothwar("./src/libretro-cores/Dinothawr/dinothawr_libretro.so");
+  LibRetroCore bsnes("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro.so");
 
-  core.init();
+  LibRetroCore* core = &dinothwar;
+
+  core->init();
+  //core->loadGame(Gio::File::create_for_path("./aw.smc"));
+  core->run();
+  //core.reset();
+  //core->deinit();
 
   if(SDL_Init(SDL_INIT_HAPTIC|SDL_INIT_GAMECONTROLLER) != 0)
   {

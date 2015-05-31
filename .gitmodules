@@ -7,3 +7,6 @@
 [submodule "src/libretro-arb"]
 	path = src/libretro-arb
 	url = git@github.com:libretro/libretro-arb.git
+[submodule "src/libretro-cores/bsnes-libretro"]
+	path = src/libretro-cores/bsnes-libretro
+	url = git@github.com:libretro/bsnes-libretro.git

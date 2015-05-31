@@ -12,15 +12,40 @@ bool environment_cb(unsigned cmd, void *data)
 {
   return false;
 }
-
-LibRetroCore::LibRetroCore(std::string path):
-  Glib::Module(path, Glib::MODULE_BIND_LOCAL)
+void video_frame(const void *data, unsigned width, unsigned height, size_t pitch)
 {
-  loadSymbols();
-  setEnvironment(&environment_cb);
-  retro_system_info info;
-  pretro_get_system_info(&info);
-  std::cout<<"Retro Core: "<<info.library_name<<" "<<info.library_version<<std::endl;
+  std::cout<<"video refresh: "<<width<<"x"<<height<<std::endl;
+}
+void audio_sample(int16_t left, int16_t right)
+{
+  std::cout<<"audio sample"<<std::endl;
+}
+size_t audio_sample_batch(const int16_t *data, size_t frames)
+{
+  std::cout<<"audio sample batch"<<std::endl;
+  return 0;
+}
+void input_poll()
+{
+  std::cout<<"input poll"<<std::endl;
+}
+int16_t input_status(unsigned port, unsigned device, unsigned idx, unsigned id)
+{
+  std::cout<<"input status"<<std::endl;
+  return 0;
+}
+
+
+LibRetroCore::LibRetroCore(std::string p):
+  Glib::Module(p, Glib::MODULE_BIND_LOCAL)
+{
+  path = p;
+  retro_system_info info = getSystemInfo();
+  path = p;
+  name = info.library_name;
+  version = info.library_version;
+  extensions = info.valid_extensions;
+  std::cout<<"Retro Core: "<<name<<" "<<version<<" "<<extensions<<std::endl;
 }
 
 void LibRetroCore::loadSymbols()
@@ -62,33 +87,47 @@ void LibRetroCore::loadSymbols()
 
 void LibRetroCore::init()
 {
+  loadSymbols();
+  setEnvironment(&environment_cb);
+  setVideoRefresh(&video_frame);
+  setAudioSample(&audio_sample);
+  setAudioSampleBatch(&audio_sample_batch);
+  setInputPoll(&input_poll);
+  setInputState(&input_status);
   pretro_init();
+}
+void LibRetroCore::deinit()
+{
+  pretro_deinit();
 }
 
 unsigned LibRetroCore::apiVersion()
 {
-  if(pretro_api_version == nullptr) {
-    unsigned (*func)() = nullptr;
-    get_symbol("retro_api_version", (void *&)func);
-    return func();
-  }
-  else {
-    return pretro_api_version();
-  }
+  unsigned (*func)() = nullptr;
+  get_symbol("retro_api_version", (void *&)func);
+  return func();
 }
 
 retro_system_info LibRetroCore::getSystemInfo()
 {
-  if(pretro_get_system_info == nullptr) {
-    void (*func)(retro_system_info*) = nullptr;
-    get_symbol("retro_get_system_info", (void *&)func);
-    retro_system_info info;
+  void (*func)(retro_system_info*) = nullptr;
+  get_symbol("retro_get_system_info", (void *&)func);
+  retro_system_info info;
+  func(&info);
+  return info;
+}
+retro_system_av_info LibRetroCore::getSystemAVInfo()
+{
+  if(pretro_get_system_av_info == nullptr) {
+    void (*func)(retro_system_av_info*) = nullptr;
+    get_symbol("retro_get_system_av_info", (void *&)func);
+    retro_system_av_info info;
     func(&info);
     return info;
   }
   else {
-    retro_system_info info;
-    pretro_get_system_info(&info);
+    retro_system_av_info info;
+    pretro_get_system_av_info(&info);
     return info;
   }
 }
@@ -97,8 +136,60 @@ void LibRetroCore::setEnvironment(retro_environment_t cb)
 {
   pretro_set_environment(cb);
 }
+void LibRetroCore::setVideoRefresh(retro_video_refresh_t cb)
+{
+  pretro_set_video_refresh(cb);
+}
+void LibRetroCore::setAudioSample(retro_audio_sample_t cb)
+{
+  pretro_set_audio_sample(cb);
+}
+void LibRetroCore::setAudioSampleBatch(retro_audio_sample_batch_t cb)
+{
+  pretro_set_audio_sample_batch(cb);
+}
+void LibRetroCore::setInputPoll(retro_input_poll_t cb)
+{
+  pretro_set_input_poll(cb);
+}
+void LibRetroCore::setInputState(retro_input_state_t cb)
+{
+  pretro_set_input_state(cb);
+}
+
+void LibRetroCore::setControllerPortDevice(unsigned port, unsigned device)
+{
+  pretro_set_controller_port_device(port, device);
+}
+
+void LibRetroCore::reset()
+{
+  pretro_reset();
+}
+void LibRetroCore::run()
+{
+  pretro_run();
+}
 
 bool LibRetroCore::loadGame(const retro_game_info* game)
 {
   return pretro_load_game(game);
+}
+bool LibRetroCore::loadGame(Glib::RefPtr<Gio::File> file)
+{
+  char* contents;
+  size_t size;
+  retro_game_info game;
+  game.path = file->get_path().c_str();
+  try {
+    file->load_contents(contents, size);
+  }
+  catch(Gio::Error e)
+  {
+    std::cerr<<"Loading game: "<<file->get_basename()<<e.what()<<std::endl;
+  }
+  game.data = contents;
+  game.size = size;
+  std::cout<<"Ready"<<std::endl;
+  return loadGame(&game);
 }

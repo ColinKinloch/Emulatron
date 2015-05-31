@@ -1,4 +1,5 @@
 SUBDIRS += src/libretro-cores/Dinothawr
+SUBDIRS += src/libretro-cores/bsnes-libretro
 
 bin_PROGRAMS += src/emulatron
 

@@ -1,11 +1,14 @@
 #pragma once
 
 #include <iostream>
+#include <giomm/file.h>
 #include <glibmm/module.h>
 #include "libretro-arb/libretro.h"
 
 class LibRetroCore: public Glib::Module
 {
+  void loadSymbols();
+
   void (*pretro_init)(void);
   void (*pretro_deinit)(void);
 
@@ -44,12 +47,19 @@ class LibRetroCore: public Glib::Module
   void *(*pretro_get_memory_data)(unsigned);
   size_t (*pretro_get_memory_size)(unsigned);
 
+protected:
+  std::string path;
+  std::string name;
+  std::string version;
+  std::string extensions;
+
 public:
   LibRetroCore(std::string path);
 
-  void loadSymbols();
-
   void init();
+  void deinit();
+
+  unsigned apiVersion();
 
   retro_system_info getSystemInfo();
   retro_system_av_info getSystemAVInfo();
@@ -63,7 +73,24 @@ public:
 
   void setControllerPortDevice(unsigned, unsigned);
 
-  unsigned apiVersion();
+  void reset();
+  void run();
 
-  bool loadGame(const retro_game_info* game);
+  size_t serializeSize();
+  bool serialize(void*, size_t);
+  bool unserialize(const void*, size_t);
+
+  void cheatReset();
+  void cheatSet(unsigned, bool, const char*);
+
+  bool loadGame(const retro_game_info*);
+  bool loadGame(Glib::RefPtr<Gio::File>);
+  bool loadGameSpecial(unsigned, const struct retro_game_info*, size_t);
+
+  void unloadGame();
+
+  unsigned getRegion();
+
+  void* getMemoryData(unsigned);
+  size_t getMemorySize(unsigned);
 };
