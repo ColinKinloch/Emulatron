@@ -10,3 +10,6 @@
 [submodule "src/libretro-cores/bsnes-libretro"]
 	path = src/libretro-cores/bsnes-libretro
 	url = git@github.com:libretro/bsnes-libretro.git
+[submodule "src/libretro-cores/vba-next"]
+	path = src/libretro-cores/vba-next
+	url = git@github.com:libretro/vba-next.git

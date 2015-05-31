@@ -8,28 +8,191 @@
   else{std::cout<<"Loaded symbol: "<<#x<<std::endl;} \
 } while(0)
 
-bool environment_cb(unsigned cmd, void *data)
+static bool environment_cb(unsigned cmd, void *data)
 {
+  std::cout<<"environment: ";
+  switch(cmd) {
+    case RETRO_ENVIRONMENT_SET_ROTATION:
+      std::cout<<"set rotation"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_OVERSCAN:
+      std::cout<<"get overscan"<<std::endl;
+      return false;
+    case RETRO_ENVIRONMENT_SET_MESSAGE:
+      std::cout<<"set message"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SHUTDOWN:
+      std::cout<<"shutdown"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL:
+      std::cout<<"set performance level"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
+      std::cout<<"get system directory"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
+    {
+      retro_pixel_format format = *(retro_pixel_format*)data;
+      std::cout<<"set pixel format:"<<std::endl;
+      switch(format) {
+        case RETRO_PIXEL_FORMAT_0RGB1555:
+          std::cout<<"0RGB1555";
+          break;
+        case RETRO_PIXEL_FORMAT_XRGB8888:
+          std::cout<<"XRGB8888";
+          break;
+        case RETRO_PIXEL_FORMAT_RGB565:
+          std::cout<<"RGB565";
+          break;
+        case RETRO_PIXEL_FORMAT_UNKNOWN:
+          std::cout<<"Unknown";
+      }
+      std::cout<<std::endl;
+      return true;
+    }
+    case RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS:
+      std::cout<<"set input descriptors"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK:
+      std::cout<<"set keyboard callback"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE:
+      std::cout<<"set disk control interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_HW_RENDER:
+      std::cout<<"set hw render"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_VARIABLE:
+    {
+      retro_variable* var = (retro_variable*)data;
+      std::cout<<"get variable: "<<var->key<<std::endl;
+      break;
+    }
+    case RETRO_ENVIRONMENT_SET_VARIABLES:
+    {
+        retro_variable* var = (retro_variable*)data;
+        std::cout<<"set variable:"<<std::endl;
+      if(var->value != nullptr) {
+        std::cout<<var->key<<": "<<var->value<<std::endl;
+        return true;
+      }
+      else {
+        std::cout<<"null value"<<std::endl;
+      }
+      break;
+    }
+    case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
+    {
+      std::cout<<"get variable update"<<std::endl;
+      return false;
+    }
+    case RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME:
+      std::cout<<"set support no game"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_LIBRETRO_PATH:
+      std::cout<<"get libretro path"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK:
+      std::cout<<"set audio callback"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK:
+      std::cout<<"set frame time callback"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE:
+      std::cout<<"get rumble interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_INPUT_DEVICE_CAPABILITIES:
+      std::cout<<"get input device capabilities"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_SENSOR_INTERFACE:
+      std::cout<<"get sensor interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_CAMERA_INTERFACE:
+      std::cout<<"get camera interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
+      std::cout<<"get log interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_PERF_INTERFACE:
+      std::cout<<"get perf interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_LOCATION_INTERFACE:
+      std::cout<<"get location interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_CORE_ASSETS_DIRECTORY:
+      std::cout<<"get core assets directory"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
+      std::cout<<"get set directory"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO:
+      std::cout<<"set system av info"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_PROC_ADDRESS_CALLBACK:
+      std::cout<<"set proc address callback"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO:
+    {
+      retro_subsystem_info* info = (retro_subsystem_info*)data;
+      std::cout<<"set subsystem info:"<<std::endl;
+      std::cout<<info->ident<<" ("<<info->desc<<")"<<std::endl;
+      for(int i=0; i<info->num_roms;i++) {
+        retro_subsystem_rom_info rominfo = info->roms[i];
+        std::cout<<rominfo.desc<<std::endl;
+      }
+      break;
+    }
+    case RETRO_ENVIRONMENT_SET_CONTROLLER_INFO:
+    {
+      retro_controller_info* info = (retro_controller_info*)data;
+      std::cout<<"set controller info:"<<std::endl;
+      for(int i=0; i < info->num_types; i++) {
+        retro_controller_description contdesc = info->types[i];
+        std::cout<<contdesc.desc<<std::endl;
+      }
+      break;
+    }
+    case RETRO_ENVIRONMENT_SET_MEMORY_MAPS:
+      std::cout<<"set memory maps"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_GEOMETRY:
+      std::cout<<"set geometry"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_USERNAME:
+      std::cout<<"get username"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_LANGUAGE:
+      std::cout<<"get language"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_CAN_DUPE:
+      std::cerr<<"get can dupe"<<std::endl;
+      *(bool*)data=true;
+      return true;
+    default:
+      std::cerr<<"Unknown"<<std::endl;
+      return false;
+
+  }
   return false;
 }
-void video_frame(const void *data, unsigned width, unsigned height, size_t pitch)
+static void video_frame(const void *data, unsigned width, unsigned height, size_t pitch)
 {
   std::cout<<"video refresh: "<<width<<"x"<<height<<std::endl;
 }
-void audio_sample(int16_t left, int16_t right)
+static void audio_sample(int16_t left, int16_t right)
 {
   std::cout<<"audio sample"<<std::endl;
 }
-size_t audio_sample_batch(const int16_t *data, size_t frames)
+static size_t audio_sample_batch(const int16_t *data, size_t frames)
 {
   std::cout<<"audio sample batch"<<std::endl;
   return 0;
 }
-void input_poll()
+static void input_poll()
 {
   std::cout<<"input poll"<<std::endl;
 }
-int16_t input_status(unsigned port, unsigned device, unsigned idx, unsigned id)
+static int16_t input_status(unsigned port, unsigned device, unsigned index, unsigned id)
 {
   std::cout<<"input status"<<std::endl;
   return 0;
@@ -37,7 +200,7 @@ int16_t input_status(unsigned port, unsigned device, unsigned idx, unsigned id)
 
 
 LibRetroCore::LibRetroCore(std::string p):
-  Glib::Module(p, Glib::MODULE_BIND_LOCAL)
+  Glib::Module(p, Glib::MODULE_BIND_LOCAL|Glib::MODULE_BIND_LAZY)
 {
   path = p;
   retro_system_info info = getSystemInfo();
@@ -45,7 +208,7 @@ LibRetroCore::LibRetroCore(std::string p):
   name = info.library_name;
   version = info.library_version;
   extensions = info.valid_extensions;
-  std::cout<<"Retro Core: "<<name<<" "<<version<<" "<<extensions<<std::endl;
+  std::cout<<"libRetro v"<<apiVersion()<<" Core: "<<name<<" "<<version<<" "<<extensions<<std::endl;
 }
 
 void LibRetroCore::loadSymbols()

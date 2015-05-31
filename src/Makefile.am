@@ -1,5 +1,8 @@
 SUBDIRS += src/libretro-cores/Dinothawr
 SUBDIRS += src/libretro-cores/bsnes-libretro
+$(shell cp src/libretro-cores/vba-next/Makefile.libretro \
+	   src/libretro-cores/vba-next/Makefile)
+SUBDIRS += src/libretro-cores/vba-next
 
 bin_PROGRAMS += src/emulatron
 

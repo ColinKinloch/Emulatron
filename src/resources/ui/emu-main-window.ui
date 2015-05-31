@@ -396,11 +396,14 @@
                           <object class="GtkCellRendererText">
                             <property name="alignment">center</property>
                             <property name="xalign">0.5</property>
+                            <property name="wrap-width">0</property>
+                            <property name="wrap-mode">word</property>
                           </object>
                           <attributes>
                             <attribute name="text">3</attribute>
                           </attributes>
                           <packing>
+                            <property name="expand">True</property>
                           </packing>
                         </child>
                       </object>

@@ -57,12 +57,13 @@ Emulatron::Emulatron(int& argc, char**& argv):
   
   LibRetroCore dinothwar("./src/libretro-cores/Dinothawr/dinothawr_libretro.so");
   LibRetroCore bsnes("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro.so");
+  LibRetroCore vbaNext("./src/libretro-cores/vba-next/vba_next_libretro.so");
 
-  LibRetroCore* core = &dinothwar;
+  LibRetroCore* core = &vbaNext;
 
   core->init();
   //core->loadGame(Gio::File::create_for_path("./aw.smc"));
-  core->run();
+  //core->run();
   //core.reset();
   //core->deinit();
 
@@ -173,10 +174,10 @@ void Emulatron::view_gl()
 {
   std::string child = "";
   if(emuMainStack->get_visible_child_name() == "game-selector") {
-    emuMainStack->set_visible_child("game-view", Gtk::STACK_TRANSITION_TYPE_OVER_RIGHT_LEFT);
+    emuMainStack->set_visible_child("game-view", Gtk::STACK_TRANSITION_TYPE_OVER_LEFT);
   }
   else {
-    emuMainStack->set_visible_child("game-selector", Gtk::STACK_TRANSITION_TYPE_OVER_LEFT_RIGHT);
+    emuMainStack->set_visible_child("game-selector", Gtk::STACK_TRANSITION_TYPE_UNDER_RIGHT);
   }
 }
 
