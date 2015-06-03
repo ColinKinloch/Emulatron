@@ -1,3 +1,4 @@
+src/libretro-cores/vba-next/Makefile
 *.o
 src/emulatron
 src/emu-resources.c

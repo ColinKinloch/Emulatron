@@ -1,12 +1,17 @@
 #pragma once
 
 #include <iostream>
+#include <ao/ao.h>
 #include <giomm/file.h>
+#include <gdkmm/pixbuf.h>
 #include <glibmm/module.h>
 #include "libretro-arb/libretro.h"
 
 class LibRetroCore: public Glib::Module
 {
+  //static bool environment_cb(LibRetroCore*, unsigned, void*);
+  //bool environment_cb(unsigned, void*);
+
   void loadSymbols();
 
   void (*pretro_init)(void);
@@ -47,6 +52,9 @@ class LibRetroCore: public Glib::Module
   void *(*pretro_get_memory_data)(unsigned);
   size_t (*pretro_get_memory_size)(unsigned);
 
+  Glib::RefPtr<Gdk::Pixbuf> frame;
+  retro_pixel_format pixelFormat;
+
 protected:
   std::string path;
   std::string name;
@@ -55,6 +63,8 @@ protected:
 
 public:
   LibRetroCore(std::string path);
+
+  sigc::signal<Glib::RefPtr<Gdk::Pixbuf> > videoSignal;
 
   void init();
   void deinit();

@@ -40,6 +40,36 @@ resize (GtkGLArea *area, int width, int height)
 Emulatron::Emulatron(int& argc, char**& argv):
   Gtk::Application(argc, argv, "org.colinkinloch.emulatron", Gio::APPLICATION_FLAGS_NONE)
 {
+  ao_initialize();
+  defaultDriver = ao_default_driver_id();
+
+  format.bits = 16;
+  format.channels = 2;
+  format.rate = 44100;
+  format.byte_format = AO_FMT_LITTLE;
+
+  audioDev = ao_open_live(defaultDriver, &format, NULL);
+  if(audioDev == nullptr)
+  {
+    std::cerr<<"audio device fail"<<std::endl;
+  }
+  int buf_size = format.bits/8 * format.channels * format.rate;
+  char* buffer = new char [buf_size];
+
+  int sample;
+
+	float freq = 440.0;
+  for(int i=0; i<format.rate; i++){
+    sample = (int)(0.75 * 32768.0 *
+			sin(2 * M_PI * freq * ((float) i/format.rate)));
+
+		/* Put the same stuff in left and right channel */
+		buffer[4*i] = buffer[4*i+2] = sample & 0xff;
+		buffer[4*i+1] = buffer[4*i+3] = (sample >> 8) & 0xff;
+  }
+
+  ao_play(audioDev, buffer, buf_size);
+
   Glib::init();
   Gio::init();
   
@@ -59,11 +89,11 @@ Emulatron::Emulatron(int& argc, char**& argv):
   LibRetroCore bsnes("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro.so");
   LibRetroCore vbaNext("./src/libretro-cores/vba-next/vba_next_libretro.so");
 
-  LibRetroCore* core = &vbaNext;
+  core = &vbaNext;
 
   core->init();
-  //core->loadGame(Gio::File::create_for_path("./aw.smc"));
-  //core->run();
+  core->loadGame(Gio::File::create_for_path("./fz.gba"));
+  core->run();
   //core.reset();
   //core->deinit();
 

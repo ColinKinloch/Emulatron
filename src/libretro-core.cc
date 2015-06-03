@@ -1,5 +1,7 @@
 
 #include "libretro-core.hh"
+#include <gtkmm.h>
+#include <functional>
 
 #undef SYM
 #define SYM(x) do { \
@@ -8,7 +10,7 @@
   else{std::cout<<"Loaded symbol: "<<#x<<std::endl;} \
 } while(0)
 
-static bool environment_cb(unsigned cmd, void *data)
+bool environment_cb(unsigned cmd, void *data)
 {
   std::cout<<"environment: ";
   switch(cmd) {
@@ -181,11 +183,15 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
 }
 static void audio_sample(int16_t left, int16_t right)
 {
+  //int16_t *buffer[2];
+  //buffer[0] = left;
+  //buffer[1] = right;
+  //ao_play(dev, buffer, sizeof(buffer));
   std::cout<<"audio sample"<<std::endl;
 }
 static size_t audio_sample_batch(const int16_t *data, size_t frames)
 {
-  std::cout<<"audio sample batch"<<std::endl;
+  //ao_play(dev, data, frames * sizeof(int16_t))
   return 0;
 }
 static void input_poll()
@@ -194,7 +200,7 @@ static void input_poll()
 }
 static int16_t input_status(unsigned port, unsigned device, unsigned index, unsigned id)
 {
-  std::cout<<"input status"<<std::endl;
+  std::cout<<"input status:"<<port<<":"<<device<<":"<<index<<":"<<id<<std::endl;
   return 0;
 }
 
@@ -251,6 +257,8 @@ void LibRetroCore::loadSymbols()
 void LibRetroCore::init()
 {
   loadSymbols();
+  //sigc::slot<bool, unsigned, void*> slot = sigc::mem_fun(*this, &LibRetroCore::environment_cb);
+  //retro_environment_t env = slot;
   setEnvironment(&environment_cb);
   setVideoRefresh(&video_frame);
   setAudioSample(&audio_sample);
