@@ -118,9 +118,13 @@ Emulatron::Emulatron(int& argc, char**& argv):
     sampledata[a] = amp * 32000.0;
   }
 
+  pa_proplist *ctxProp = pa_proplist_new();
+  pa_proplist_sets(ctxProp, PA_PROP_APPLICATION_ICON_NAME, "input-gaming");
+
+
   pa_ml = pa_mainloop_new();
   pa_mlapi = pa_mainloop_get_api(pa_ml);
-  pa_ctx = pa_context_new(pa_mlapi, "Emulatron deluxe edition 5");
+  pa_ctx = pa_context_new_with_proplist(pa_mlapi, "Emulatron", ctxProp);
   pa_context_flags_t ctx_flags;
   pa_context_connect(pa_ctx, nullptr, (pa_context_flags_t)0, nullptr);
 
