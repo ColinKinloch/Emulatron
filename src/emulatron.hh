@@ -1,7 +1,6 @@
 #pragma once
 
-#include <ao/ao.h>
-
+#include <pulse/pulseaudio.h>
 #include <gtkmm/builder.h>
 
 #include "emu-window.hh"
@@ -13,9 +12,11 @@
 class Emulatron: public Gtk::Application
 {
 protected:
-  ao_device *audioDev;
-  ao_sample_format format;
-  int defaultDriver;
+
+  pa_mainloop *pa_ml;
+  pa_mainloop_api *pa_mlapi;
+  pa_context *pa_ctx;
+  pa_stream *playstream;
 
   Glib::RefPtr<Gtk::Builder> refBuilder;
   Glib::RefPtr<Gtk::Settings> settings;

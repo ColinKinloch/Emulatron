@@ -37,42 +37,133 @@ resize (GtkGLArea *area, int width, int height)
 };
 
 
+
+
+
+static int latency = 20000; // start latency in micro seconds
+static int sampleoffs = 0;
+static short sampledata[300000];
+static pa_buffer_attr bufattr;
+static int underflows = 0;
+static pa_sample_spec ss;
+
+// This callback gets called when our context changes state.  We really only
+// care about when it's ready or if it has failed
+void pa_state_cb(pa_context *c, void *userdata) {
+  pa_context_state_t state;
+  int *pa_ready = (int *)userdata;
+  state = pa_context_get_state(c);
+  switch  (state) {
+    // These are just here for reference
+  case PA_CONTEXT_UNCONNECTED:
+  case PA_CONTEXT_CONNECTING:
+  case PA_CONTEXT_AUTHORIZING:
+  case PA_CONTEXT_SETTING_NAME:
+  default:
+    break;
+  case PA_CONTEXT_FAILED:
+  case PA_CONTEXT_TERMINATED:
+    *pa_ready = 2;
+    break;
+  case PA_CONTEXT_READY:
+    *pa_ready = 1;
+    break;
+  }
+}
+
+static void stream_request_cb(pa_stream *s, size_t length, void *userdata) {
+  pa_usec_t usec;
+  int neg;
+  pa_stream_get_latency(s,&usec,&neg);
+  printf("  latency %8d us\n",(int)usec);
+  if (sampleoffs*2 + length > sizeof(sampledata)) {
+    sampleoffs = 0;
+  }
+  if (length > sizeof(sampledata)) {
+    length = sizeof(sampledata);
+  }
+  pa_stream_write(s, &sampledata[sampleoffs], length, NULL, 0LL, PA_SEEK_RELATIVE);
+  sampleoffs += length/2;
+}
+
+static void stream_underflow_cb(pa_stream *s, void *userdata) {
+  // We increase the latency by 50% if we get 6 underflows and latency is under 2s
+  // This is very useful for over the network playback that can't handle low latencies
+  printf("underflow\n");
+  underflows++;
+  if (underflows >= 6 && latency < 2000000) {
+    latency = (latency*3)/2;
+    bufattr.maxlength = pa_usec_to_bytes(latency,&ss);
+    bufattr.tlength = pa_usec_to_bytes(latency,&ss);
+    pa_stream_set_buffer_attr(s, &bufattr, NULL, NULL);
+    underflows = 0;
+    printf("latency increased to %d\n", latency);
+  }
+}
+
+
+
+
 Emulatron::Emulatron(int& argc, char**& argv):
   Gtk::Application(argc, argv, "org.colinkinloch.emulatron", Gio::APPLICATION_FLAGS_NONE)
 {
-  ao_initialize();
-  defaultDriver = ao_default_driver_id();
+  int r;
+  int pa_ready = 0;
+  int retval = 0;
+  unsigned int a;
+  double amp;
 
-  format.bits = 16;
-  format.channels = 2;
-  format.rate = 44100;
-  format.byte_format = AO_FMT_LITTLE;
-
-  audioDev = ao_open_live(defaultDriver, &format, NULL);
-  if(audioDev == nullptr)
-  {
-    std::cerr<<"audio device fail"<<std::endl;
-  }
-  int buf_size = format.bits/8 * format.channels * format.rate;
-  char* buffer = new char [buf_size];
-
-  int sample;
-
-	float freq = 440.0;
-  for(int i=0; i<format.rate; i++){
-    sample = (int)(0.75 * 32768.0 *
-			sin(2 * M_PI * freq * ((float) i/format.rate)));
-
-		/* Put the same stuff in left and right channel */
-		buffer[4*i] = buffer[4*i+2] = sample & 0xff;
-		buffer[4*i+1] = buffer[4*i+3] = (sample >> 8) & 0xff;
+  for (a=0; a<sizeof(sampledata)/2; a++) {
+    amp = cos(5000*(double)a/44100.0);
+    sampledata[a] = amp * 32000.0;
   }
 
-  ao_play(audioDev, buffer, buf_size);
+  pa_ml = pa_mainloop_new();
+  pa_mlapi = pa_mainloop_get_api(pa_ml);
+  pa_ctx = pa_context_new(pa_mlapi, "Emulatron deluxe edition 5");
+  pa_context_flags_t ctx_flags;
+  pa_context_connect(pa_ctx, nullptr, (pa_context_flags_t)0, nullptr);
+
+  pa_context_set_state_callback(pa_ctx, pa_state_cb, &pa_ready);
+
+  while (pa_ready == 0) {
+    pa_mainloop_iterate(pa_ml, 1, NULL);
+  }
+
+  ss.rate = 44100;
+  ss.channels = 1;
+  ss.format = PA_SAMPLE_S16LE;
+  playstream = pa_stream_new(pa_ctx, "Playback", &ss, NULL);
+  if (!playstream) {
+    printf("pa_stream_new failed\n");
+  }
+  pa_stream_set_write_callback(playstream, stream_request_cb, NULL);
+  pa_stream_set_underflow_callback(playstream, stream_underflow_cb, NULL);
+
+  bufattr.fragsize = (uint32_t)-1;
+  bufattr.maxlength = pa_usec_to_bytes(latency,&ss);
+  bufattr.minreq = pa_usec_to_bytes(0,&ss);
+  bufattr.prebuf = (uint32_t)-1;
+  bufattr.tlength = pa_usec_to_bytes(latency,&ss);
+  r = pa_stream_connect_playback(playstream, NULL, &bufattr, (pa_stream_flags_t)(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+
+  if (r < 0) {
+    // Old pulse audio servers don't like the ADJUST_LATENCY flag, so retry without that
+    r = pa_stream_connect_playback(playstream, NULL, &bufattr,
+                                   (pa_stream_flags_t)(PA_STREAM_INTERPOLATE_TIMING|
+                                   PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+  }
+  if (r < 0) {
+    printf("pa_stream_connect_playback failed\n");
+    retval = -1;
+  }
+
+
+  pa_mainloop_iterate(pa_ml, 1, NULL);
 
   Glib::init();
   Gio::init();
-  
+
   Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path("./openvgdb.sqlite");
   OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
   if(!openVGDBFile->query_exists())
@@ -84,7 +175,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     //TODO Deal with zip
     //openVGDBFile->create_file()->splice(openVGDBUrl->read());
   }
-  
+
   LibRetroCore dinothwar("./src/libretro-cores/Dinothawr/dinothawr_libretro.so");
   LibRetroCore bsnes("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro.so");
   LibRetroCore vbaNext("./src/libretro-cores/vba-next/vba_next_libretro.so");

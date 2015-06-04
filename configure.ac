@@ -66,7 +66,7 @@ AC_SUBST(EMULATRON_VERSION_MICRO)
 #PKG_CHECK_MODULES(LIBRETRO, $LIBRETRO_CORES)
 
 AC_SEARCH_LIBS([dlopen], [dl dld zrldsrl])
-PKG_CHECK_MODULES(PLAYER, gtkmm-3.0 libgdamm-5.0 sdl2 gl ao)
+PKG_CHECK_MODULES(PLAYER, gtkmm-3.0 libgdamm-5.0 sdl2 gl libpulse)
 
 AC_PATH_PROG(GLIB_COMPILE_RESOURCES, glib-compile-resources)
 
