@@ -7,7 +7,7 @@
 #include <gdkmm/pixbuf.h>
 
 #include <SDL.h>
-#include <GL/gl.h>
+#include <GLES3/gl3.h>
 
 #include "emulatron.hh"
 #include "emu-window.hh"
@@ -17,9 +17,18 @@
 
 #include "emu-resources.h"
 
+#include "game-model.hh"
+
 std::default_random_engine generator;
 std::uniform_real_distribution<float> distribution(0,1);
 auto rng = std::bind(distribution, generator);
+
+Gtk::Image* area;
+bool pixAlpha = false;
+int pixBits = 8;
+int pixStride;
+Gdk::Colorspace pixSpace = Gdk::COLORSPACE_RGB;
+Glib::RefPtr<Gdk::Pixbuf> pix;
 
 static gboolean
 render (GtkGLArea *area, GdkGLContext *context)
@@ -37,15 +46,16 @@ resize (GtkGLArea *area, int width, int height)
 };
 
 
-
-
-
 static int latency = 20000; // start latency in micro seconds
 static int sampleoffs = 0;
-static short sampledata[300000];
+static int16_t sampledata[300000];
 static pa_buffer_attr bufattr;
 static int underflows = 0;
 static pa_sample_spec ss;
+static pa_mainloop *pa_ml;
+static pa_mainloop_api *pa_mlapi;
+static pa_context *pa_ctx;
+static pa_stream *playstream;
 
 // This callback gets called when our context changes state.  We really only
 // care about when it's ready or if it has failed
@@ -102,6 +112,208 @@ static void stream_underflow_cb(pa_stream *s, void *userdata) {
 }
 
 
+static bool environment_cb(unsigned cmd, void *data)
+{
+  std::cout<<"environment: ";
+  switch(cmd) {
+    case RETRO_ENVIRONMENT_SET_ROTATION:
+      std::cout<<"set rotation"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_OVERSCAN:
+      std::cout<<"get overscan"<<std::endl;
+      return false;
+    case RETRO_ENVIRONMENT_SET_MESSAGE:
+      std::cout<<"set message"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SHUTDOWN:
+      std::cout<<"shutdown"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL:
+      std::cout<<"set performance level"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
+      std::cout<<"get system directory"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
+    {
+      retro_pixel_format format = *(retro_pixel_format*)data;
+      std::cout<<"set pixel format:"<<std::endl;
+      switch(format) {
+        case RETRO_PIXEL_FORMAT_0RGB1555:
+          std::cout<<"0RGB1555";
+          break;
+        case RETRO_PIXEL_FORMAT_XRGB8888:
+          std::cout<<"XRGB8888";
+          break;
+        case RETRO_PIXEL_FORMAT_RGB565:
+          std::cout<<"RGB565";
+          break;
+        case RETRO_PIXEL_FORMAT_UNKNOWN:
+          std::cout<<"Unknown";
+      }
+      std::cout<<std::endl;
+      return true;
+    }
+    case RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS:
+      std::cout<<"set input descriptors"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK:
+      std::cout<<"set keyboard callback"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE:
+      std::cout<<"set disk control interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_HW_RENDER:
+      std::cout<<"set hw render"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_VARIABLE:
+    {
+      retro_variable* var = (retro_variable*)data;
+      std::cout<<"get variable: "<<var->key<<std::endl;
+      break;
+    }
+    case RETRO_ENVIRONMENT_SET_VARIABLES:
+    {
+        retro_variable* var = (retro_variable*)data;
+        std::cout<<"set variable:"<<std::endl;
+      if(var->value != nullptr) {
+        std::cout<<var->key<<": "<<var->value<<std::endl;
+        return true;
+      }
+      else {
+        std::cout<<"null value"<<std::endl;
+      }
+      break;
+    }
+    case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
+    {
+      std::cout<<"get variable update"<<std::endl;
+      return false;
+    }
+    case RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME:
+      std::cout<<"set support no game"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_LIBRETRO_PATH:
+      std::cout<<"get libretro path"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK:
+      std::cout<<"set audio callback"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK:
+      std::cout<<"set frame time callback"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE:
+      std::cout<<"get rumble interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_INPUT_DEVICE_CAPABILITIES:
+      std::cout<<"get input device capabilities"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_SENSOR_INTERFACE:
+      std::cout<<"get sensor interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_CAMERA_INTERFACE:
+      std::cout<<"get camera interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
+      std::cout<<"get log interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_PERF_INTERFACE:
+      std::cout<<"get perf interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_LOCATION_INTERFACE:
+      std::cout<<"get location interface"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_CORE_ASSETS_DIRECTORY:
+      std::cout<<"get core assets directory"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
+      std::cout<<"get set directory"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO:
+      std::cout<<"set system av info"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_PROC_ADDRESS_CALLBACK:
+      std::cout<<"set proc address callback"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO:
+    {
+      retro_subsystem_info* info = (retro_subsystem_info*)data;
+      std::cout<<"set subsystem info:"<<std::endl;
+      std::cout<<info->ident<<" ("<<info->desc<<")"<<std::endl;
+      for(int i=0; i<info->num_roms;i++) {
+        retro_subsystem_rom_info rominfo = info->roms[i];
+        std::cout<<rominfo.desc<<std::endl;
+      }
+      break;
+    }
+    case RETRO_ENVIRONMENT_SET_CONTROLLER_INFO:
+    {
+      retro_controller_info* info = (retro_controller_info*)data;
+      std::cout<<"set controller info:"<<std::endl;
+      for(int i=0; i < info->num_types; i++) {
+        retro_controller_description contdesc = info->types[i];
+        std::cout<<contdesc.desc<<std::endl;
+      }
+      break;
+    }
+    case RETRO_ENVIRONMENT_SET_MEMORY_MAPS:
+      std::cout<<"set memory maps"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_SET_GEOMETRY:
+      std::cout<<"set geometry"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_USERNAME:
+      std::cout<<"get username"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_LANGUAGE:
+      std::cout<<"get language"<<std::endl;
+      break;
+    case RETRO_ENVIRONMENT_GET_CAN_DUPE:
+      std::cerr<<"get can dupe"<<std::endl;
+      *(bool*)data=true;
+      return true;
+    default:
+      std::cerr<<"Unknown"<<std::endl;
+      return false;
+
+  }
+  return false;
+}
+static void video_frame(const void *data, unsigned width, unsigned height, size_t pitch)
+{
+  int z = 4;
+  auto tmpPix = Gdk::Pixbuf::create_from_data((guint8*)data, pixSpace, pixAlpha, pixBits, width, height, pitch);
+  pix = tmpPix->scale_simple(width*z, height*z, Gdk::INTERP_NEAREST);
+  area->set(pix);
+  std::cout<<"video refresh: "<<width<<"x"<<height<<std::endl;
+}
+static void audio_sample(int16_t left, int16_t right)
+{
+  //int16_t *buffer[2];
+  //buffer[0] = left;
+  //buffer[1] = right;
+  //ao_play(dev, buffer, sizeof(buffer));
+  std::cout<<"audio sample"<<std::endl;
+}
+static size_t audio_sample_batch(const int16_t *data, size_t frames)
+{
+  for(int i = 0; i>frames; i++)
+  {
+    sampledata[i] = data[i];
+  }
+  //ao_play(dev, data, frames * sizeof(int16_t))
+  return 0;
+}
+static void input_poll()
+{
+  std::cout<<"input poll"<<std::endl;
+}
+static int16_t input_state(unsigned port, unsigned device, unsigned index, unsigned id)
+{
+  std::cout<<"input state:"<<port<<":"<<device<<":"<<index<<":"<<id<<std::endl;
+  return 0;
+}
+
 
 
 Emulatron::Emulatron(int& argc, char**& argv):
@@ -149,7 +361,9 @@ Emulatron::Emulatron(int& argc, char**& argv):
   bufattr.minreq = pa_usec_to_bytes(0,&ss);
   bufattr.prebuf = (uint32_t)-1;
   bufattr.tlength = pa_usec_to_bytes(latency,&ss);
-  r = pa_stream_connect_playback(playstream, NULL, &bufattr, (pa_stream_flags_t)(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+  r = pa_stream_connect_playback(playstream, NULL, &bufattr,
+  (pa_stream_flags_t)(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE),
+  NULL, NULL);
 
   if (r < 0) {
     // Old pulse audio servers don't like the ADJUST_LATENCY flag, so retry without that
@@ -161,9 +375,6 @@ Emulatron::Emulatron(int& argc, char**& argv):
     printf("pa_stream_connect_playback failed\n");
     retval = -1;
   }
-
-
-  pa_mainloop_iterate(pa_ml, 1, NULL);
 
   Glib::init();
   Gio::init();
@@ -180,17 +391,32 @@ Emulatron::Emulatron(int& argc, char**& argv):
     //openVGDBFile->create_file()->splice(openVGDBUrl->read());
   }
 
-  LibRetroCore dinothwar("./src/libretro-cores/Dinothawr/dinothawr_libretro.so");
-  LibRetroCore bsnes("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro.so");
-  LibRetroCore vbaNext("./src/libretro-cores/vba-next/vba_next_libretro.so");
+  retroClock = Glib::TimeoutSource::create(32);
 
-  core = &vbaNext;
+  LibRetroCore* dinothwar = new LibRetroCore("./src/libretro-cores/Dinothawr/dinothawr_libretro.so");
+  LibRetroCore* bsnes = new LibRetroCore("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro.so");
+  LibRetroCore* vbaNext = new LibRetroCore("./src/libretro-cores/vba-next/vba_next_libretro.so");
+
+  core = vbaNext;
+
+  core->loadSymbols();
+
+  core->setEnvironment(&environment_cb);
+  core->setVideoRefresh(&video_frame);
+  core->setAudioSample(&audio_sample);
+  core->setAudioSampleBatch(&audio_sample_batch);
+  core->setInputPoll(&input_poll);
+  core->setInputState(&input_state);
 
   core->init();
   core->loadGame(Gio::File::create_for_path("./fz.gba"));
-  core->run();
+  //core->run();
   //core.reset();
   //core->deinit();
+  retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
+  //retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
+
+  //sigc::mem_fun(core, &LibRetroCore::run));
 
   if(SDL_Init(SDL_INIT_HAPTIC|SDL_INIT_GAMECONTROLLER) != 0)
   {
@@ -238,6 +464,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     refBuilder->get_widget_derived("emu_pref_window", prefWindow);
     refBuilder->get_widget_derived("emu_about_dialog", aboutDialog);
     refBuilder->get_widget("game_area", gameArea);
+    refBuilder->get_widget("game_image_area", gameImageArea);
     refBuilder->get_widget("emu_main_stack", emuMainStack);
     //add_window(*emuWindow);
   }
@@ -250,6 +477,8 @@ Emulatron::Emulatron(int& argc, char**& argv):
     std::cerr << "runtime_error: " << ex.what() << std::endl;
   }
   
+  area = gameImageArea;
+
   GtkWidget* glAreaWidget = gameArea->gobj();
   GtkGLArea* glArea = GTK_GL_AREA(glAreaWidget);
   gtk_gl_area_make_current(glArea);
@@ -281,7 +510,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     sigc::mem_fun(this, &Emulatron::on_about));
   
   emuWindow->signal_hide().connect(sigc::mem_fun(this, &Emulatron::on_quit));
-  
+  emuWindow->gameIconView->signal_item_activated().connect(sigc::mem_fun(this, &Emulatron::startGame));
   register_application();
   
   add_window(*emuWindow);
@@ -293,6 +522,25 @@ Emulatron::Emulatron(int& argc, char**& argv):
   auto actions = list_actions();
   for(auto it = actions.begin(); it != actions.end() ;++it)
    std::cout<<*it<<std::endl;
+}
+
+void Emulatron::startGame(const Gtk::TreeModel::Path& path)
+{
+  auto store = emuWindow->gameIconView->get_model();
+  auto iter = store->get_iter(path);
+
+  if(iter)
+  {
+    Gtk::TreeModel::Row row = *iter;
+    core->loadGame(Gio::File::create_for_uri((Glib::ustring)row[store->col.filename]));
+    retroClock->attach(Glib::MainContext::get_default());
+    //retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
+  }
+}
+bool Emulatron::stepGame()
+{
+  core->run();
+  return true;
 }
 
 void Emulatron::view_gl()

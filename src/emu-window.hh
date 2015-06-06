@@ -24,13 +24,14 @@ public:
   
   void on_layout_change(const Glib::ustring& value);
   
-protected:
-  Glib::RefPtr<Gnome::Gda::Connection> openVGDB;
-  
-  type_signal_search_mode m_signal_search_mode;
-  
   GameIconView* gameIconView = nullptr;
   GameTreeView* gameTreeView = nullptr;
+
+protected:
+  Glib::RefPtr<Gnome::Gda::Connection> openVGDB;
+
+  type_signal_search_mode m_signal_search_mode;
+  
   Gtk::TreeView* consoleSelector = nullptr;
   Gtk::TreeView* collectionSelector = nullptr;
   

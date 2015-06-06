@@ -9,10 +9,6 @@
 
 class LibRetroCore: public Glib::Module
 {
-  //static bool environment_cb(LibRetroCore*, unsigned, void*);
-  //bool environment_cb(unsigned, void*);
-
-  void loadSymbols();
 
   void (*pretro_init)(void);
   void (*pretro_deinit)(void);
@@ -93,6 +89,7 @@ public:
   void cheatReset();
   void cheatSet(unsigned, bool, const char*);
 
+  void loadSymbols();
   bool loadGame(const retro_game_info*);
   bool loadGame(Glib::RefPtr<Gio::File>);
   bool loadGameSpecial(unsigned, const struct retro_game_info*, size_t);

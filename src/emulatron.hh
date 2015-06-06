@@ -13,14 +13,9 @@ class Emulatron: public Gtk::Application
 {
 protected:
 
-  pa_mainloop *pa_ml;
-  pa_mainloop_api *pa_mlapi;
-  pa_context *pa_ctx;
-  pa_stream *playstream;
-
   Glib::RefPtr<Gtk::Builder> refBuilder;
   Glib::RefPtr<Gtk::Settings> settings;
-  
+
   void view_gl();
 
   void on_open();
@@ -30,11 +25,18 @@ protected:
   void on_about();
   void on_quit();
   
+  void startGame(const Gtk::TreeModel::Path& path);
+  bool stepGame();
+
+
+  Glib::RefPtr<Glib::TimeoutSource> retroClock;
+
 public:
   EmuWindow* emuWindow;
   EmuPreferenceWindow* prefWindow;
   EmuAboutDialog* aboutDialog;
   Gtk::Widget* gameArea;
+  Gtk::Image* gameImageArea;
   Gtk::Stack* emuMainStack;
   
   LibRetroCore* core;

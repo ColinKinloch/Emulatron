@@ -9,7 +9,7 @@
   if(p##x == nullptr) {std::cerr<<"Failed to load symbol: "<<#x<<std::endl;} \
   else{std::cout<<"Loaded symbol: "<<#x<<std::endl;} \
 } while(0)
-
+/*
 bool environment_cb(unsigned cmd, void *data)
 {
   std::cout<<"environment: ";
@@ -202,7 +202,7 @@ static int16_t input_status(unsigned port, unsigned device, unsigned index, unsi
 {
   std::cout<<"input status:"<<port<<":"<<device<<":"<<index<<":"<<id<<std::endl;
   return 0;
-}
+}*/
 
 
 LibRetroCore::LibRetroCore(std::string p):
@@ -214,7 +214,8 @@ LibRetroCore::LibRetroCore(std::string p):
   name = info.library_name;
   version = info.library_version;
   extensions = info.valid_extensions;
-  std::cout<<"libRetro v"<<apiVersion()<<" Core: "<<name<<" "<<version<<" "<<extensions<<std::endl;
+  std::cout<<"libRetro v"<<apiVersion()<<
+  " Core: "<<name<<" "<<version<<" "<<extensions<<std::endl;
 }
 
 void LibRetroCore::loadSymbols()
@@ -256,15 +257,14 @@ void LibRetroCore::loadSymbols()
 
 void LibRetroCore::init()
 {
-  loadSymbols();
   //sigc::slot<bool, unsigned, void*> slot = sigc::mem_fun(*this, &LibRetroCore::environment_cb);
   //retro_environment_t env = slot;
-  setEnvironment(&environment_cb);
+  /*setEnvironment(environment_cb);
   setVideoRefresh(&video_frame);
   setAudioSample(&audio_sample);
   setAudioSampleBatch(&audio_sample_batch);
   setInputPoll(&input_poll);
-  setInputState(&input_status);
+  setInputState(&input_status);*/
   pretro_init();
 }
 void LibRetroCore::deinit()
