@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <cmath>
 #include <random>
 #include <iostream>
 
@@ -29,6 +30,11 @@ int pixBits = 8;
 int pixStride;
 Gdk::Colorspace pixSpace = Gdk::COLORSPACE_RGB;
 Glib::RefPtr<Gdk::Pixbuf> pix;
+
+int rl = 5;
+int gl = 6;
+int bl = 5;
+int al = 0;
 
 static gboolean
 render (GtkGLArea *area, GdkGLContext *context)
@@ -144,9 +150,17 @@ static bool environment_cb(unsigned cmd, void *data)
           break;
         case RETRO_PIXEL_FORMAT_XRGB8888:
           std::cout<<"XRGB8888";
+          rl = 8;
+          gl = 8;
+          bl = 8;
+          al = 8;
           break;
         case RETRO_PIXEL_FORMAT_RGB565:
           std::cout<<"RGB565";
+          rl = 5;
+          gl = 6;
+          bl = 5;
+          al = 0;
           break;
         case RETRO_PIXEL_FORMAT_UNKNOWN:
           std::cout<<"Unknown";
@@ -279,13 +293,40 @@ static bool environment_cb(unsigned cmd, void *data)
   }
   return false;
 }
+struct RGB565 {
+  unsigned int r :5;
+  unsigned int g :6;
+  unsigned int b :5;
+};
+struct RGB888 {
+  uint8_t r :8;
+  uint8_t g :8;
+  uint8_t b :8;
+};
 static void video_frame(const void *data, unsigned width, unsigned height, size_t pitch)
 {
   int z = 4;
-  auto tmpPix = Gdk::Pixbuf::create_from_data((guint8*)data, pixSpace, pixAlpha, pixBits, width, height, pitch);
+  int padding = (pitch - 2 * width)/2;
+  size_t stride = (width+padding)*3;
+  RGB565* u = (struct RGB565*)data;
+  RGB888 b[width*height];
+  for(int p = 0; p<width*height; ++p)
+  {
+    RGB565 t = u[p];
+    b[p].r = 255/31 * t.r;
+    b[p].g = 255/63 * t.g;
+    b[p].b = 255/31 * t.b;
+    /*b[p].r = (t.r *255+15)/31;
+    b[p].g = (t.g * 255+31)/63;
+    b[p].b = (t.b * 255+15)/31;*/
+  }
+  //guint8[] rgb888;
+
+
+  auto tmpPix = Gdk::Pixbuf::create_from_data((guchar*)b, pixSpace, pixAlpha, pixBits, width, height, stride);
   pix = tmpPix->scale_simple(width*z, height*z, Gdk::INTERP_NEAREST);
   area->set(pix);
-  std::cout<<"video refresh: "<<width<<"x"<<height<<std::endl;
+  std::cout<<"video refresh: "<<width<<"x"<<height<<":"<<padding<<std::endl;
 }
 static void audio_sample(int16_t left, int16_t right)
 {
@@ -391,7 +432,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     //openVGDBFile->create_file()->splice(openVGDBUrl->read());
   }
 
-  retroClock = Glib::TimeoutSource::create(32);
+  retroClock = Glib::TimeoutSource::create(16);
 
   LibRetroCore* dinothwar = new LibRetroCore("./src/libretro-cores/Dinothawr/dinothawr_libretro.so");
   LibRetroCore* bsnes = new LibRetroCore("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro.so");
