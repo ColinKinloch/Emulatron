@@ -31,10 +31,7 @@ int pixStride;
 Gdk::Colorspace pixSpace = Gdk::COLORSPACE_RGB;
 Glib::RefPtr<Gdk::Pixbuf> pix;
 
-int rl = 5;
-int gl = 6;
-int bl = 5;
-int al = 0;
+retro_pixel_format pixFormat = RETRO_PIXEL_FORMAT_0RGB1555;
 
 static gboolean
 render (GtkGLArea *area, GdkGLContext *context)
@@ -147,22 +144,18 @@ static bool environment_cb(unsigned cmd, void *data)
       switch(format) {
         case RETRO_PIXEL_FORMAT_0RGB1555:
           std::cout<<"0RGB1555";
+          pixFormat = RETRO_PIXEL_FORMAT_0RGB1555;
           break;
         case RETRO_PIXEL_FORMAT_XRGB8888:
           std::cout<<"XRGB8888";
-          rl = 8;
-          gl = 8;
-          bl = 8;
-          al = 8;
+          pixFormat = RETRO_PIXEL_FORMAT_XRGB8888;
           break;
         case RETRO_PIXEL_FORMAT_RGB565:
           std::cout<<"RGB565";
-          rl = 5;
-          gl = 6;
-          bl = 5;
-          al = 0;
+          pixFormat = RETRO_PIXEL_FORMAT_RGB565;
           break;
         case RETRO_PIXEL_FORMAT_UNKNOWN:
+          pixFormat = RETRO_PIXEL_FORMAT_UNKNOWN;
           std::cout<<"Unknown";
       }
       std::cout<<std::endl;
@@ -308,20 +301,27 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
   int z = 4;
   int padding = (pitch - 2 * width)/2;
   size_t stride = (width+padding)*3;
-  RGB565* u = (struct RGB565*)data;
   RGB888 b[width*height];
-  for(int p = 0; p<width*height; ++p)
+  switch(pixFormat)
   {
-    RGB565 t = u[p];
-    b[p].r = 255/31 * t.r;
-    b[p].g = 255/63 * t.g;
-    b[p].b = 255/31 * t.b;
-    /*b[p].r = (t.r *255+15)/31;
-    b[p].g = (t.g * 255+31)/63;
-    b[p].b = (t.b * 255+15)/31;*/
-  }
+    case RETRO_PIXEL_FORMAT_RGB565:
+    {
+      RGB565* u = (struct RGB565*)data;
+      for(int p = 0; p<width*height; ++p)
+      {
+        RGB565 t = u[p];
+        //TODO Workout endian-ness?
+        b[p].b = 255/31 * t.r;
+        b[p].g = 255/63 * t.g;
+        b[p].r = 255/31 * t.b;
+        /*b[p].r = (t.r *255+15)/31;
+        b[p].g = (t.g * 255+31)/63;
+        b[p].b = (t.b * 255+15)/31;*/
+      }
+      break;
+    }
   //guint8[] rgb888;
-
+  }
 
   auto tmpPix = Gdk::Pixbuf::create_from_data((guchar*)b, pixSpace, pixAlpha, pixBits, width, height, stride);
   pix = tmpPix->scale_simple(width*z, height*z, Gdk::INTERP_NEAREST);
