@@ -25,10 +25,6 @@ std::uniform_real_distribution<float> distribution(0,1);
 auto rng = std::bind(distribution, generator);
 
 Gtk::Image* area;
-bool pixAlpha = false;
-int pixBits = 8;
-int pixStride;
-Gdk::Colorspace pixSpace = Gdk::COLORSPACE_RGB;
 Glib::RefPtr<Gdk::Pixbuf> pix;
 
 retro_pixel_format pixFormat = RETRO_PIXEL_FORMAT_0RGB1555;
@@ -286,44 +282,122 @@ static bool environment_cb(unsigned cmd, void *data)
   }
   return false;
 }
+//TODO BitFields don't work
+struct RGB1555 {
+  unsigned char r :5;
+  unsigned char g :5;
+  unsigned char b :5;
+};
 struct RGB565 {
-  unsigned int r :5;
-  unsigned int g :6;
-  unsigned int b :5;
+  unsigned char r :5;
+  unsigned char g :6;
+  unsigned char b :5;
 };
-struct RGB888 {
-  uint8_t r :8;
-  uint8_t g :8;
-  uint8_t b :8;
+struct RGB8888 {
+  unsigned char r :8;
+  unsigned char g :8;
+  unsigned char b :8;
+  unsigned char a :8;
 };
+#define GREEN_MASK  0b0000011111100000
+#define GREEN_OFFSET  5
+#define RED_MASK  0b1111100000000000
+#define RED_OFFSET  11
+#define BLUE_MASK  0b0000000000011111
+#define BLUE_OFFSET  0
+RGB8888* toRGB8888(void* in, unsigned width, unsigned height, size_t pitch)
+{
+  int padding = (pitch - (2 * width))/2;
+  size_t stride = (width+padding)*3;
+  int nPixels = (width+padding)*height;
+  RGB8888 *out;
+  out = new RGB8888[nPixels];
+  for(int p = 0; p<nPixels; ++p)
+  {
+    //uint16_t b = ((int*)in)[p];
+    uint8_t b1 = ((char*)in)[p*2];
+    uint8_t b2 = ((char*)in)[(p*2)+1];
+    uint16_t b = b1|((uint16_t)b2)<<8;
+    out[p].r = 255/31 * (b >> RED_OFFSET);
+    out[p].g = 255/63 * (b & GREEN_MASK) >> GREEN_OFFSET;
+    out[p].b = 255/31 * (b & BLUE_MASK);
+    out[p].a = 255;
+  }
+  return out;
+}
+
+//BAD conversion
+RGB8888* toRGB8888(RGB565* in, unsigned width, unsigned height, size_t pitch)
+{
+  int padding = (pitch - (2 * width))/2;
+  size_t stride = (width+padding)*3;
+  int nPixels = (width+padding)*height;
+  RGB8888 *out;
+  out = new RGB8888[nPixels];
+  for(int p = 0; p<nPixels; ++p)
+  {
+    RGB565 pixel = in[p];
+    out[p].b = 255/31 * pixel.r;
+    out[p].g = 255/63 * pixel.g;
+    out[p].r = 255/31 * pixel.b;
+    out[p].a = 255;
+  }
+  return out;
+}
+RGB8888* toRGB8888(RGB1555* in, unsigned width, unsigned height, size_t pitch)
+{
+  int padding = (pitch - (2 * width))/2;
+  size_t stride = (width+padding)*3;
+  int nPixels = (width+padding)*height;
+  RGB8888 *out;
+  out = new RGB8888[nPixels];
+  for(int p = 0; p<nPixels; ++p)
+  {
+    RGB1555 pixel = in[p];
+    out[p].b = 255/31 * pixel.r;
+    out[p].g = 255/31 * pixel.g;
+    out[p].r = 255/31 * pixel.b;
+    out[p].a = 255;
+  }
+  return out;
+}
 static void video_frame(const void *data, unsigned width, unsigned height, size_t pitch)
 {
   int z = 4;
-  int padding = (pitch - 2 * width)/2;
-  size_t stride = (width+padding)*3;
-  RGB888 b[width*height];
+  int padding;
+  RGB8888* p;
   switch(pixFormat)
   {
     case RETRO_PIXEL_FORMAT_RGB565:
     {
-      RGB565* u = (struct RGB565*)data;
-      for(int p = 0; p<width*height; ++p)
-      {
-        RGB565 t = u[p];
-        //TODO Workout endian-ness?
-        b[p].b = 255/31 * t.r;
-        b[p].g = 255/63 * t.g;
-        b[p].r = 255/31 * t.b;
-        /*b[p].r = (t.r *255+15)/31;
-        b[p].g = (t.g * 255+31)/63;
-        b[p].b = (t.b * 255+15)/31;*/
-      }
+      padding = (pitch - (2 * width))/2;
+      p = toRGB8888((void*)data, width, height, pitch);
+      //p = toRGB8888((RGB565*)data, width, height, pitch);
       break;
     }
-  //guint8[] rgb888;
+    case RETRO_PIXEL_FORMAT_0RGB1555:
+    {
+      padding = (pitch - (2 * width))/2;
+      p = toRGB8888((RGB1555*)data, width, height, pitch);
+      break;
+    }
+    case RETRO_PIXEL_FORMAT_XRGB8888:
+    {
+      padding = (pitch - (4 * width))/4;
+      p = (RGB8888*)data;
+      break;
+    }
+    case RETRO_PIXEL_FORMAT_UNKNOWN:
+    {
+      break;
+    }
   }
+  size_t stride = (width+padding)*4;
 
-  auto tmpPix = Gdk::Pixbuf::create_from_data((guchar*)b, pixSpace, pixAlpha, pixBits, width, height, stride);
+  auto tmpPix = Gdk::Pixbuf::create_from_data((guchar*)p,
+  Gdk::COLORSPACE_RGB, true, 8,
+  width+padding, height, stride);
+  delete p;
   pix = tmpPix->scale_simple(width*z, height*z, Gdk::INTERP_NEAREST);
   area->set(pix);
   std::cout<<"video refresh: "<<width<<"x"<<height<<":"<<padding<<std::endl;
