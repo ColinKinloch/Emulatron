@@ -648,8 +648,8 @@ void Emulatron::startGame(const Gtk::TreeModel::Path& path)
     //retroClock->attach(Glib::MainContext::get_default());
     //Glib::signal_timeout().connect(sigc::mem_fun(this, &Emulatron::stepSound), (1000/avInfo.timing.fps));
     //retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
-    Glib::signal_idle().connect(sigc::mem_fun(this, &Emulatron::stepSound));
-    Glib::signal_timeout().connect(sigc::mem_fun(this, &Emulatron::stepGame), 1000/avInfo.timing.fps, Glib::PRIORITY_HIGH);
+    Glib::signal_idle().connect(sigc::mem_fun(this, &Emulatron::stepSound), Glib::PRIORITY_DEFAULT_IDLE);
+    Glib::signal_timeout().connect(sigc::mem_fun(this, &Emulatron::stepGame), 16/*1000/avInfo.timing.fps*/, Glib::PRIORITY_HIGH);
   }
 }
 bool Emulatron::stepGame()
