@@ -20,6 +20,8 @@
 
 #include "game-model.hh"
 
+retro_system_av_info avInfo;
+
 std::default_random_engine generator;
 std::uniform_real_distribution<float> distribution(0,1);
 auto rng = std::bind(distribution, generator);
@@ -44,10 +46,15 @@ resize (GtkGLArea *area, int width, int height)
   glViewport(0,0,width,height);
 };
 
+struct {
+  uint16_t *data;
+  size_t size;
+  unsigned offset;
+} buffer;
 
 static int latency = 20000; // start latency in micro seconds
 static int sampleoffs = 0;
-static int16_t sampledata[300000];
+static int16_t sampledata[642];
 static pa_buffer_attr bufattr;
 static int underflows = 0;
 static pa_sample_spec ss;
@@ -84,7 +91,7 @@ static void stream_request_cb(pa_stream *s, size_t length, void *userdata) {
   pa_usec_t usec;
   int neg;
   pa_stream_get_latency(s,&usec,&neg);
-  printf("  latency %8d us\n",(int)usec);
+  std::cout<<"  latency "<<(int)usec<<" us"<<std::endl;
   if (sampleoffs*2 + length > sizeof(sampledata)) {
     sampleoffs = 0;
   }
@@ -98,15 +105,15 @@ static void stream_request_cb(pa_stream *s, size_t length, void *userdata) {
 static void stream_underflow_cb(pa_stream *s, void *userdata) {
   // We increase the latency by 50% if we get 6 underflows and latency is under 2s
   // This is very useful for over the network playback that can't handle low latencies
-  printf("underflow\n");
+  std::cout<<"underflow"<<std::endl;
   underflows++;
-  if (underflows >= 6 && latency < 2000000) {
+  if (underflows >= 6 && latency < 20000) {
     latency = (latency*3)/2;
     bufattr.maxlength = pa_usec_to_bytes(latency,&ss);
     bufattr.tlength = pa_usec_to_bytes(latency,&ss);
     pa_stream_set_buffer_attr(s, &bufattr, NULL, NULL);
     underflows = 0;
-    printf("latency increased to %d\n", latency);
+    std::cout<<"latency increased to "<<latency<<std::endl;
   }
 }
 
@@ -135,26 +142,7 @@ static bool environment_cb(unsigned cmd, void *data)
       break;
     case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
     {
-      retro_pixel_format format = *(retro_pixel_format*)data;
-      std::cout<<"set pixel format:"<<std::endl;
-      switch(format) {
-        case RETRO_PIXEL_FORMAT_0RGB1555:
-          std::cout<<"0RGB1555";
-          pixFormat = RETRO_PIXEL_FORMAT_0RGB1555;
-          break;
-        case RETRO_PIXEL_FORMAT_XRGB8888:
-          std::cout<<"XRGB8888";
-          pixFormat = RETRO_PIXEL_FORMAT_XRGB8888;
-          break;
-        case RETRO_PIXEL_FORMAT_RGB565:
-          std::cout<<"RGB565";
-          pixFormat = RETRO_PIXEL_FORMAT_RGB565;
-          break;
-        case RETRO_PIXEL_FORMAT_UNKNOWN:
-          pixFormat = RETRO_PIXEL_FORMAT_UNKNOWN;
-          std::cout<<"Unknown";
-      }
-      std::cout<<std::endl;
+      pixFormat = *(retro_pixel_format*)data;
       return true;
     }
     case RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS:
@@ -396,7 +384,7 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
 
   auto tmpPix = Gdk::Pixbuf::create_from_data((guchar*)p,
   Gdk::COLORSPACE_RGB, true, 8,
-  width+padding, height, stride);
+  width, height, stride);
   delete p;
   pix = tmpPix->scale_simple(width*z, height*z, Gdk::INTERP_NEAREST);
   area->set(pix);
@@ -412,10 +400,13 @@ static void audio_sample(int16_t left, int16_t right)
 }
 static size_t audio_sample_batch(const int16_t *data, size_t frames)
 {
-  for(int i = 0; i>frames; i++)
+  for(int i = 0; i<frames; i++)
   {
+    //std::cout<<"d:"<<data<<std::endl;
     sampledata[i] = data[i];
   }
+  //pa_mainloop_iterate(pa_ml, false, nullptr);
+  //std::cout<<"audio sample:"<<frames<<std::endl;
   //ao_play(dev, data, frames * sizeof(int16_t))
   return 0;
 }
@@ -434,6 +425,28 @@ static int16_t input_state(unsigned port, unsigned device, unsigned index, unsig
 Emulatron::Emulatron(int& argc, char**& argv):
   Gtk::Application(argc, argv, "org.colinkinloch.emulatron", Gio::APPLICATION_FLAGS_NONE)
 {
+
+  Glib::init();
+  Gio::init();
+
+
+  LibRetroCore* dinothwar = new LibRetroCore("./src/libretro-cores/Dinothawr/dinothawr_libretro.so");
+  LibRetroCore* bsnes = new LibRetroCore("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro.so");
+  LibRetroCore* vbaNext = new LibRetroCore("./src/libretro-cores/vba-next/vba_next_libretro.so");
+
+  core = vbaNext;
+
+  core->loadSymbols();
+
+  core->setEnvironment(&environment_cb);
+  core->setVideoRefresh(&video_frame);
+  core->setAudioSample(&audio_sample);
+  core->setAudioSampleBatch(&audio_sample_batch);
+  core->setInputPoll(&input_poll);
+  core->setInputState(&input_state);
+
+  avInfo = core->getSystemAVInfo();
+
   int r;
   int pa_ready = 0;
   int retval = 0;
@@ -441,8 +454,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
   double amp;
 
   for (a=0; a<sizeof(sampledata)/2; a++) {
-    amp = cos(5000*(double)a/44100.0);
-    sampledata[a] = amp * 32000.0;
+    sampledata[a] = 0;
   }
 
   pa_proplist *ctxProp = pa_proplist_new();
@@ -461,12 +473,12 @@ Emulatron::Emulatron(int& argc, char**& argv):
     pa_mainloop_iterate(pa_ml, 1, NULL);
   }
 
-  ss.rate = 44100;
-  ss.channels = 1;
+  ss.rate = avInfo.timing.sample_rate;
+  ss.channels = 2;
   ss.format = PA_SAMPLE_S16LE;
   playstream = pa_stream_new(pa_ctx, "Playback", &ss, NULL);
   if (!playstream) {
-    printf("pa_stream_new failed\n");
+    std::cout<<"pa_stream_new failed"<<std::endl;
   }
   pa_stream_set_write_callback(playstream, stream_request_cb, NULL);
   pa_stream_set_underflow_callback(playstream, stream_underflow_cb, NULL);
@@ -491,9 +503,6 @@ Emulatron::Emulatron(int& argc, char**& argv):
     retval = -1;
   }
 
-  Glib::init();
-  Gio::init();
-
   Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path("./openvgdb.sqlite");
   OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
   if(!openVGDBFile->query_exists())
@@ -506,29 +515,17 @@ Emulatron::Emulatron(int& argc, char**& argv):
     //openVGDBFile->create_file()->splice(openVGDBUrl->read());
   }
 
-  retroClock = Glib::TimeoutSource::create(16);
+  //retroClock = Glib::TimeoutSource::create(1000/avInfo.timing.fps);
+  //retroClock = Glib::TimeoutSource::create(16);
 
-  LibRetroCore* dinothwar = new LibRetroCore("./src/libretro-cores/Dinothawr/dinothawr_libretro.so");
-  LibRetroCore* bsnes = new LibRetroCore("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro.so");
-  LibRetroCore* vbaNext = new LibRetroCore("./src/libretro-cores/vba-next/vba_next_libretro.so");
 
-  core = vbaNext;
-
-  core->loadSymbols();
-
-  core->setEnvironment(&environment_cb);
-  core->setVideoRefresh(&video_frame);
-  core->setAudioSample(&audio_sample);
-  core->setAudioSampleBatch(&audio_sample_batch);
-  core->setInputPoll(&input_poll);
-  core->setInputState(&input_state);
 
   core->init();
-  core->loadGame(Gio::File::create_for_path("./fz.gba"));
+  //core->loadGame(Gio::File::create_for_path("./fz.gba"));
   //core->run();
   //core.reset();
   //core->deinit();
-  retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
+  //retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
   //retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
 
   //sigc::mem_fun(core, &LibRetroCore::run));
@@ -537,10 +534,10 @@ Emulatron::Emulatron(int& argc, char**& argv):
   {
     std::cerr<<SDL_GetError()<<std::endl;
   }
-  
+
   refBuilder = Gtk::Builder::create();
   refBuilder->set_application(Glib::RefPtr<Emulatron>(this));
-  
+
   settings = Gtk::Settings::get_default();
   settings->property_gtk_application_prefer_dark_theme() = true;
   
@@ -648,13 +645,21 @@ void Emulatron::startGame(const Gtk::TreeModel::Path& path)
   {
     Gtk::TreeModel::Row row = *iter;
     core->loadGame(Gio::File::create_for_uri((Glib::ustring)row[store->col.filename]));
-    retroClock->attach(Glib::MainContext::get_default());
+    //retroClock->attach(Glib::MainContext::get_default());
+    //Glib::signal_timeout().connect(sigc::mem_fun(this, &Emulatron::stepSound), (1000/avInfo.timing.fps));
     //retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
+    Glib::signal_idle().connect(sigc::mem_fun(this, &Emulatron::stepSound));
+    Glib::signal_timeout().connect(sigc::mem_fun(this, &Emulatron::stepGame), 1000/avInfo.timing.fps, Glib::PRIORITY_HIGH);
   }
 }
 bool Emulatron::stepGame()
 {
   core->run();
+  return true;
+}
+bool Emulatron::stepSound()
+{
+  pa_mainloop_iterate(pa_ml, false, nullptr);
   return true;
 }
 

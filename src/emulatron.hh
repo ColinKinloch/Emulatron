@@ -27,6 +27,7 @@ protected:
   
   void startGame(const Gtk::TreeModel::Path& path);
   bool stepGame();
+  bool stepSound();
 
 
   Glib::RefPtr<Glib::TimeoutSource> retroClock;
