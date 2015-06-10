@@ -31,11 +31,16 @@ AC_PROG_CXX(clang++)
 AC_PROG_LD(llvm-ld)
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11
-if test "$os_osx" = "yes"; then
-  CXXFLAGS+=" -stdlib=libc++ -std=c++11" 
-  CFLAGS+=" -stdlib=libc++"
-  LDFLAGS+=" -stdlib=libc++"
-fi
+AC_CANONICAL_HOST
+
+case $host_os in
+  darwin* )
+    CXXFLAGS+=" -stdlib=libc++ -std=c++11" 
+    CFLAGS+=" -stdlib=libc++"
+    LDFLAGS+=" -stdlib=libc++"
+    ;;
+esac
+
 
 AX_CHECK_GL
 
