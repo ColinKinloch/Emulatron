@@ -26,10 +26,16 @@ GOBJECT_INTROSPECTION_CHECK([0.6.7])
 m4_define([glib_required_version], [2.23.0])
 AM_PATH_GLIB_2_0(glib_required_version)
 
-AC_PROG_CC()
-AC_PROG_CXX()
+AC_PROG_CC(clang)
+AC_PROG_CXX(clang++)
+AC_PROG_LD(llvm-ld)
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11
+if test "$os_osx" = "yes"; then
+  CXXFLAGS+=" -stdlib=libc++ -std=c++11" 
+  CFLAGS+=" -stdlib=libc++"
+  LDFLAGS+=" -stdlib=libc++"
+fi
 
 AX_CHECK_GL
 
