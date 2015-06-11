@@ -57,10 +57,23 @@ struct {
   unsigned offset;
 } buffer;
 
-static int latency = 20000; // start latency in micro seconds
+typedef struct
+{
+   pa_threaded_mainloop *mainloop;
+   pa_context *context;
+   pa_stream *stream;
+   size_t buffer_size;
+   bool nonblock;
+   bool success;
+   bool is_paused;
+} pa_t;
+
+static pa_t* pa;
+
+static int latency = pow(2, 7); // start latency in micro seconds
 static int sampleoffs = 0;
-static int16_t sampledata[642];
-static pa_buffer_attr bufattr;
+static int16_t sampledata[20000];
+static pa_buffer_attr buffer_attr;
 static int underflows = 0;
 static pa_sample_spec ss;
 static pa_mainloop *pa_ml;
@@ -70,58 +83,77 @@ static pa_stream *playstream;
 
 // This callback gets called when our context changes state.  We really only
 // care about when it's ready or if it has failed
-void pa_state_cb(pa_context *c, void *userdata) {
-  pa_context_state_t state;
-  int *pa_ready = (int *)userdata;
-  state = pa_context_get_state(c);
-  switch  (state) {
-    // These are just here for reference
-  case PA_CONTEXT_UNCONNECTED:
-  case PA_CONTEXT_CONNECTING:
-  case PA_CONTEXT_AUTHORIZING:
-  case PA_CONTEXT_SETTING_NAME:
-  default:
-    break;
-  case PA_CONTEXT_FAILED:
-  case PA_CONTEXT_TERMINATED:
-    *pa_ready = 2;
-    break;
-  case PA_CONTEXT_READY:
-    *pa_ready = 1;
-    break;
-  }
+static void context_state_cb(pa_context *c, void *data)
+{
+   pa_t *pa = (pa_t*)data;
+
+   switch (pa_context_get_state(c))
+   {
+      case PA_CONTEXT_READY:
+      case PA_CONTEXT_TERMINATED:
+      case PA_CONTEXT_FAILED:
+         pa_threaded_mainloop_signal(pa->mainloop, 0);
+         break;
+      default:
+         break;
+   }
 }
 
-static void stream_request_cb(pa_stream *s, size_t length, void *userdata) {
-  pa_usec_t usec;
-  int neg;
-  pa_stream_get_latency(s,&usec,&neg);
-  std::cout<<"  latency "<<(int)usec<<" us"<<std::endl;
-  if (sampleoffs*2 + length > sizeof(sampledata)) {
-    sampleoffs = 0;
-  }
-  if (length > sizeof(sampledata)) {
-    length = sizeof(sampledata);
-  }
-  pa_stream_write(s, &sampledata[sampleoffs], length, NULL, 0LL, PA_SEEK_RELATIVE);
-  sampleoffs += length/2;
+static void stream_state_cb(pa_stream *s, void *data)
+{
+   pa_t *pa = (pa_t*)data;
+
+   switch (pa_stream_get_state(s))
+   {
+      case PA_STREAM_READY:
+      case PA_STREAM_FAILED:
+      case PA_STREAM_TERMINATED:
+         pa_threaded_mainloop_signal(pa->mainloop, 0);
+         break;
+      default:
+         break;
+   }
 }
 
-static void stream_underflow_cb(pa_stream *s, void *userdata) {
-  // We increase the latency by 50% if we get 6 underflows and latency is under 2s
-  // This is very useful for over the network playback that can't handle low latencies
-  std::cout<<"underflow"<<std::endl;
-  underflows++;
-  if (underflows >= 6 && latency < 20000) {
-    latency = (latency*3)/2;
-    bufattr.maxlength = pa_usec_to_bytes(latency,&ss);
-    bufattr.tlength = pa_usec_to_bytes(latency,&ss);
-    pa_stream_set_buffer_attr(s, &bufattr, NULL, NULL);
-    underflows = 0;
-    std::cout<<"latency increased to "<<latency<<std::endl;
-  }
+static void stream_request_cb(pa_stream *s, size_t length, void *data)
+{
+   pa_t *pa = (pa_t*)data;
+
+   (void)length;
+   (void)s;
+
+   pa_threaded_mainloop_signal(pa->mainloop, 0);
 }
 
+static void stream_latency_update_cb(pa_stream *s, void *data)
+{
+   pa_t *pa = (pa_t*)data;
+
+   (void)s;
+
+   pa_threaded_mainloop_signal(pa->mainloop, 0);
+}
+
+static void underrun_update_cb(pa_stream *s, void *data)
+{
+   pa_t *pa = (pa_t*)data;
+
+   (void)s;
+
+   std::cout<<"[PulseAudio]: Underrun (Buffer: "<<pa->buffer_size
+   <<", Writable size:"<<pa_stream_writable_size(pa->stream)
+   <<")."<<std::endl;
+}
+
+static void buffer_attr_cb(pa_stream *s, void *data)
+{
+   pa_t *pa = (pa_t*)data;
+   const pa_buffer_attr *server_attr = pa_stream_get_buffer_attr(s);
+   if (server_attr)
+      pa->buffer_size = server_attr->tlength;
+   std::cout<<"[PulseAudio]: Got new buffer size "<<pa->buffer_size<<"."<<std::endl;
+
+}
 
 static bool environment_cb(unsigned cmd, void *data)
 {
@@ -172,12 +204,13 @@ static bool environment_cb(unsigned cmd, void *data)
     {
         retro_variable* var = (retro_variable*)data;
         std::cout<<"set variable:"<<std::endl;
-      if(var->value != nullptr) {
+      if(var->key != nullptr) {
         std::cout<<var->key<<": "<<var->value<<std::endl;
         return true;
       }
       else {
         std::cout<<"null value"<<std::endl;
+        return false;
       }
       break;
     }
@@ -405,11 +438,14 @@ static void audio_sample(int16_t left, int16_t right)
 }
 static size_t audio_sample_batch(const int16_t *data, size_t frames)
 {
-  for(int i = 0; i<frames; i++)
-  {
-    //std::cout<<"d:"<<data<<std::endl;
-    sampledata[i] = data[i];
-  }
+  float gain = 1;
+  float* out;
+   size_t i;
+   gain = gain / 0x8000;
+   for (i = 0; i < frames; i++)
+      out[i] = (float)data[i] * gain;
+  //memcpy(sampledata, data, frames);
+  //sampleoffs = 0;
   //pa_mainloop_iterate(pa_ml, false, nullptr);
   //std::cout<<"audio sample:"<<frames<<std::endl;
   //ao_play(dev, data, frames * sizeof(int16_t))
@@ -465,10 +501,55 @@ Emulatron::Emulatron(int& argc, char**& argv):
   pa_proplist *ctxProp = pa_proplist_new();
   pa_proplist_sets(ctxProp, PA_PROP_APPLICATION_ICON_NAME, "input-gaming");
 
-
+  pa = new pa_t();
+  pa->mainloop = pa_threaded_mainloop_new();
   pa_ml = pa_mainloop_new();
   pa_mlapi = pa_mainloop_get_api(pa_ml);
-  pa_ctx = pa_context_new_with_proplist(pa_mlapi, "Emulatron", ctxProp);
+  pa->context = pa_ctx = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(pa->mainloop), "Emulatron", ctxProp);
+  pa_context_set_state_callback(pa->context, context_state_cb, pa);
+
+  pa_context_connect(pa->context, nullptr, PA_CONTEXT_NOFLAGS, NULL);
+  pa_threaded_mainloop_lock(pa->mainloop);
+  pa_threaded_mainloop_start(pa->mainloop);
+  pa_threaded_mainloop_wait(pa->mainloop);
+
+  pa_sample_spec spec;
+  spec.format = PA_SAMPLE_FLOAT32LE;
+  spec.channels = 2;
+  spec.rate = avInfo.timing.sample_rate;
+
+  pa->stream = pa_stream_new(pa->context, "audio", &spec, nullptr);
+
+  pa_stream_set_state_callback(pa->stream, stream_state_cb, pa);
+  pa_stream_set_write_callback(pa->stream, stream_request_cb, pa);
+  pa_stream_set_latency_update_callback(pa->stream, stream_latency_update_cb, pa);
+  pa_stream_set_underflow_callback(pa->stream, underrun_update_cb, pa);
+  pa_stream_set_buffer_attr_callback(pa->stream, buffer_attr_cb, pa);
+
+  buffer_attr.maxlength = -1;
+  buffer_attr.tlength = pa_usec_to_bytes(latency * PA_USEC_PER_MSEC, &spec);
+  buffer_attr.prebuf = -1;
+  buffer_attr.minreq = -1;
+  buffer_attr.fragsize = -1;
+
+  pa_stream_connect_playback(pa->stream, NULL, &buffer_attr, PA_STREAM_ADJUST_LATENCY, NULL, NULL);
+
+  pa_threaded_mainloop_wait(pa->mainloop);
+
+  const pa_buffer_attr *server_attr = nullptr;
+  server_attr = pa_stream_get_buffer_attr(pa->stream);
+  if (server_attr)
+   {
+      pa->buffer_size = server_attr->tlength;
+      std::cout<<"[PulseAudio]: Requested "<<buffer_attr.tlength
+      <<" bytes buffer, got "<<pa->buffer_size
+      <<"."<<std::endl;
+   }
+   else
+      pa->buffer_size = buffer_attr.tlength;
+
+  pa_threaded_mainloop_unlock(pa->mainloop);
+  /*
   pa_context_flags_t ctx_flags;
   pa_context_connect(pa_ctx, nullptr, (pa_context_flags_t)0, nullptr);
 
@@ -480,8 +561,8 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   ss.rate = avInfo.timing.sample_rate;
   ss.channels = 2;
-  ss.format = PA_SAMPLE_S16LE;
-  playstream = pa_stream_new(pa_ctx, "Playback", &ss, NULL);
+  ss.format = PA_SAMPLE_FLOAT32LE;
+  playstream = pa_stream_new(pa_ctx, "audio", &ss, NULL);
   if (!playstream) {
     std::cout<<"pa_stream_new failed"<<std::endl;
   }
@@ -489,10 +570,10 @@ Emulatron::Emulatron(int& argc, char**& argv):
   pa_stream_set_underflow_callback(playstream, stream_underflow_cb, NULL);
 
   bufattr.fragsize = (uint32_t)-1;
-  bufattr.maxlength = pa_usec_to_bytes(latency,&ss);
-  bufattr.minreq = pa_usec_to_bytes(0,&ss);
+  bufattr.maxlength = -1;//pa_usec_to_bytes(latency,&ss);
+  bufattr.minreq = -1;//pa_usec_to_bytes(0,&ss);
   bufattr.prebuf = (uint32_t)-1;
-  bufattr.tlength = pa_usec_to_bytes(latency,&ss);
+  bufattr.tlength = pa_usec_to_bytes(latency*PA_USEC_PER_MSEC, &ss);
   r = pa_stream_connect_playback(playstream, NULL, &bufattr,
   (pa_stream_flags_t)(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE),
   NULL, NULL);
@@ -507,7 +588,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     printf("pa_stream_connect_playback failed\n");
     retval = -1;
   }
-
+  */
   Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path("./openvgdb.sqlite");
   OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
   if(!openVGDBFile->query_exists())
@@ -653,7 +734,7 @@ void Emulatron::startGame(const Gtk::TreeModel::Path& path)
     //retroClock->attach(Glib::MainContext::get_default());
     //Glib::signal_timeout().connect(sigc::mem_fun(this, &Emulatron::stepSound), (1000/avInfo.timing.fps));
     //retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
-    Glib::signal_idle().connect(sigc::mem_fun(this, &Emulatron::stepSound), Glib::PRIORITY_DEFAULT_IDLE);
+    //Glib::signal_idle().connect(sigc::mem_fun(this, &Emulatron::stepSound), Glib::PRIORITY_DEFAULT_IDLE);
     Glib::signal_timeout().connect(sigc::mem_fun(this, &Emulatron::stepGame), 16/*1000/avInfo.timing.fps*/, Glib::PRIORITY_HIGH);
   }
 }
