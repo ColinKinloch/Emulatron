@@ -8,7 +8,12 @@
 #include <gdkmm/pixbuf.h>
 
 #include <SDL.h>
+
+#if __APPLE__
+#include <GL/gl.h>
+#else
 #include <GLES3/gl3.h>
+#endif
 
 #include "emulatron.hh"
 #include "emu-window.hh"
