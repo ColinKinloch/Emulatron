@@ -420,12 +420,12 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
   }
   size_t stride = (width+padding)*4;
 
-  auto tmpPix = Gdk::Pixbuf::create_from_data((guchar*)p,
+  auto oPix = Gdk::Pixbuf::create_from_data((guchar*)p,
   Gdk::COLORSPACE_RGB, true, 8,
   width, height, stride);
-  delete p;
-  pix = tmpPix->scale_simple(width*z, height*z, Gdk::INTERP_NEAREST);
+  pix = oPix->scale_simple(width*z, height*z, Gdk::INTERP_NEAREST);
   area->set(pix);
+  delete p;
   std::cout<<"video refresh: "<<width<<"x"<<height<<":"<<padding<<std::endl;
 }
 static void audio_sample(int16_t left, int16_t right)
@@ -471,9 +471,9 @@ Emulatron::Emulatron(int& argc, char**& argv):
   Gio::init();
 
 
-  LibRetroCore* dinothwar = new LibRetroCore("./src/libretro-cores/Dinothawr/dinothawr_libretro");
-  LibRetroCore* bsnes = new LibRetroCore("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro");
-  LibRetroCore* vbaNext = new LibRetroCore("./src/libretro-cores/vba-next/vba_next_libretro");
+  LibRetroCore* dinothwar = new LibRetroCore("./src/libretro-cores/Dinothawr/dinothawr_libretro.dylib");
+  LibRetroCore* bsnes = new LibRetroCore("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro.dylib");
+  LibRetroCore* vbaNext = new LibRetroCore("./src/libretro-cores/vba-next/vba_next_libretro.dylib");
 
   core = vbaNext;
 
