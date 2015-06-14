@@ -1,3 +1,4 @@
+src/org.colinkinloch.emulatron.gschema.xml
 src/libretro-cores/vba-next/Makefile
 *.o
 src/emulatron
