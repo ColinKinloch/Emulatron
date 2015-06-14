@@ -328,21 +328,13 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
   }
   size_t stride = (width+padding)*4;
 
-  auto tmpPix = Gdk::Pixbuf::create_from_data((guchar*)p,
+  auto oPix = Gdk::Pixbuf::create_from_data((guchar*)p,
   Gdk::COLORSPACE_RGB, true, 8,
   width, height, stride);
-  delete p;
-  pix = tmpPix->scale_simple(width*z, height*z, Gdk::INTERP_NEAREST);
+  pix = oPix->scale_simple(width*z, height*z, Gdk::INTERP_NEAREST);
   area->set(pix);
+  delete p;
   //std::cout<<"video refresh: "<<width<<"x"<<height<<":"<<padding<<std::endl;
-}
-static bool audio_driver_flush(const int16_t *data, size_t frames)
-{
-  size_t output_size = sizeof(int16_t);
-
-  aud->write(data, frames * output_size * 2);
-
-  return true;
 }
 static void audio_sample(int16_t left, int16_t right)
 {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include <ao/ao.h>
 #include <giomm/file.h>
 #include <gdkmm/pixbuf.h>
 #include <glibmm/module.h>
