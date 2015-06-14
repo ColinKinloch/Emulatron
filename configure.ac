@@ -101,6 +101,7 @@ AC_CONFIG_LINKS(src/resources/gtk/menus.ui:src/resources/gtk/$os_menus_ui)
 
 AC_CONFIG_FILES([
 	Makefile
+	data/org.colinkinloch.emulatron.gschema.xml
 	src/resources/emu.gresource.xml
 ])
 #	data/Makefile

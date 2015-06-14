@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <algorithm>
 #include <cmath>
 #include <random>
 #include <iostream>
@@ -31,6 +32,7 @@ std::default_random_engine generator;
 std::uniform_real_distribution<float> distribution(0,1);
 auto rng = std::bind(distribution, generator);
 
+Audio* aud;
 Gtk::Image* area;
 Glib::RefPtr<Gdk::Pixbuf> pix;
 
@@ -57,103 +59,9 @@ struct {
   unsigned offset;
 } buffer;
 
-typedef struct
-{
-   pa_threaded_mainloop *mainloop;
-   pa_context *context;
-   pa_stream *stream;
-   size_t buffer_size;
-   bool nonblock;
-   bool success;
-   bool is_paused;
-} pa_t;
-
-static pa_t* pa;
-
-static int latency = pow(2, 7); // start latency in micro seconds
+static int latency = 64;//pow(2, 6);// start latency in micro seconds
 static int sampleoffs = 0;
 static int16_t sampledata[20000];
-static pa_buffer_attr buffer_attr;
-static int underflows = 0;
-static pa_sample_spec ss;
-static pa_mainloop *pa_ml;
-static pa_mainloop_api *pa_mlapi;
-static pa_context *pa_ctx;
-static pa_stream *playstream;
-
-// This callback gets called when our context changes state.  We really only
-// care about when it's ready or if it has failed
-static void context_state_cb(pa_context *c, void *data)
-{
-   pa_t *pa = (pa_t*)data;
-
-   switch (pa_context_get_state(c))
-   {
-      case PA_CONTEXT_READY:
-      case PA_CONTEXT_TERMINATED:
-      case PA_CONTEXT_FAILED:
-         pa_threaded_mainloop_signal(pa->mainloop, 0);
-         break;
-      default:
-         break;
-   }
-}
-
-static void stream_state_cb(pa_stream *s, void *data)
-{
-   pa_t *pa = (pa_t*)data;
-
-   switch (pa_stream_get_state(s))
-   {
-      case PA_STREAM_READY:
-      case PA_STREAM_FAILED:
-      case PA_STREAM_TERMINATED:
-         pa_threaded_mainloop_signal(pa->mainloop, 0);
-         break;
-      default:
-         break;
-   }
-}
-
-static void stream_request_cb(pa_stream *s, size_t length, void *data)
-{
-   pa_t *pa = (pa_t*)data;
-
-   (void)length;
-   (void)s;
-
-   pa_threaded_mainloop_signal(pa->mainloop, 0);
-}
-
-static void stream_latency_update_cb(pa_stream *s, void *data)
-{
-   pa_t *pa = (pa_t*)data;
-
-   (void)s;
-
-   pa_threaded_mainloop_signal(pa->mainloop, 0);
-}
-
-static void underrun_update_cb(pa_stream *s, void *data)
-{
-   pa_t *pa = (pa_t*)data;
-
-   (void)s;
-
-   std::cout<<"[PulseAudio]: Underrun (Buffer: "<<pa->buffer_size
-   <<", Writable size:"<<pa_stream_writable_size(pa->stream)
-   <<")."<<std::endl;
-}
-
-static void buffer_attr_cb(pa_stream *s, void *data)
-{
-   pa_t *pa = (pa_t*)data;
-   const pa_buffer_attr *server_attr = pa_stream_get_buffer_attr(s);
-   if (server_attr)
-      pa->buffer_size = server_attr->tlength;
-   std::cout<<"[PulseAudio]: Got new buffer size "<<pa->buffer_size<<"."<<std::endl;
-
-}
 
 static bool environment_cb(unsigned cmd, void *data)
 {
@@ -426,7 +334,15 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
   delete p;
   pix = tmpPix->scale_simple(width*z, height*z, Gdk::INTERP_NEAREST);
   area->set(pix);
-  std::cout<<"video refresh: "<<width<<"x"<<height<<":"<<padding<<std::endl;
+  //std::cout<<"video refresh: "<<width<<"x"<<height<<":"<<padding<<std::endl;
+}
+static bool audio_driver_flush(const int16_t *data, size_t frames)
+{
+  size_t output_size = sizeof(int16_t);
+
+  aud->write(data, frames * output_size * 2);
+
+  return true;
 }
 static void audio_sample(int16_t left, int16_t right)
 {
@@ -438,26 +354,20 @@ static void audio_sample(int16_t left, int16_t right)
 }
 static size_t audio_sample_batch(const int16_t *data, size_t frames)
 {
-  float gain = 1;
-  float* out;
-   size_t i;
-   gain = gain / 0x8000;
-   for (i = 0; i < frames; i++)
-      out[i] = (float)data[i] * gain;
-  //memcpy(sampledata, data, frames);
-  //sampleoffs = 0;
-  //pa_mainloop_iterate(pa_ml, false, nullptr);
-  //std::cout<<"audio sample:"<<frames<<std::endl;
-  //ao_play(dev, data, frames * sizeof(int16_t))
-  return 0;
+  if (frames > (AUDIO_CHUNK_SIZE_NONBLOCKING >> 1))
+    frames = AUDIO_CHUNK_SIZE_NONBLOCKING >> 1;
+
+  audio_driver_flush(data, frames << 1);
+
+  return frames;
 }
 static void input_poll()
 {
-  std::cout<<"input poll"<<std::endl;
+  //std::cout<<"input poll"<<std::endl;
 }
 static int16_t input_state(unsigned port, unsigned device, unsigned index, unsigned id)
 {
-  std::cout<<"input state:"<<port<<":"<<device<<":"<<index<<":"<<id<<std::endl;
+  //std::cout<<"input state:"<<port<<":"<<device<<":"<<index<<":"<<id<<std::endl;
   return 0;
 }
 
@@ -470,6 +380,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
   Glib::init();
   Gio::init();
 
+  settings = Gio::Settings::create("org.colinkinloch.emulatron");
 
   LibRetroCore* dinothwar = new LibRetroCore("./src/libretro-cores/Dinothawr/dinothawr_libretro");
   LibRetroCore* bsnes = new LibRetroCore("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro");
@@ -498,97 +409,9 @@ Emulatron::Emulatron(int& argc, char**& argv):
     sampledata[a] = 0;
   }
 
-  pa_proplist *ctxProp = pa_proplist_new();
-  pa_proplist_sets(ctxProp, PA_PROP_APPLICATION_ICON_NAME, "input-gaming");
+  audio = aud = new Audio(avInfo.timing.sample_rate, settings->get_uint("audiolatency"));
+  std::cout<<"latency is "<<settings->get_uint("audiolatency")<<std::endl;
 
-  pa = new pa_t();
-  pa->mainloop = pa_threaded_mainloop_new();
-  pa_ml = pa_mainloop_new();
-  pa_mlapi = pa_mainloop_get_api(pa_ml);
-  pa->context = pa_ctx = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(pa->mainloop), "Emulatron", ctxProp);
-  pa_context_set_state_callback(pa->context, context_state_cb, pa);
-
-  pa_context_connect(pa->context, nullptr, PA_CONTEXT_NOFLAGS, NULL);
-  pa_threaded_mainloop_lock(pa->mainloop);
-  pa_threaded_mainloop_start(pa->mainloop);
-  pa_threaded_mainloop_wait(pa->mainloop);
-
-  pa_sample_spec spec;
-  spec.format = PA_SAMPLE_FLOAT32LE;
-  spec.channels = 2;
-  spec.rate = avInfo.timing.sample_rate;
-
-  pa->stream = pa_stream_new(pa->context, "audio", &spec, nullptr);
-
-  pa_stream_set_state_callback(pa->stream, stream_state_cb, pa);
-  pa_stream_set_write_callback(pa->stream, stream_request_cb, pa);
-  pa_stream_set_latency_update_callback(pa->stream, stream_latency_update_cb, pa);
-  pa_stream_set_underflow_callback(pa->stream, underrun_update_cb, pa);
-  pa_stream_set_buffer_attr_callback(pa->stream, buffer_attr_cb, pa);
-
-  buffer_attr.maxlength = -1;
-  buffer_attr.tlength = pa_usec_to_bytes(latency * PA_USEC_PER_MSEC, &spec);
-  buffer_attr.prebuf = -1;
-  buffer_attr.minreq = -1;
-  buffer_attr.fragsize = -1;
-
-  pa_stream_connect_playback(pa->stream, NULL, &buffer_attr, PA_STREAM_ADJUST_LATENCY, NULL, NULL);
-
-  pa_threaded_mainloop_wait(pa->mainloop);
-
-  const pa_buffer_attr *server_attr = nullptr;
-  server_attr = pa_stream_get_buffer_attr(pa->stream);
-  if (server_attr)
-   {
-      pa->buffer_size = server_attr->tlength;
-      std::cout<<"[PulseAudio]: Requested "<<buffer_attr.tlength
-      <<" bytes buffer, got "<<pa->buffer_size
-      <<"."<<std::endl;
-   }
-   else
-      pa->buffer_size = buffer_attr.tlength;
-
-  pa_threaded_mainloop_unlock(pa->mainloop);
-  /*
-  pa_context_flags_t ctx_flags;
-  pa_context_connect(pa_ctx, nullptr, (pa_context_flags_t)0, nullptr);
-
-  pa_context_set_state_callback(pa_ctx, pa_state_cb, &pa_ready);
-
-  while (pa_ready == 0) {
-    pa_mainloop_iterate(pa_ml, 1, NULL);
-  }
-
-  ss.rate = avInfo.timing.sample_rate;
-  ss.channels = 2;
-  ss.format = PA_SAMPLE_FLOAT32LE;
-  playstream = pa_stream_new(pa_ctx, "audio", &ss, NULL);
-  if (!playstream) {
-    std::cout<<"pa_stream_new failed"<<std::endl;
-  }
-  pa_stream_set_write_callback(playstream, stream_request_cb, NULL);
-  pa_stream_set_underflow_callback(playstream, stream_underflow_cb, NULL);
-
-  bufattr.fragsize = (uint32_t)-1;
-  bufattr.maxlength = -1;//pa_usec_to_bytes(latency,&ss);
-  bufattr.minreq = -1;//pa_usec_to_bytes(0,&ss);
-  bufattr.prebuf = (uint32_t)-1;
-  bufattr.tlength = pa_usec_to_bytes(latency*PA_USEC_PER_MSEC, &ss);
-  r = pa_stream_connect_playback(playstream, NULL, &bufattr,
-  (pa_stream_flags_t)(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE),
-  NULL, NULL);
-
-  if (r < 0) {
-    // Old pulse audio servers don't like the ADJUST_LATENCY flag, so retry without that
-    r = pa_stream_connect_playback(playstream, NULL, &bufattr,
-                                   (pa_stream_flags_t)(PA_STREAM_INTERPOLATE_TIMING|
-                                   PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
-  }
-  if (r < 0) {
-    printf("pa_stream_connect_playback failed\n");
-    retval = -1;
-  }
-  */
   Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path("./openvgdb.sqlite");
   OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
   if(!openVGDBFile->query_exists())
@@ -624,18 +447,18 @@ Emulatron::Emulatron(int& argc, char**& argv):
   refBuilder = Gtk::Builder::create();
   refBuilder->set_application(Glib::RefPtr<Emulatron>(this));
 
-  settings = Gtk::Settings::get_default();
-  settings->property_gtk_application_prefer_dark_theme() = true;
-  
+  uiSettings = Gtk::Settings::get_default();
+  uiSettings->property_gtk_application_prefer_dark_theme() = true;
+
   Glib::RefPtr<Gdk::Screen> screen = Gdk::Screen::get_default();
   Glib::RefPtr<Gtk::CssProvider> css = Gtk::CssProvider::create();
-  
+
   css->load_from_file(Gio::File::create_for_uri("resource:///org/colinkinloch/emulatron/ui/emulatron.css"));
-  
+
   Glib::RefPtr<Gtk::StyleContext> styleContext = Gtk::StyleContext::create();
-  
+
   styleContext->add_provider_for_screen(screen,css,GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-  
+
   try
   {
     refBuilder->add_from_resource("/org/colinkinloch/emulatron/gtk/menus.ui");
@@ -655,7 +478,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
   {
     std::cerr << "BuilderError: " << ex.what() << std::endl;
   }
-  
+
   try
   {
     refBuilder->get_widget_derived("emu_main_window", emuWindow);
@@ -674,7 +497,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
   {
     std::cerr << "runtime_error: " << ex.what() << std::endl;
   }
-  
+
   area = gameImageArea;
 
   GtkWidget* glAreaWidget = gameArea->gobj();
@@ -745,7 +568,7 @@ bool Emulatron::stepGame()
 }
 bool Emulatron::stepSound()
 {
-  pa_mainloop_iterate(pa_ml, false, nullptr);
+  //pa_mainloop_iterate(pa_ml, false, nullptr);
   return true;
 }
 

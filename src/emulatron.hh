@@ -8,13 +8,14 @@
 #include "emu-preference-window.hh"
 
 #include "libretro-core.hh"
+#include "audio.hh"
 
 class Emulatron: public Gtk::Application
 {
 protected:
 
   Glib::RefPtr<Gtk::Builder> refBuilder;
-  Glib::RefPtr<Gtk::Settings> settings;
+  Glib::RefPtr<Gtk::Settings> uiSettings;
 
   void view_gl();
 
@@ -40,7 +41,10 @@ public:
   Gtk::Image* gameImageArea;
   Gtk::Stack* emuMainStack;
   
+  Glib::RefPtr<Gio::Settings> settings;
+
   LibRetroCore* core;
+  Audio* audio;
 
   Emulatron(int& argc, char**& argv);
 };
