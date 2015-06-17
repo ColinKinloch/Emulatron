@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema path="/org/colinkinloch/emulatron/" id="org.colinkinloch.emulatron" gettext-domain="@GETTEXT_PACKAGE@">
-    <key type="u" name="audiolatency">
+  <schema id="org.colinkinloch.emulatron" path="/org/colinkinloch/emulatron/" gettext-domain="@GETTEXT_PACKAGE@">
+    <child schema="org.colinkinloch.emulatron.audio" name="audio"/>
+  </schema>
+  <schema id="org.colinkinloch.emulatron.audio" path="/org/colinkinloch/emulatron/audio/">
+    <key name="latency" type="u">
       <default>64</default>
       <summary>Audio latency</summary>
       <description>Audio latency of the audio</description>

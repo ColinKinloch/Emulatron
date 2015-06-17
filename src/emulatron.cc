@@ -28,10 +28,6 @@
 
 retro_system_av_info avInfo;
 
-std::default_random_engine generator;
-std::uniform_real_distribution<float> distribution(0,1);
-auto rng = std::bind(distribution, generator);
-
 Audio* aud;
 Gtk::Image* area;
 Glib::RefPtr<Gdk::Pixbuf> pix;
@@ -41,7 +37,7 @@ retro_pixel_format pixFormat = RETRO_PIXEL_FORMAT_0RGB1555;
 static gboolean
 render (GtkGLArea *area, GdkGLContext *context)
 {
-  glClearColor (rng(), rng(), rng(), 0);
+  glClearColor (0,0,0,0);
   glClear (GL_COLOR_BUFFER_BIT);
   return true;
 };
@@ -344,6 +340,10 @@ static void audio_sample(int16_t left, int16_t right)
   //ao_play(dev, buffer, sizeof(buffer));
   std::cout<<"audio sample"<<std::endl;
 }
+bool audio_driver_flush(const int16_t *data, size_t samples)
+{
+  return true;
+}
 static size_t audio_sample_batch(const int16_t *data, size_t frames)
 {
   if (frames > (AUDIO_CHUNK_SIZE_NONBLOCKING >> 1))
@@ -401,8 +401,8 @@ Emulatron::Emulatron(int& argc, char**& argv):
     sampledata[a] = 0;
   }
 
-  audio = aud = new Audio(avInfo.timing.sample_rate, settings->get_uint("audiolatency"));
-  std::cout<<"latency is "<<settings->get_uint("audiolatency")<<std::endl;
+  Glib::RefPtr<Gio::Settings> audioSettings = settings->get_child("audio");
+  audio = aud = new Audio(avInfo.timing.sample_rate, audioSettings->get_uint("latency"));
 
   Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path("./openvgdb.sqlite");
   OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
