@@ -61,7 +61,6 @@ static int16_t sampledata[20000];
 
 static bool environment_cb(unsigned cmd, void *data)
 {
-  std::cout<<"environment: ";
   switch(cmd) {
     case RETRO_ENVIRONMENT_SET_ROTATION:
       std::cout<<"set rotation"<<std::endl;
@@ -120,7 +119,7 @@ static bool environment_cb(unsigned cmd, void *data)
     }
     case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
     {
-      std::cout<<"get variable update"<<std::endl;
+      //std::cout<<"get variable update"<<std::endl;
       return false;
     }
     case RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME:
@@ -342,6 +341,8 @@ static void audio_sample(int16_t left, int16_t right)
 }
 bool audio_driver_flush(const int16_t *data, size_t samples)
 {
+  //convert samples to avInfo.timing.sample_rate
+  aud->write(data, samples);
   return true;
 }
 static size_t audio_sample_batch(const int16_t *data, size_t frames)
@@ -402,9 +403,9 @@ Emulatron::Emulatron(int& argc, char**& argv):
   }
 
   Glib::RefPtr<Gio::Settings> audioSettings = settings->get_child("audio");
-  audio = aud = new Audio(avInfo.timing.sample_rate, audioSettings->get_uint("latency"));
+  audio = aud = new Audio(audioSettings->get_uint("rate"), audioSettings->get_uint("latency"));
 
-  Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path("./openvgdb.sqlite");
+  Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path(settings->get_string("openvgdb-path"));
   OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
   if(!openVGDBFile->query_exists())
   {
@@ -550,7 +551,8 @@ void Emulatron::startGame(const Gtk::TreeModel::Path& path)
     //Glib::signal_timeout().connect(sigc::mem_fun(this, &Emulatron::stepSound), (1000/avInfo.timing.fps));
     //retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
     //Glib::signal_idle().connect(sigc::mem_fun(this, &Emulatron::stepSound), Glib::PRIORITY_DEFAULT_IDLE);
-    Glib::signal_timeout().connect(sigc::mem_fun(this, &Emulatron::stepGame), 16/*1000/avInfo.timing.fps*/, Glib::PRIORITY_HIGH);
+    std::cout<<avInfo.timing.fps<<std::endl;
+    Glib::signal_timeout().connect(sigc::mem_fun(this, &Emulatron::stepGame), 1000/avInfo.timing.fps, Glib::PRIORITY_HIGH);
   }
 }
 bool Emulatron::stepGame()

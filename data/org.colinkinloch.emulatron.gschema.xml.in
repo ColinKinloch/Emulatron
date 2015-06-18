@@ -2,12 +2,31 @@
 <schemalist>
   <schema id="org.colinkinloch.emulatron" path="/org/colinkinloch/emulatron/" gettext-domain="@GETTEXT_PACKAGE@">
     <child schema="org.colinkinloch.emulatron.audio" name="audio"/>
+    <child schema="org.colinkinloch.emulatron.video" name="video"/>
+    <key name="openvgdb-path" type="s">
+      <default>'./openvgdb.sqlite'</default>
+      <summary>Path to openvgdb database</summary>
+    </key>
   </schema>
   <schema id="org.colinkinloch.emulatron.audio" path="/org/colinkinloch/emulatron/audio/">
     <key name="latency" type="u">
       <default>64</default>
       <summary>Audio latency</summary>
-      <description>Audio latency of the audio</description>
+      <description>Desired audio latency in milliseconds</description>
     </key>
+    <key name="rate" type="u">
+      <default>48000</default>
+      <summary>Output audio sample rate</summary>
+    </key>
+    <key name="sync" type="b">
+      <default>true</default>
+      <summary>Will sync (block) on audio</summary>
+    </key>
+    <key name="volume" type="d">
+      <default>0.0</default>
+      <summary>Gain</summary>
+    </key>
+  </schema>
+  <schema id="org.colinkinloch.emulatron.video" path="/org/colinkinloch/emulatron/video/">
   </schema>
 </schemalist>
