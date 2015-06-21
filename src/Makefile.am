@@ -3,6 +3,14 @@ SUBDIRS += src/libretro-cores/bsnes-libretro
 $(shell cp src/libretro-cores/vba-next/Makefile.libretro \
 	   src/libretro-cores/vba-next/Makefile)
 SUBDIRS += src/libretro-cores/vba-next
+SUBDIRS += src/libretro-cores/mupen64plus-libretro
+SUBDIRS += src/libretro-cores/snes9x/libretro
+$(shell cp src/libretro-cores/blueMSX-libretro/Makefile.libretro \
+		 src/libretro-cores/blueMSX-libretro/Makefile)
+SUBDIRS += src/libretro-cores/blueMSX-libretro
+$(shell cp src/libretro-cores/Genesis-Plus-GX/Makefile.libretro \
+     src/libretro-cores/Genesis-Plus-GX/Makefile)
+SUBDIRS += src/libretro-cores/Genesis-Plus-GX
 
 bin_PROGRAMS += src/emulatron
 

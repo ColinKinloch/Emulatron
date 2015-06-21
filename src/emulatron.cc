@@ -378,6 +378,8 @@ Emulatron::Emulatron(int& argc, char**& argv):
   LibRetroCore* dinothwar = new LibRetroCore("./src/libretro-cores/Dinothawr/dinothawr_libretro");
   LibRetroCore* bsnes = new LibRetroCore("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro");
   LibRetroCore* vbaNext = new LibRetroCore("./src/libretro-cores/vba-next/vba_next_libretro");
+  LibRetroCore* snes9x = new LibRetroCore("./src/libretro-cores/snes9x/libretro/snes9x_libretro");
+  //LibRetroCore* mupen = new LibRetroCore("./src/libretro-cores/mupen64plus-libretro/mupen64plus_libretro");
 
   core = vbaNext;
 
@@ -403,7 +405,8 @@ Emulatron::Emulatron(int& argc, char**& argv):
   }
 
   Glib::RefPtr<Gio::Settings> audioSettings = settings->get_child("audio");
-  audio = aud = new Audio(audioSettings->get_uint("rate"), audioSettings->get_uint("latency"));
+  //audioSettings->get_uint("rate")
+  audio = aud = new Audio(avInfo.timing.sample_rate, audioSettings->get_uint("latency"));
 
   Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path(settings->get_string("openvgdb-path"));
   OpenVGDB openVGDB = OpenVGDB(openVGDBFile);

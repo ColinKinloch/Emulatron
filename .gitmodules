@@ -13,3 +13,9 @@
 [submodule "src/libretro-cores/vba-next"]
 	path = src/libretro-cores/vba-next
 	url = git@github.com:libretro/vba-next.git
+[submodule "src/libretro-cores/mupen64plus-libretro"]
+	path = src/libretro-cores/mupen64plus-libretro
+	url = git@github.com:libretro/mupen64plus-libretro.git
+[submodule "src/libretro-cores/snes9x"]
+	path = src/libretro-cores/snes9x
+	url = git@github.com:libretro/snes9x.git
