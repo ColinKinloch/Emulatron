@@ -79,8 +79,13 @@ static void stream_success_cb(pa_stream *s, int success, void *data)
    pa->success = success;
    pa_threaded_mainloop_signal(pa->mainloop, 0);
 }
-Audio::Audio(unsigned rate, unsigned latency)
+Audio::Audio(Glib::RefPtr<Gio::Settings> set)
 {
+
+  settings = set;
+
+  unsigned rate = settings->get_uint("rate");
+  unsigned latency = settings->get_uint("latency");
 
   pa_proplist *ctxProp = pa_proplist_new();
   pa_proplist_sets(ctxProp, PA_PROP_APPLICATION_ICON_NAME, "input-gaming");

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sigc++/sigc++.h>
 #include <algorithm>
+#include <gtkmm.h>
 
 #define AUDIO_CHUNK_SIZE_BLOCKING 512
 /* So we don't get complete line-noise when fast-forwarding audio. */
@@ -24,8 +25,10 @@ class Audio
   pa_t *pa;
   pa_buffer_attr buffer_attr;
 public:
-  Audio(unsigned rate, unsigned latency);
+  Audio(Glib::RefPtr<Gio::Settings> set);
   ~Audio();
+
+  Glib::RefPtr<Gio::Settings> settings;
 
   size_t write(const void *buffer, size_t size);
   bool stop();

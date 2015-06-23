@@ -341,7 +341,15 @@ static void audio_sample(int16_t left, int16_t right)
 }
 bool audio_driver_flush(const int16_t *data, size_t samples)
 {
+
   //convert samples to avInfo.timing.sample_rate
+  //audioSettings->get_uint("rate")
+  //avInfo.timing.sample_rate
+  int dif = avInfo.timing.sample_rate/aud->settings->get_uint("rate");
+  for(int i=0; i<aud->settings->get_uint("rate"); ++i)
+  {
+
+  }
   aud->write(data, samples);
   return true;
 }
@@ -406,7 +414,8 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   Glib::RefPtr<Gio::Settings> audioSettings = settings->get_child("audio");
   //audioSettings->get_uint("rate")
-  audio = aud = new Audio(avInfo.timing.sample_rate, audioSettings->get_uint("latency"));
+  //avInfo.timing.sample_rate
+  audio = aud = new Audio(audioSettings);
 
   Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path(settings->get_string("openvgdb-path"));
   OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
