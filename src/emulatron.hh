@@ -39,6 +39,7 @@ public:
   EmuAboutDialog* aboutDialog;
   Gtk::Widget* gameArea;
   Gtk::Image* gameImageArea;
+  Gtk::DrawingArea* gameCairoArea;
   Gtk::Stack* emuMainStack;
   
   Glib::RefPtr<Gio::Settings> settings;

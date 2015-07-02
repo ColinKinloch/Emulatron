@@ -29,7 +29,8 @@
 retro_system_av_info avInfo;
 
 Audio* aud;
-Gtk::Image* area;
+Gtk::DrawingArea* area;
+Gtk::Allocation alloc;
 Glib::RefPtr<Gdk::Pixbuf> pix;
 
 retro_pixel_format pixFormat = RETRO_PIXEL_FORMAT_0RGB1555;
@@ -292,7 +293,22 @@ RGB8888* toRGB8888(RGB1555* in, unsigned width, unsigned height, size_t pitch)
 }
 static void video_frame(const void *data, unsigned width, unsigned height, size_t pitch)
 {
-  int z = 4;
+  int sw = width;
+  int sh = height;
+  float sr = (float)sw/sh;
+  int dw = alloc.get_width();
+  int dh = alloc.get_height();
+  float dr = (float)dw/dh;
+  float s = 0;
+  if(dr<sr)
+  {
+    s = (float)dw/sw;
+  }
+  else
+  {
+    std::cout<<"this happens?"<<std::endl;
+    s = (float)dh/sh;
+  }
   int padding;
   RGB8888* p;
   switch(pixFormat)
@@ -326,10 +342,23 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
   auto oPix = Gdk::Pixbuf::create_from_data((guchar*)p,
   Gdk::COLORSPACE_RGB, true, 8,
   width, height, stride);
-  pix = oPix->scale_simple(width*z, height*z, Gdk::INTERP_NEAREST);
-  area->set(pix);
+  pix = oPix->scale_simple(s*width, s*height, Gdk::INTERP_NEAREST);
+  area->queue_draw();
+  //area->set(pix);
   delete p;
   //std::cout<<"video refresh: "<<width<<"x"<<height<<":"<<padding<<std::endl;
+}
+static bool draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr)
+{
+  if(!pix)
+    return false;
+  Gdk::Cairo::set_source_pixbuf(cr, pix, 0, 0);
+  cr->paint();
+  return true;
+}
+static void resize_cairo(Gtk::Allocation a)
+{
+  alloc = a;
 }
 static void audio_sample(int16_t left, int16_t right)
 {
@@ -345,12 +374,11 @@ bool audio_driver_flush(const int16_t *data, size_t samples)
   //convert samples to avInfo.timing.sample_rate
   //audioSettings->get_uint("rate")
   //avInfo.timing.sample_rate
-  int dif = avInfo.timing.sample_rate/aud->settings->get_uint("rate");
-  for(int i=0; i<aud->settings->get_uint("rate"); ++i)
+  float dif = avInfo.timing.sample_rate/aud->settings->get_uint("rate");
+  /*for(int i=0; i<aud->settings->get_uint("rate"); ++i)
   {
-
-  }
-  aud->write(data, samples);
+  }*/
+  //aud->write(data, samples);
   return true;
 }
 static size_t audio_sample_batch(const int16_t *data, size_t frames)
@@ -380,6 +408,12 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   Glib::init();
   Gio::init();
+
+  Gtk::Window::set_default_icon_list({
+    Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/dino_down.png"),
+    Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/icon32.png"),
+    Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/joy-angle-256.png")
+  });
 
   settings = Gio::Settings::create("org.colinkinloch.emulatron");
 
@@ -413,8 +447,6 @@ Emulatron::Emulatron(int& argc, char**& argv):
   }
 
   Glib::RefPtr<Gio::Settings> audioSettings = settings->get_child("audio");
-  //audioSettings->get_uint("rate")
-  //avInfo.timing.sample_rate
   audio = aud = new Audio(audioSettings);
 
   Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path(settings->get_string("openvgdb-path"));
@@ -491,6 +523,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     refBuilder->get_widget_derived("emu_about_dialog", aboutDialog);
     refBuilder->get_widget("game_area", gameArea);
     refBuilder->get_widget("game_image_area", gameImageArea);
+    refBuilder->get_widget("game_cairo_area", gameCairoArea);
     refBuilder->get_widget("emu_main_stack", emuMainStack);
     //add_window(*emuWindow);
   }
@@ -503,7 +536,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     std::cerr << "runtime_error: " << ex.what() << std::endl;
   }
 
-  area = gameImageArea;
+  area = gameCairoArea;
 
   GtkWidget* glAreaWidget = gameArea->gobj();
   GtkGLArea* glArea = GTK_GL_AREA(glAreaWidget);
@@ -514,6 +547,11 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   g_signal_connect(glArea, "render", G_CALLBACK(render), NULL);
   g_signal_connect(glArea, "resize", G_CALLBACK(resize), NULL);
+
+  //g_signal_connect(gameCairoArea, "resize", G_CALLBACK(draw_cairo), NULL);
+  //g_signal_connect(gameCairoArea, "draw", G_CALLBACK(draw_cairo), NULL);
+  gameCairoArea->signal_size_allocate().connect(&resize_cairo);
+  gameCairoArea->signal_draw().connect(&draw_cairo);
 
   prefWindow->set_transient_for(*emuWindow);
   aboutDialog->set_transient_for(*emuWindow);

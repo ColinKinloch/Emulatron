@@ -88,7 +88,7 @@ Audio::Audio(Glib::RefPtr<Gio::Settings> set)
   unsigned latency = settings->get_uint("latency");
 
   pa_proplist *ctxProp = pa_proplist_new();
-  pa_proplist_sets(ctxProp, PA_PROP_APPLICATION_ICON_NAME, "input-gaming");
+  //pa_proplist_sets(ctxProp, PA_PROP_APPLICATION_ICON_NAME, "input-gaming");
   pa = new pa_t();
   pa->mainloop = pa_threaded_mainloop_new();
   pa->context = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(pa->mainloop), "Emulatron", ctxProp);

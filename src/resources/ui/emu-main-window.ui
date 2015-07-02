@@ -474,13 +474,21 @@
                     <object class="GtkStack" id="gl_switcher">
                       <property name="visible">True</property>
                       <child>
+                        <object class="GtkDrawingArea" id="game_cairo_area">
+                          <property name="visible">True</property>
+                        </object>
+                        <packing>
+                          <property name="name">cairo-area</property>
+                        </packing>
+                      </child>
+                      <!--<child>
                         <object class="GtkImage" id="game_image_area">
                           <property name="visible">True</property>
                         </object>
                         <packing>
                           <property name="name">pixbuf-area</property>
                         </packing>
-                      </child>
+                      </child>-->
                       <child>
                         <object class="GtkGLArea" id="game_area">
                           <property name="visible">True</property>
