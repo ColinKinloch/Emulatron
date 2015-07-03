@@ -8,7 +8,6 @@
     <file compressed="true">ui/emu-view-actions.ui</file>
     <file compressed="true">ui/emu-header-bar.ui</file>
     <file compressed="true">ui/emulatron.css</file>
-    <file compressed="true" preprocess="to-pixdata">img/icon32.png</file>
     <file compressed="true" preprocess="to-pixdata">img/dpad.png</file>
     <file compressed="true" preprocess="to-pixdata">img/joy-256.png</file>
     <file compressed="true" preprocess="to-pixdata">img/joy-512.png</file>
