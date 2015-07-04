@@ -30,13 +30,7 @@ retro_system_av_info avInfo;
 
 Audio* aud;
 Gtk::DrawingArea* area;
-Gtk::Allocation alloc;
-Glib::RefPtr<Gdk::Pixbuf> pix;
-Cairo::RefPtr<Cairo::ImageSurface> surf;
 Cairo::RefPtr<Cairo::SurfacePattern> patt;
-Cairo::Matrix mat;
-int cornx, corny;
-float s = 0;
 
 
 Cairo::Format pixFormat = Cairo::Format::FORMAT_RGB16_565;
@@ -66,7 +60,7 @@ static int latency = 64;//pow(2, 6);// start latency in micro seconds
 static int sampleoffs = 0;
 static int16_t sampledata[20000];
 
-static bool environment_cb(unsigned cmd, void *data)
+bool Emulatron::env(unsigned cmd, void *data)
 {
   switch(cmd) {
     case RETRO_ENVIRONMENT_SET_ROTATION:
@@ -238,11 +232,7 @@ static bool environment_cb(unsigned cmd, void *data)
   }
   return false;
 }
-void Emulatron::vf(const void *d, unsigned w, unsigned h, size_t p)
-{
-  std::cout<<"it works"<<w<<"x"<<h<<std::endl;
-}
-static void video_frame(const void *data, unsigned width, unsigned height, size_t pitch)
+void Emulatron::vf(const void *data, unsigned width, unsigned height, size_t pitch)
 {
   int sw = width;
   int sh = height;
@@ -250,6 +240,8 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
   int dw = alloc.get_width();
   int dh = alloc.get_height();
   float dr = (float)dw/dh;
+  float s;
+  int cornx, corny;
   if(dr<sr)
   {
     s = (float)dw/sw;
@@ -270,7 +262,7 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
   mat.scale(1/s,1/s);
   mat.translate(cornx, corny);
 
-  area->queue_draw();
+  gameCairoArea->queue_draw();
 }
 bool Emulatron::draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr)
 {
@@ -287,12 +279,8 @@ void Emulatron::resize_cairo(Gtk::Allocation a)
 {
   alloc = a;
 }
-static void audio_sample(int16_t left, int16_t right)
+void Emulatron::as(int16_t left, int16_t right)
 {
-  //int16_t *buffer[2];
-  //buffer[0] = left;
-  //buffer[1] = right;
-  //ao_play(dev, buffer, sizeof(buffer));
   std::cout<<"audio sample"<<std::endl;
 }
 bool audio_driver_flush(const int16_t *data, size_t samples)
@@ -308,7 +296,7 @@ bool audio_driver_flush(const int16_t *data, size_t samples)
   //aud->write(data, samples);
   return true;
 }
-static size_t audio_sample_batch(const int16_t *data, size_t frames)
+size_t Emulatron::asb(const int16_t *data, size_t frames)
 {
   if (frames > (AUDIO_CHUNK_SIZE_NONBLOCKING >> 1))
     frames = AUDIO_CHUNK_SIZE_NONBLOCKING >> 1;
@@ -317,17 +305,15 @@ static size_t audio_sample_batch(const int16_t *data, size_t frames)
 
   return frames;
 }
-static void input_poll()
+void Emulatron::ip()
 {
   //std::cout<<"input poll"<<std::endl;
 }
-static int16_t input_state(unsigned port, unsigned device, unsigned index, unsigned id)
+int16_t Emulatron::is(unsigned port, unsigned device, unsigned index, unsigned id)
 {
   //std::cout<<"input state:"<<port<<":"<<device<<":"<<index<<":"<<id<<std::endl;
   return 0;
 }
-
-
 
 Emulatron::Emulatron(int& argc, char**& argv):
   Gtk::Application(argc, argv, "org.colinkinloch.emulatron", Gio::APPLICATION_FLAGS_NONE)
@@ -354,14 +340,12 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   core->loadSymbols();
 
+  core->signal_environment().connect(sigc::mem_fun(this, &Emulatron::env));
   core->signal_video_refresh().connect(sigc::mem_fun(this, &Emulatron::vf));
-
-  core->setEnvironment(&environment_cb);
-  core->setVideoRefresh(&video_frame);
-  core->setAudioSample(&audio_sample);
-  core->setAudioSampleBatch(&audio_sample_batch);
-  core->setInputPoll(&input_poll);
-  core->setInputState(&input_state);
+  core->signal_audio_sample().connect(sigc::mem_fun(this, &Emulatron::as));
+  core->signal_audio_sample_batch().connect(sigc::mem_fun(this, &Emulatron::asb));
+  core->signal_input_poll().connect(sigc::mem_fun(this, &Emulatron::ip));
+  core->signal_input_state().connect(sigc::mem_fun(this, &Emulatron::is));
 
   avInfo = core->getSystemAVInfo();
 

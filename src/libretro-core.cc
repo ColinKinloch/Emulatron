@@ -11,6 +11,8 @@
 } while(0)
 
 
+LibRetroCore* core;
+
 LibRetroCore::LibRetroCore(std::string p):
   Glib::Module(p, Glib::MODULE_BIND_LOCAL|Glib::MODULE_BIND_LAZY)
 {
@@ -60,11 +62,39 @@ void LibRetroCore::loadSymbols()
   SYM(retro_get_memory_data);
   SYM(retro_get_memory_size);
 }
-
+static bool env(unsigned cmd, void *data)
+{
+  return core->on_environment(cmd, data);
+}
+static void vr(const void *data, unsigned width, unsigned height, size_t pitch){
+  core->on_video_refresh(data, width, height, pitch);
+}
+static void as(int16_t left, int16_t right)
+{
+  core->on_audio_sample(left, right);
+}
+size_t asb(const int16_t *data, size_t frames)
+{
+  return core->on_audio_sample_batch(data, frames);
+}
+void ip()
+{
+  core->on_input_poll();
+}
+int16_t is(unsigned port, unsigned device, unsigned index, unsigned id)
+{
+  return core->on_input_state(port, device, index, id);
+}
 void LibRetroCore::init()
 {
+  core = this;
+  pretro_set_environment(&env);
+  pretro_set_video_refresh(&vr);
+  pretro_set_audio_sample(&as);
+  pretro_set_audio_sample_batch(&asb);
+  pretro_set_input_poll(ip);
+  pretro_set_input_state(is);
   pretro_init();
-  //setEnvironment(&LibRetroCore::environment_cb);
 }
 void LibRetroCore::deinit()
 {
@@ -102,34 +132,54 @@ retro_system_av_info LibRetroCore::getSystemAVInfo()
   }
 }
 
-void LibRetroCore::setEnvironment(retro_environment_t cb)
+bool LibRetroCore::on_environment(unsigned cmd, void *data)
 {
-  pretro_set_environment(cb);
+  return m_signal_environment.emit(cmd, data);
 }
-void LibRetroCore::setVideoRefresh(retro_video_refresh_t cb)
+void LibRetroCore::on_video_refresh(const void *data, unsigned width, unsigned height, size_t pitch)
 {
-  pretro_set_video_refresh(cb);
+  m_signal_video_refresh.emit(data, width, height, pitch);
 }
-void LibRetroCore::setAudioSample(retro_audio_sample_t cb)
+void LibRetroCore::on_audio_sample(int16_t left, int16_t right)
 {
-  pretro_set_audio_sample(cb);
+  m_signal_audio_sample.emit(left, right);
 }
-void LibRetroCore::setAudioSampleBatch(retro_audio_sample_batch_t cb)
+size_t LibRetroCore::on_audio_sample_batch(const int16_t *data, size_t frames)
 {
-  pretro_set_audio_sample_batch(cb);
+  return m_signal_audio_sample_batch.emit(data, frames);
 }
-void LibRetroCore::setInputPoll(retro_input_poll_t cb)
+void LibRetroCore::on_input_poll()
 {
-  pretro_set_input_poll(cb);
+  return m_signal_input_poll();
 }
-void LibRetroCore::setInputState(retro_input_state_t cb)
+int16_t LibRetroCore::on_input_state(unsigned port, unsigned device, unsigned index, unsigned id)
 {
-  pretro_set_input_state(cb);
+  return m_signal_input_state(port, device, index, id);
 }
 
+LibRetroCore::type_signal_environment LibRetroCore::signal_environment()
+{
+  return m_signal_environment;
+}
 LibRetroCore::type_signal_video_refresh LibRetroCore::signal_video_refresh()
 {
   return m_signal_video_refresh;
+}
+LibRetroCore::type_signal_audio_sample LibRetroCore::signal_audio_sample()
+{
+  return m_signal_audio_sample;
+}
+LibRetroCore::type_signal_audio_sample_batch LibRetroCore::signal_audio_sample_batch()
+{
+  return m_signal_audio_sample_batch;
+}
+LibRetroCore::type_signal_input_poll LibRetroCore::signal_input_poll()
+{
+  return m_signal_input_poll;
+}
+LibRetroCore::type_signal_input_state LibRetroCore::signal_input_state()
+{
+  return m_signal_input_state;
 }
 
 void LibRetroCore::setControllerPortDevice(unsigned port, unsigned device)
