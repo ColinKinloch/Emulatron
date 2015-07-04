@@ -32,8 +32,14 @@ Audio* aud;
 Gtk::DrawingArea* area;
 Gtk::Allocation alloc;
 Glib::RefPtr<Gdk::Pixbuf> pix;
+Cairo::RefPtr<Cairo::ImageSurface> surf;
+Cairo::RefPtr<Cairo::SurfacePattern> patt;
+Cairo::Matrix mat;
+int cornx, corny;
+float s = 0;
 
-retro_pixel_format pixFormat = RETRO_PIXEL_FORMAT_0RGB1555;
+
+Cairo::Format pixFormat = Cairo::Format::FORMAT_RGB16_565;
 
 static gboolean
 render (GtkGLArea *area, GdkGLContext *context)
@@ -83,7 +89,27 @@ static bool environment_cb(unsigned cmd, void *data)
       break;
     case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
     {
-      pixFormat = *(retro_pixel_format*)data;
+      switch(*(retro_pixel_format*)data)
+      {
+        case RETRO_PIXEL_FORMAT_RGB565:
+        {
+          pixFormat = Cairo::Format::FORMAT_RGB16_565;
+          break;
+        }
+        case RETRO_PIXEL_FORMAT_0RGB1555:
+        {
+          break;
+        }
+        case RETRO_PIXEL_FORMAT_XRGB8888:
+        {
+          pixFormat = Cairo::Format::FORMAT_ARGB32;
+          break;
+        }
+        case RETRO_PIXEL_FORMAT_UNKNOWN:
+        {
+          break;
+        }
+      }
       return true;
     }
     case RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS:
@@ -212,84 +238,9 @@ static bool environment_cb(unsigned cmd, void *data)
   }
   return false;
 }
-//TODO BitFields don't work
-struct RGB1555 {
-  unsigned char r :5;
-  unsigned char g :5;
-  unsigned char b :5;
-};
-struct RGB565 {
-  unsigned char r :5;
-  unsigned char g :6;
-  unsigned char b :5;
-};
-struct RGB8888 {
-  unsigned char r :8;
-  unsigned char g :8;
-  unsigned char b :8;
-  unsigned char a :8;
-};
-#define GREEN_MASK  0b0000011111100000
-#define GREEN_OFFSET  5
-#define RED_MASK  0b1111100000000000
-#define RED_OFFSET  11
-#define BLUE_MASK  0b0000000000011111
-#define BLUE_OFFSET  0
-RGB8888* toRGB8888(void* in, unsigned width, unsigned height, size_t pitch)
+void Emulatron::vf(const void *d, unsigned w, unsigned h, size_t p)
 {
-  int padding = (pitch - (2 * width))/2;
-  size_t stride = (width+padding)*3;
-  int nPixels = (width+padding)*height;
-  RGB8888 *out;
-  out = new RGB8888[nPixels];
-  for(int p = 0; p<nPixels; ++p)
-  {
-    //uint16_t b = ((int*)in)[p];
-    uint8_t b1 = ((char*)in)[p*2];
-    uint8_t b2 = ((char*)in)[(p*2)+1];
-    uint16_t b = b1|((uint16_t)b2)<<8;
-    out[p].r = 255/31 * (b >> RED_OFFSET);
-    out[p].g = 255/63 * (b & GREEN_MASK) >> GREEN_OFFSET;
-    out[p].b = 255/31 * (b & BLUE_MASK);
-    out[p].a = 255;
-  }
-  return out;
-}
-
-//BAD conversion
-RGB8888* toRGB8888(RGB565* in, unsigned width, unsigned height, size_t pitch)
-{
-  int padding = (pitch - (2 * width))/2;
-  size_t stride = (width+padding)*3;
-  int nPixels = (width+padding)*height;
-  RGB8888 *out;
-  out = new RGB8888[nPixels];
-  for(int p = 0; p<nPixels; ++p)
-  {
-    RGB565 pixel = in[p];
-    out[p].b = 255/31 * pixel.r;
-    out[p].g = 255/63 * pixel.g;
-    out[p].r = 255/31 * pixel.b;
-    out[p].a = 255;
-  }
-  return out;
-}
-RGB8888* toRGB8888(RGB1555* in, unsigned width, unsigned height, size_t pitch)
-{
-  int padding = (pitch - (2 * width))/2;
-  size_t stride = (width+padding)*3;
-  int nPixels = (width+padding)*height;
-  RGB8888 *out;
-  out = new RGB8888[nPixels];
-  for(int p = 0; p<nPixels; ++p)
-  {
-    RGB1555 pixel = in[p];
-    out[p].b = 255/31 * pixel.r;
-    out[p].g = 255/31 * pixel.g;
-    out[p].r = 255/31 * pixel.b;
-    out[p].a = 255;
-  }
-  return out;
+  std::cout<<"it works"<<w<<"x"<<h<<std::endl;
 }
 static void video_frame(const void *data, unsigned width, unsigned height, size_t pitch)
 {
@@ -299,64 +250,40 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
   int dw = alloc.get_width();
   int dh = alloc.get_height();
   float dr = (float)dw/dh;
-  float s = 0;
   if(dr<sr)
   {
     s = (float)dw/sw;
   }
   else
   {
-    std::cout<<"this happens?"<<std::endl;
     s = (float)dh/sh;
   }
-  int padding;
-  RGB8888* p;
-  switch(pixFormat)
-  {
-    case RETRO_PIXEL_FORMAT_RGB565:
-    {
-      padding = (pitch - (2 * width))/2;
-      p = toRGB8888((void*)data, width, height, pitch);
-      //p = toRGB8888((RGB565*)data, width, height, pitch);
-      break;
-    }
-    case RETRO_PIXEL_FORMAT_0RGB1555:
-    {
-      padding = (pitch - (2 * width))/2;
-      p = toRGB8888((RGB1555*)data, width, height, pitch);
-      break;
-    }
-    case RETRO_PIXEL_FORMAT_XRGB8888:
-    {
-      padding = (pitch - (4 * width))/4;
-      p = (RGB8888*)data;
-      break;
-    }
-    case RETRO_PIXEL_FORMAT_UNKNOWN:
-    {
-      break;
-    }
+  cornx = -(dw-s*sw)/2;
+  corny = -(dh-s*sh)/2;
+  if(!s) {
+    s = 1;
   }
-  size_t stride = (width+padding)*4;
 
-  auto oPix = Gdk::Pixbuf::create_from_data((guchar*)p,
-  Gdk::COLORSPACE_RGB, true, 8,
-  width, height, stride);
-  pix = oPix->scale_simple(s*width, s*height, Gdk::INTERP_NEAREST);
+  surf = Cairo::ImageSurface::create((unsigned char*)data, pixFormat, sw, sh, pitch);
+
+  mat = Cairo::identity_matrix();
+  mat.scale(1/s,1/s);
+  mat.translate(cornx, corny);
+
   area->queue_draw();
-  //area->set(pix);
-  delete p;
-  //std::cout<<"video refresh: "<<width<<"x"<<height<<":"<<padding<<std::endl;
 }
-static bool draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr)
+bool Emulatron::draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr)
 {
-  if(!pix)
+  if(!surf)
     return false;
-  Gdk::Cairo::set_source_pixbuf(cr, pix, 0, 0);
+  patt = Cairo::SurfacePattern::create(surf);
+  patt->set_filter(Cairo::Filter::FILTER_NEAREST);
+  patt->set_matrix(mat);
+  cr->set_source(patt);
   cr->paint();
   return true;
 }
-static void resize_cairo(Gtk::Allocation a)
+void Emulatron::resize_cairo(Gtk::Allocation a)
 {
   alloc = a;
 }
@@ -411,7 +338,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   Gtk::Window::set_default_icon_list({
     Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/dino_down.png"),
-    Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/icon32.png"),
+    //Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/icon32.png"),
     Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/joy-angle-256.png")
   });
 
@@ -426,6 +353,8 @@ Emulatron::Emulatron(int& argc, char**& argv):
   core = vbaNext;
 
   core->loadSymbols();
+
+  core->signal_video_refresh().connect(sigc::mem_fun(this, &Emulatron::vf));
 
   core->setEnvironment(&environment_cb);
   core->setVideoRefresh(&video_frame);
@@ -550,8 +479,8 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   //g_signal_connect(gameCairoArea, "resize", G_CALLBACK(draw_cairo), NULL);
   //g_signal_connect(gameCairoArea, "draw", G_CALLBACK(draw_cairo), NULL);
-  gameCairoArea->signal_size_allocate().connect(&resize_cairo);
-  gameCairoArea->signal_draw().connect(&draw_cairo);
+  gameCairoArea->signal_size_allocate().connect(sigc::mem_fun(this, &Emulatron::resize_cairo));
+  gameCairoArea->signal_draw().connect(sigc::mem_fun(this, &Emulatron::draw_cairo));
 
   prefWindow->set_transient_for(*emuWindow);
   aboutDialog->set_transient_for(*emuWindow);

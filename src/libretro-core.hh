@@ -8,7 +8,10 @@
 
 class LibRetroCore: public Glib::Module
 {
-
+public:
+  typedef sigc::signal<bool, unsigned, void*> type_signal_environment;
+  typedef sigc::signal<void, const void*, unsigned, unsigned, size_t> type_signal_video_refresh;
+private:
   void (*pretro_init)(void);
   void (*pretro_deinit)(void);
 
@@ -47,6 +50,8 @@ class LibRetroCore: public Glib::Module
   void *(*pretro_get_memory_data)(unsigned);
   size_t (*pretro_get_memory_size)(unsigned);
 
+  bool environment_cb(unsigned cmd, void *data);
+
   Glib::RefPtr<Gdk::Pixbuf> frame;
   retro_pixel_format pixelFormat;
 
@@ -55,6 +60,9 @@ protected:
   std::string name;
   std::string version;
   std::string extensions;
+
+  type_signal_environment m_signal_environment;
+  type_signal_video_refresh m_signal_video_refresh;
 
 public:
   LibRetroCore(std::string path);
@@ -75,6 +83,9 @@ public:
   void setAudioSampleBatch(retro_audio_sample_batch_t);
   void setInputPoll(retro_input_poll_t);
   void setInputState(retro_input_state_t);
+
+  type_signal_environment signal_environment();
+  type_signal_video_refresh signal_video_refresh();
 
   void setControllerPortDevice(unsigned, unsigned);
 

@@ -18,6 +18,9 @@ protected:
   Glib::RefPtr<Gtk::Settings> uiSettings;
 
   void view_gl();
+  bool draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr);
+  void resize_cairo(Gtk::Allocation a);
+  void vf(const void *d, unsigned w, unsigned h, size_t p);
 
   void on_open();
 

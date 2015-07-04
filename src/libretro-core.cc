@@ -64,6 +64,7 @@ void LibRetroCore::loadSymbols()
 void LibRetroCore::init()
 {
   pretro_init();
+  //setEnvironment(&LibRetroCore::environment_cb);
 }
 void LibRetroCore::deinit()
 {
@@ -124,6 +125,11 @@ void LibRetroCore::setInputPoll(retro_input_poll_t cb)
 void LibRetroCore::setInputState(retro_input_state_t cb)
 {
   pretro_set_input_state(cb);
+}
+
+LibRetroCore::type_signal_video_refresh LibRetroCore::signal_video_refresh()
+{
+  return m_signal_video_refresh;
 }
 
 void LibRetroCore::setControllerPortDevice(unsigned port, unsigned device)
