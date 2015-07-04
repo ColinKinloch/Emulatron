@@ -452,6 +452,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
   gameCairoArea->signal_draw().connect(sigc::mem_fun(this, &Emulatron::draw_cairo));
 
   volumeSlider->signal_value_changed().connect(sigc::mem_fun(audio, &Audio::setVolume));
+  volumeSlider->set_value(audio->getVolume());
 
   prefWindow->set_transient_for(*emuWindow);
   aboutDialog->set_transient_for(*emuWindow);

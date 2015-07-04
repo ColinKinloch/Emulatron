@@ -23,8 +23,6 @@ typedef struct
 
 class Audio
 {
-  pa_t *pa;
-  pa_buffer_attr buffer_attr;
 public:
   Audio(Glib::RefPtr<Gio::Settings> set);
   ~Audio();
@@ -33,7 +31,20 @@ public:
 
   size_t write(const void *buffer, size_t size);
   void setVolume(double volume);
+  double getVolume();
   bool stop();
   bool alive();
   bool start();
+
+  typedef sigc::signal<void, double> type_signal_volume_changed;
+
+  type_signal_volume_changed signal_volume_changed();
+
+private:
+  pa_t *pa;
+  pa_buffer_attr buffer_attr;
+
+protected:
+  type_signal_volume_changed m_signal_volume_changed;
+
 };

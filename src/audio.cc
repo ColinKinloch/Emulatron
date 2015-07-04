@@ -1,5 +1,6 @@
 #include "audio.hh"
 
+Audio* audio;
 
 static void context_state_cb(pa_context *c, void *data)
 {
@@ -79,8 +80,16 @@ static void stream_success_cb(pa_stream *s, int success, void *data)
    pa->success = success;
    pa_threaded_mainloop_signal(pa->mainloop, 0);
 }
+static void sink_input_info_cb(pa_context *c, const pa_sink_input_info *i, int eol, void *data)
+{
+  pa_t *pa = (pa_t*)data;
+  pa->cvolume = i->volume;
+  pa_volume_t volume = pa_cvolume_max(&pa->cvolume);
+  audio->signal_volume_changed().emit((float)volume/PA_VOLUME_NORM);
+}
 Audio::Audio(Glib::RefPtr<Gio::Settings> set)
 {
+  audio = this;
   //pa_buffer_attr buffer_attr = {0};
   const pa_buffer_attr *server_attr = nullptr;
   pa_sample_spec spec;
@@ -190,6 +199,12 @@ size_t Audio::write(const void *buffer, size_t size)
 
    return written;
 }
+
+double Audio::getVolume()
+{
+  pa_volume_t volume = pa_cvolume_max(&pa->cvolume);
+  return (float)volume/PA_VOLUME_NORM;
+}
 void Audio::setVolume(double vol)
 {
   pa_volume_t volume;
@@ -207,7 +222,7 @@ void Audio::setVolume(double vol)
     std::cout<<"Bad volume"<<std::endl;
     pa_cvolume_set(&pa->cvolume, ss->channels, PA_VOLUME_NORM);
   }
-  pa_cvolume cvolume;
+  pa_cvolume cvolume = pa->cvolume;
   pa_cvolume_scale(&cvolume, PA_VOLUME_NORM);
   pa_sw_cvolume_multiply_scalar(&cvolume, &cvolume, volume);
   pa_context_set_sink_input_volume(pa->context, pa_stream_get_index(pa->stream),
@@ -249,4 +264,9 @@ bool Audio::start()
    pa_threaded_mainloop_unlock(pa->mainloop);
    pa->is_paused = false;
    return ret;
+}
+
+Audio::type_signal_volume_changed Audio::signal_volume_changed()
+{
+  return m_signal_volume_changed;
 }
