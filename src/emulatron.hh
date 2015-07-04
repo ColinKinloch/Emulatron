@@ -27,6 +27,8 @@ protected:
   void ip();
   int16_t is(unsigned port, unsigned device, unsigned index, unsigned id);
 
+  void setVolume(double vol);
+
   void on_open();
 
   void on_preferences();
@@ -48,6 +50,7 @@ public:
   Gtk::Image* gameImageArea;
   Gtk::DrawingArea* gameCairoArea;
   Gtk::Stack* emuMainStack;
+  Gtk::VolumeButton* volumeSlider;
 
   Gtk::Allocation alloc;
   Cairo::RefPtr<Cairo::ImageSurface> surf;

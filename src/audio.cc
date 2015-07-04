@@ -81,6 +81,9 @@ static void stream_success_cb(pa_stream *s, int success, void *data)
 }
 Audio::Audio(Glib::RefPtr<Gio::Settings> set)
 {
+  //pa_buffer_attr buffer_attr = {0};
+  const pa_buffer_attr *server_attr = nullptr;
+  pa_sample_spec spec;
 
   settings = set;
 
@@ -99,8 +102,7 @@ Audio::Audio(Glib::RefPtr<Gio::Settings> set)
   pa_threaded_mainloop_start(pa->mainloop);
   pa_threaded_mainloop_wait(pa->mainloop);
 
-  pa_sample_spec spec;
-  spec.format = PA_SAMPLE_S16LE;
+  spec.format = PA_SAMPLE_FLOAT32LE;
   spec.channels = 2;
   spec.rate = rate;
 
@@ -112,11 +114,16 @@ Audio::Audio(Glib::RefPtr<Gio::Settings> set)
   pa_stream_set_underflow_callback(pa->stream, underrun_update_cb, pa);
   pa_stream_set_buffer_attr_callback(pa->stream, buffer_attr_cb, pa);
 
+  buffer_attr.maxlength = -1;
+  buffer_attr.tlength = pa_usec_to_bytes(latency * PA_USEC_PER_MSEC, &spec);
+  buffer_attr.prebuf = -1;
+  buffer_attr.minreq = -1;
+  buffer_attr.fragsize = -1;
+
   pa_stream_connect_playback(pa->stream, NULL, &buffer_attr, PA_STREAM_ADJUST_LATENCY, NULL, NULL);
 
   pa_threaded_mainloop_wait(pa->mainloop);
 
-  const pa_buffer_attr *server_attr = nullptr;
   server_attr = pa_stream_get_buffer_attr(pa->stream);
   if (server_attr)
   {
@@ -157,7 +164,6 @@ Audio::~Audio()
 size_t Audio::write(const void *buffer, size_t size)
 {
   const uint8_t *buf = (const uint8_t*)buffer;
-
   size_t written = 0;
 
    pa_threaded_mainloop_lock(pa->mainloop);
@@ -183,6 +189,31 @@ size_t Audio::write(const void *buffer, size_t size)
    pa_threaded_mainloop_unlock(pa->mainloop);
 
    return written;
+}
+void Audio::setVolume(double vol)
+{
+  pa_volume_t volume;
+  vol *= PA_VOLUME_NORM;
+  if(vol >= (float)PA_VOLUME_MAX)
+    volume = PA_VOLUME_MAX;
+  else
+    volume = lroundf(vol);
+
+  pa_threaded_mainloop_lock(pa->mainloop);
+
+  if(!pa_cvolume_valid(&pa->cvolume))
+  {
+    const pa_sample_spec *ss = pa_stream_get_sample_spec(pa->stream);
+    std::cout<<"Bad volume"<<std::endl;
+    pa_cvolume_set(&pa->cvolume, ss->channels, PA_VOLUME_NORM);
+  }
+  pa_cvolume cvolume;
+  pa_cvolume_scale(&cvolume, PA_VOLUME_NORM);
+  pa_sw_cvolume_multiply_scalar(&cvolume, &cvolume, volume);
+  pa_context_set_sink_input_volume(pa->context, pa_stream_get_index(pa->stream),
+  &cvolume, nullptr, nullptr);
+
+  pa_threaded_mainloop_unlock(pa->mainloop);
 }
 bool Audio::stop()
 {

@@ -32,7 +32,6 @@ Audio* aud;
 Gtk::DrawingArea* area;
 Cairo::RefPtr<Cairo::SurfacePattern> patt;
 
-
 Cairo::Format pixFormat = Cairo::Format::FORMAT_RGB16_565;
 
 static gboolean
@@ -285,22 +284,20 @@ void Emulatron::as(int16_t left, int16_t right)
 }
 bool audio_driver_flush(const int16_t *data, size_t samples)
 {
-
-  //convert samples to avInfo.timing.sample_rate
-  //audioSettings->get_uint("rate")
-  //avInfo.timing.sample_rate
-  float dif = avInfo.timing.sample_rate/aud->settings->get_uint("rate");
-  /*for(int i=0; i<aud->settings->get_uint("rate"); ++i)
-  {
-  }*/
-  //aud->write(data, samples);
+  size_t i;
+  size_t outsize = sizeof(float);
+  unsigned int rate = aud->settings->get_uint("rate");
+  float out[samples];
+  float gain = 1.0 / 0x8000;
+  for(i=0; i < samples; i++)
+    out[i] = (float)data[i] * gain;
+  aud->write(out, samples*outsize);
   return true;
 }
 size_t Emulatron::asb(const int16_t *data, size_t frames)
 {
   if (frames > (AUDIO_CHUNK_SIZE_NONBLOCKING >> 1))
     frames = AUDIO_CHUNK_SIZE_NONBLOCKING >> 1;
-
   audio_driver_flush(data, frames << 1);
 
   return frames;
@@ -324,7 +321,6 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   Gtk::Window::set_default_icon_list({
     Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/dino_down.png"),
-    //Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/icon32.png"),
     Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/joy-angle-256.png")
   });
 
@@ -348,16 +344,6 @@ Emulatron::Emulatron(int& argc, char**& argv):
   core->signal_input_state().connect(sigc::mem_fun(this, &Emulatron::is));
 
   avInfo = core->getSystemAVInfo();
-
-  int r;
-  int pa_ready = 0;
-  int retval = 0;
-  unsigned int a;
-  double amp;
-
-  for (a=0; a<sizeof(sampledata)/2; a++) {
-    sampledata[a] = 0;
-  }
 
   Glib::RefPtr<Gio::Settings> audioSettings = settings->get_child("audio");
   audio = aud = new Audio(audioSettings);
@@ -438,6 +424,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     refBuilder->get_widget("game_image_area", gameImageArea);
     refBuilder->get_widget("game_cairo_area", gameCairoArea);
     refBuilder->get_widget("emu_main_stack", emuMainStack);
+    refBuilder->get_widget("volume_slider", volumeSlider);
     //add_window(*emuWindow);
   }
   catch(const Gtk::BuilderError& ex)
@@ -461,10 +448,10 @@ Emulatron::Emulatron(int& argc, char**& argv):
   g_signal_connect(glArea, "render", G_CALLBACK(render), NULL);
   g_signal_connect(glArea, "resize", G_CALLBACK(resize), NULL);
 
-  //g_signal_connect(gameCairoArea, "resize", G_CALLBACK(draw_cairo), NULL);
-  //g_signal_connect(gameCairoArea, "draw", G_CALLBACK(draw_cairo), NULL);
   gameCairoArea->signal_size_allocate().connect(sigc::mem_fun(this, &Emulatron::resize_cairo));
   gameCairoArea->signal_draw().connect(sigc::mem_fun(this, &Emulatron::draw_cairo));
+
+  volumeSlider->signal_value_changed().connect(sigc::mem_fun(audio, &Audio::setVolume));
 
   prefWindow->set_transient_for(*emuWindow);
   aboutDialog->set_transient_for(*emuWindow);
@@ -540,6 +527,11 @@ void Emulatron::view_gl()
   }
 }
 
+void Emulatron::setVolume(double val)
+{
+  std::cout<<"helo"<<val<<std::endl;
+  audio->setVolume(val);
+}
 void Emulatron::on_open()
 {
   std::cout<<"Open rom!"<<std::endl;

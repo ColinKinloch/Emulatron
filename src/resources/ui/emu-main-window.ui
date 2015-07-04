@@ -573,7 +573,7 @@
                         <object class="GtkToolItem">
                           <property name="visible">True</property>
                           <child>
-                            <object class="GtkVolumeButton">
+                            <object class="GtkVolumeButton" id="volume_slider">
                               <property name="visible">True</property>
                             </object>
                           </child>

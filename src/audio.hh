@@ -11,12 +11,13 @@
 typedef struct
 {
   pa_threaded_mainloop *mainloop;
-   pa_context *context;
-   pa_stream *stream;
-   size_t buffer_size;
-   bool nonblock;
-   bool success;
-   bool is_paused;
+  pa_context *context;
+  pa_stream *stream;
+  pa_cvolume cvolume;
+  size_t buffer_size;
+  bool nonblock;
+  bool success;
+  bool is_paused;
 } pa_t;
 
 
@@ -31,6 +32,7 @@ public:
   Glib::RefPtr<Gio::Settings> settings;
 
   size_t write(const void *buffer, size_t size);
+  void setVolume(double volume);
   bool stop();
   bool alive();
   bool start();
