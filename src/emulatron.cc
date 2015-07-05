@@ -32,6 +32,7 @@ retro_system_av_info avInfo;
 
 Audio* aud;
 Cairo::RefPtr<Cairo::SurfacePattern> patt;
+int px, py;
 
 Cairo::Format pixFormat = Cairo::Format::FORMAT_RGB16_565;
 
@@ -273,6 +274,14 @@ bool Emulatron::draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr)
   patt->set_matrix(mat);
   cr->set_source(patt);
   cr->paint();
+
+  int x = 0, y = 0;
+  //TODO Replace deprecated get_pointer with get_device_position
+  gameCairoArea->get_pointer(x, y);
+  double tx = x, ty = y;
+  mat.transform_point(tx, ty);
+  px = tx;
+  py = ty;
   return true;
 }
 void Emulatron::resize_cairo(Gtk::Allocation a)
@@ -323,6 +332,20 @@ int16_t Emulatron::is(unsigned port, unsigned device, unsigned index, unsigned i
       if(cont)
       {
         return cont->getButton(id);
+      }
+    }
+    case RETRO_DEVICE_MOUSE:
+    {
+      switch(id)
+      {
+        case RETRO_DEVICE_ID_MOUSE_X:
+        {
+          return px;
+        }
+        case RETRO_DEVICE_ID_MOUSE_Y:
+        {
+          return py;
+        }
       }
     }
     case RETRO_DEVICE_ANALOG:
