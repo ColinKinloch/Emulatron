@@ -73,6 +73,7 @@
       <child>
         <object class="GtkButton" id="test_button">
           <property name="visible">True</property>
+          <property name="action-name">app.view-gl</property>
           <child internal-child="accessible">
             <object class="AtkObject" id="test-button-atkobject">
               <property name="AtkObject::accessible-name" translatable="yes">Add</property>
@@ -85,7 +86,7 @@
             <object class="GtkImage" id="test_button_image">
               <property name="visible">True</property>
               <property name="can_focus">False</property>
-              <property name="resource">/org/colinkinloch/emulatron/img/dino_down.png</property>
+              <property name="icon_name">go-previous-symbolic</property>
               <property name="icon_size">1</property>
             </object>
           </child>
@@ -476,6 +477,9 @@
                       <child>
                         <object class="GtkDrawingArea" id="game_cairo_area">
                           <property name="visible">True</property>
+                          <style>
+                            <class name="game-area"/>
+                          </style>
                         </object>
                         <packing>
                           <property name="name">cairo-area</property>

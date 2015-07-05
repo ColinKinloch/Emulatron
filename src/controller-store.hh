@@ -1,6 +1,7 @@
 #pragma once
 
 #include "controller-model.hh"
+#include "controller.hh"
 
 #include <gtkmm/treestore.h>
 #include <gtkmm/liststore.h>

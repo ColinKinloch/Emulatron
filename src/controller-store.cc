@@ -6,21 +6,23 @@ ControllerStore::ControllerStore(const ControllerModel::ColumnRecord& columns):
 {
   set_column_types(columns);
   
-  //get SDL controllers
-  int joyNum = SDL_NumJoysticks();
-  std::cout<<joyNum<<" Joysticks"<<std::endl;
-  for(int i=0; i<joyNum; ++i)
+  int n = SDL_NumJoysticks();
+  for(int i = 0; i<n; i++)
+  {
+    new Controller(i);
+  }
+  std::cout<<"Controllers!"<<std::endl;
+  for(auto& it : Controller::controllers)
   {
     Gtk::TreeModel::Row row = *(append());
     try
     {
-      SDL_GameController* cont = SDL_GameControllerOpen(i);
-      const char* cname = SDL_GameControllerName(cont);
+      const char* cname = it.second->getName();
       Glib::ustring name = Glib::ustring(cname?cname:"Unknown");
-      row[col.sdl] = cont;
+      row[col.cont] = it.second;
       row[col.name] = name;
-      row[col.attached] = SDL_GameControllerGetAttached(cont);
-      std::cout<<"Joystick "<<i<<": "<<name<<std::endl;
+      row[col.attached] = SDL_GameControllerGetAttached(it.second->getSDLGameController());
+      std::cout<<"Controller:"<<name<<std::endl;
     }
     catch(std::logic_error& error)
     {

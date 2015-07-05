@@ -26,10 +26,11 @@
 
 #include "game-model.hh"
 
+#include "controller.hh"
+
 retro_system_av_info avInfo;
 
 Audio* aud;
-Gtk::DrawingArea* area;
 Cairo::RefPtr<Cairo::SurfacePattern> patt;
 
 Cairo::Format pixFormat = Cairo::Format::FORMAT_RGB16_565;
@@ -278,10 +279,6 @@ void Emulatron::resize_cairo(Gtk::Allocation a)
 {
   alloc = a;
 }
-void Emulatron::as(int16_t left, int16_t right)
-{
-  std::cout<<"audio sample"<<std::endl;
-}
 bool audio_driver_flush(const int16_t *data, size_t samples)
 {
   size_t i;
@@ -294,6 +291,15 @@ bool audio_driver_flush(const int16_t *data, size_t samples)
   aud->write(out, samples*outsize);
   return true;
 }
+void Emulatron::as(int16_t left, int16_t right)
+{
+  std::cout<<"audio sample"<<std::endl;
+  int16_t out[2];
+  out[0] = left;
+  out[1] = right;
+  audio_driver_flush(out, 2);
+
+}
 size_t Emulatron::asb(const int16_t *data, size_t frames)
 {
   if (frames > (AUDIO_CHUNK_SIZE_NONBLOCKING >> 1))
@@ -304,11 +310,30 @@ size_t Emulatron::asb(const int16_t *data, size_t frames)
 }
 void Emulatron::ip()
 {
-  //std::cout<<"input poll"<<std::endl;
+  Controller::poll();
 }
 int16_t Emulatron::is(unsigned port, unsigned device, unsigned index, unsigned id)
 {
-  //std::cout<<"input state:"<<port<<":"<<device<<":"<<index<<":"<<id<<std::endl;
+  switch(device)
+  {
+    case RETRO_DEVICE_NONE: return 0;
+    case RETRO_DEVICE_JOYPAD:
+    {
+      Controller* cont = Controller::controllers[port];
+      if(cont)
+      {
+        return cont->getButton(id);
+      }
+    }
+    case RETRO_DEVICE_ANALOG:
+    {
+      Controller* cont = Controller::controllers[port];
+      if(cont)
+      {
+        return cont->getAxis(id, index);
+      }
+    }
+  }
   return 0;
 }
 
@@ -326,13 +351,20 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   settings = Gio::Settings::create("org.colinkinloch.emulatron");
 
+  if(SDL_Init(SDL_INIT_HAPTIC|SDL_INIT_GAMECONTROLLER) != 0)
+  {
+    std::cerr<<SDL_GetError()<<std::endl;
+  }
+
   LibRetroCore* dinothwar = new LibRetroCore("./src/libretro-cores/Dinothawr/dinothawr_libretro");
   LibRetroCore* bsnes = new LibRetroCore("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro");
   LibRetroCore* vbaNext = new LibRetroCore("./src/libretro-cores/vba-next/vba_next_libretro");
   LibRetroCore* snes9x = new LibRetroCore("./src/libretro-cores/snes9x/libretro/snes9x_libretro");
   //LibRetroCore* mupen = new LibRetroCore("./src/libretro-cores/mupen64plus-libretro/mupen64plus_libretro");
 
-  core = vbaNext;
+  running = false;
+
+  core = snes9x;
 
   core->loadSymbols();
 
@@ -360,25 +392,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     //openVGDBFile->create_file()->splice(openVGDBUrl->read());
   }
 
-  //retroClock = Glib::TimeoutSource::create(1000/avInfo.timing.fps);
-  //retroClock = Glib::TimeoutSource::create(16);
-
-
-
   core->init();
-  //core->loadGame(Gio::File::create_for_path("./fz.gba"));
-  //core->run();
-  //core.reset();
-  //core->deinit();
-  //retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
-  //retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
-
-  //sigc::mem_fun(core, &LibRetroCore::run));
-
-  if(SDL_Init(SDL_INIT_HAPTIC|SDL_INIT_GAMECONTROLLER) != 0)
-  {
-    std::cerr<<SDL_GetError()<<std::endl;
-  }
 
   refBuilder = Gtk::Builder::create();
   refBuilder->set_application(Glib::RefPtr<Emulatron>(this));
@@ -425,7 +439,6 @@ Emulatron::Emulatron(int& argc, char**& argv):
     refBuilder->get_widget("game_cairo_area", gameCairoArea);
     refBuilder->get_widget("emu_main_stack", emuMainStack);
     refBuilder->get_widget("volume_slider", volumeSlider);
-    //add_window(*emuWindow);
   }
   catch(const Gtk::BuilderError& ex)
   {
@@ -435,8 +448,6 @@ Emulatron::Emulatron(int& argc, char**& argv):
   {
     std::cerr << "runtime_error: " << ex.what() << std::endl;
   }
-
-  area = gameCairoArea;
 
   GtkWidget* glAreaWidget = gameArea->gobj();
   GtkGLArea* glArea = GTK_GL_AREA(glAreaWidget);
@@ -456,7 +467,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   prefWindow->set_transient_for(*emuWindow);
   aboutDialog->set_transient_for(*emuWindow);
-  
+
   add_action("view-gl",
     sigc::mem_fun(this, &Emulatron::view_gl));
 
@@ -485,8 +496,8 @@ Emulatron::Emulatron(int& argc, char**& argv):
   emuWindow->show();
   
   auto actions = list_actions();
-  for(auto it = actions.begin(); it != actions.end() ;++it)
-   std::cout<<*it<<std::endl;
+  for(auto it : actions)
+   std::cout<<it<<std::endl;
 }
 
 void Emulatron::startGame(const Gtk::TreeModel::Path& path)
@@ -497,24 +508,23 @@ void Emulatron::startGame(const Gtk::TreeModel::Path& path)
   if(iter)
   {
     Gtk::TreeModel::Row row = *iter;
+    running = false;
+    if(gameThread)
+      gameThread->join();
+    core->unloadGame();
+    //core->reset();
     core->loadGame(Gio::File::create_for_uri((Glib::ustring)row[store->col.filename]));
-    //retroClock->attach(Glib::MainContext::get_default());
-    //Glib::signal_timeout().connect(sigc::mem_fun(this, &Emulatron::stepSound), (1000/avInfo.timing.fps));
-    //retroClock->connect(sigc::mem_fun(this, &Emulatron::stepGame));
-    //Glib::signal_idle().connect(sigc::mem_fun(this, &Emulatron::stepSound), Glib::PRIORITY_DEFAULT_IDLE);
-    std::cout<<avInfo.timing.fps<<std::endl;
-    Glib::signal_timeout().connect(sigc::mem_fun(this, &Emulatron::stepGame), 1000/avInfo.timing.fps, Glib::PRIORITY_HIGH);
+    running = true;
+    gameThread = Glib::Threads::Thread::create(sigc::mem_fun(this, &Emulatron::stepGame));
+    view_gl();
   }
 }
-bool Emulatron::stepGame()
+void Emulatron::stepGame()
 {
-  core->run();
-  return true;
-}
-bool Emulatron::stepSound()
-{
-  //pa_mainloop_iterate(pa_ml, false, nullptr);
-  return true;
+  while(running)
+  {
+    core->run();
+  }
 }
 
 void Emulatron::view_gl()

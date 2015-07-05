@@ -41,10 +41,10 @@ public:
   void cheatSet(unsigned, bool, const char*);
 
   void loadSymbols();
+
   bool loadGame(const retro_game_info*);
   bool loadGame(Glib::RefPtr<Gio::File>);
   bool loadGameSpecial(unsigned, const struct retro_game_info*, size_t);
-
   void unloadGame();
 
   unsigned getRegion();

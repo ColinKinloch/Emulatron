@@ -37,8 +37,11 @@ protected:
   void on_quit();
   
   void startGame(const Gtk::TreeModel::Path& path);
-  bool stepGame();
-  bool stepSound();
+  void stepGame();
+
+  bool running;
+
+  Glib::Threads::Thread* gameThread;
 
   Glib::RefPtr<Glib::TimeoutSource> retroClock;
 

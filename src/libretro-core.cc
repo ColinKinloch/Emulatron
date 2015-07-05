@@ -218,3 +218,7 @@ bool LibRetroCore::loadGame(Glib::RefPtr<Gio::File> file)
   std::cout<<"Ready"<<std::endl;
   return loadGame(&game);
 }
+void LibRetroCore::unloadGame()
+{
+  pretro_unload_game();
+}

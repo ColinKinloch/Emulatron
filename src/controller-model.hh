@@ -1,5 +1,6 @@
 #pragma once
 
+#include "controller.hh"
 #include <gtkmm/treemodel.h>
 #include <SDL.h>
 
@@ -11,9 +12,9 @@ public:
     public Gtk::TreeModel::ColumnRecord
   {
   public:
-    Gtk::TreeModelColumn<SDL_GameController*> sdl;
+    Gtk::TreeModelColumn<Controller*> cont;
     Gtk::TreeModelColumn<Glib::ustring> name;
     Gtk::TreeModelColumn<bool> attached;
-    ColumnRecord() { add(sdl); add(name); add(attached);};
+    ColumnRecord() { add(cont); add(name); add(attached);};
   };
 };

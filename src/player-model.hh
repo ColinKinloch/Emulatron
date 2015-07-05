@@ -2,6 +2,7 @@
 
 #include <gtkmm/treemodel.h>
 
+#include "controller.hh"
 #include "controller-model.hh"
 
 class PlayerModel:

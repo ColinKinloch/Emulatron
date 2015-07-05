@@ -105,6 +105,8 @@ src_emulatron_SOURCES = \
 	src/console-store.cc \
 	src/console-store.hh \
 	src/console-model.hh \
+	src/controller.cc \
+	src/controller.hh \
 	src/collection-store.cc \
 	src/collection-store.hh \
 	src/collection-model.hh \
