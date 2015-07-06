@@ -61,6 +61,11 @@ static int latency = 64;//pow(2, 6);// start latency in micro seconds
 static int sampleoffs = 0;
 static int16_t sampledata[20000];
 
+void logfun(enum retro_log_level level, const char *fmt, ...)
+{
+  std::cout<<"log"<<std::endl;
+}
+
 bool Emulatron::env(unsigned cmd, void *data)
 {
   switch(cmd) {
@@ -77,8 +82,11 @@ bool Emulatron::env(unsigned cmd, void *data)
       std::cout<<"shutdown"<<std::endl;
       break;
     case RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL:
-      std::cout<<"set performance level"<<std::endl;
+    {
+      const unsigned *perf = (const unsigned *)data;
+      std::cout<<"set performance level:"<<*perf<<std::endl;
       break;
+    }
     case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
       std::cout<<"get system directory"<<std::endl;
       break;
@@ -108,8 +116,12 @@ bool Emulatron::env(unsigned cmd, void *data)
       return true;
     }
     case RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS:
+    {
       std::cout<<"set input descriptors"<<std::endl;
+      retro_input_descriptor* var = (retro_input_descriptor*)data;
+      std::cout<<var->description<<std::endl;
       break;
+    }
     case RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK:
       std::cout<<"set keyboard callback"<<std::endl;
       break;
@@ -123,6 +135,10 @@ bool Emulatron::env(unsigned cmd, void *data)
     {
       retro_variable* var = (retro_variable*)data;
       std::cout<<"get variable: "<<var->key<<std::endl;
+      if(var->key != nullptr) {
+        std::cout<<"-"<<var->key<<": "<<var->value<<std::endl;
+        return true;
+      }
       break;
     }
     case RETRO_ENVIRONMENT_SET_VARIABLES:
@@ -130,7 +146,7 @@ bool Emulatron::env(unsigned cmd, void *data)
         retro_variable* var = (retro_variable*)data;
         std::cout<<"set variable:"<<std::endl;
       if(var->key != nullptr) {
-        std::cout<<var->key<<": "<<var->value<<std::endl;
+        std::cout<<"-"<<var->key<<": "<<var->value<<std::endl;
         return true;
       }
       else {
@@ -148,8 +164,13 @@ bool Emulatron::env(unsigned cmd, void *data)
       std::cout<<"set support no game"<<std::endl;
       break;
     case RETRO_ENVIRONMENT_GET_LIBRETRO_PATH:
+    {
       std::cout<<"get libretro path"<<std::endl;
+      const char* path = core->file->get_relative_path(Gio::File::create_for_path("/")).c_str();
+      data = &path;
+      return true;
       break;
+    }
     case RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK:
       std::cout<<"set audio callback"<<std::endl;
       break;
@@ -170,7 +191,9 @@ bool Emulatron::env(unsigned cmd, void *data)
       break;
     case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
       std::cout<<"get log interface"<<std::endl;
-      break;
+      //data = (void*)&logfun;
+
+      break;//return true;
     case RETRO_ENVIRONMENT_GET_PERF_INTERFACE:
       std::cout<<"get perf interface"<<std::endl;
       break;
@@ -206,19 +229,31 @@ bool Emulatron::env(unsigned cmd, void *data)
       std::cout<<"set controller info:"<<std::endl;
       for(int i=0; i < info->num_types; i++) {
         retro_controller_description contdesc = info->types[i];
-        std::cout<<contdesc.desc<<std::endl;
+        std::cout<<"-"<<contdesc.desc<<std::endl;
       }
       break;
     }
     case RETRO_ENVIRONMENT_SET_MEMORY_MAPS:
+    {
       std::cout<<"set memory maps"<<std::endl;
+      retro_memory_map* maps = (retro_memory_map*)data;
+      for(int i=0; maps->num_descriptors; i++)
+      {
+        retro_memory_descriptor desc = maps->descriptors[i];
+        //std::cout<<desc.addrspace<<std::cout;
+      }
       break;
+    }
     case RETRO_ENVIRONMENT_SET_GEOMETRY:
       std::cout<<"set geometry"<<std::endl;
       break;
     case RETRO_ENVIRONMENT_GET_USERNAME:
+    {
       std::cout<<"get username"<<std::endl;
-      break;
+      const char* uname = Glib::get_real_name().c_str();
+      data = &uname;
+      return true;
+    }
     case RETRO_ENVIRONMENT_GET_LANGUAGE:
       std::cout<<"get language"<<std::endl;
       break;
@@ -387,7 +422,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   running = false;
 
-  core = snes9x;
+  core = vbaNext;
 
   core->loadSymbols();
 

@@ -11,7 +11,7 @@ class LibRetroCore: public Glib::Module
 public:
   LibRetroCore(std::string path);
 
-  sigc::signal<Glib::RefPtr<Gdk::Pixbuf> > videoSignal;
+  Glib::RefPtr<Gio::File> file;
 
   void init();
   void deinit();
@@ -111,7 +111,6 @@ private:
   retro_pixel_format pixelFormat;
 
 protected:
-  std::string path;
   std::string name;
   std::string version;
   std::string extensions;

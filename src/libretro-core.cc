@@ -16,9 +16,8 @@ LibRetroCore* core;
 LibRetroCore::LibRetroCore(std::string p):
   Glib::Module(p, Glib::MODULE_BIND_LOCAL|Glib::MODULE_BIND_LAZY)
 {
-  path = p;
+  file = Gio::File::create_for_path(p);
   retro_system_info info = getSystemInfo();
-  path = p;
   name = info.library_name;
   version = info.library_version;
   extensions = info.valid_extensions;
