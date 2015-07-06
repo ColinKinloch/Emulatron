@@ -2,10 +2,11 @@ Emulatron
 =========
 A GTK+ frontend for libRetro emulators.
 
-So far just a UI plagiarising OpenEmu.
+Inspired by [OpenEmu](https://github.com/OpenEmu/OpenEmu).
 
 Dependencies
 ------------
+* pulseaudio
 * gtkmm
 * libgdamm
 * SDL2
@@ -22,10 +23,12 @@ Build
 ```bash
 yum groupinstall "Development Tools"
 yum install autoconf automake gcc-c++ autoconf-archive
-yum install gtkmm30-devel libgda-sqlite libgdamm-devel SDL2-devel gobject-introspection-devel
+yum install pulseaudio-libs-devel gtkmm30-devel libgda-sqlite libgdamm-devel SDL2-devel gobject-introspection-devel
 autoreconf --install
 ./configure
 make
+sudo cp data/org.colinkinloch.emulatron.gschema.xml /usr/share/glib-2.0/schemas
+sudo glib-compile-schemas /usr/share/glib-2.0/schemas
 ./src/emulatron
 ```
 
