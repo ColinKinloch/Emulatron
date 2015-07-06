@@ -12,6 +12,7 @@ Dependencies
 
 Screenshots
 -----------
+![sfii](https://raw.githubusercontent.com/wiki/ColinKinloch/Emulatron/sfii.png "Street Fighter II")
 ![mainwin](https://raw.githubusercontent.com/wiki/ColinKinloch/Emulatron/window.png "Main Window")
 ![controlpref](https://raw.githubusercontent.com/wiki/ColinKinloch/Emulatron/controls.png "Control Preferences")
 
