@@ -1,3 +1,5 @@
+#pragma once
+
 #include <pulse/pulseaudio.h>
 #include <iostream>
 #include <sigc++/sigc++.h>

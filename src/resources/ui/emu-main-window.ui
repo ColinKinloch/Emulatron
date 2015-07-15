@@ -517,7 +517,7 @@
                         <object class="GtkToolItem">
                           <property name="visible">True</property>
                           <child>
-                            <object class="GtkButton">
+                            <object class="GtkToggleButton" id="pause_button">
                               <property name="visible">True</property>
                               <style>
                                 <class name="image-button"/>

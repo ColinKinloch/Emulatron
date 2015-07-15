@@ -19,7 +19,7 @@
 #include "emulatron.hh"
 #include "emu-window.hh"
 
-#include "libretro-core.hh"
+#include "retro/console.hh"
 #include "openvgdb.hh"
 
 #include "emu-resources.h"
@@ -27,6 +27,7 @@
 #include "game-model.hh"
 
 #include "controller.hh"
+#include "mouse.hh"
 
 retro_system_av_info avInfo;
 
@@ -191,7 +192,7 @@ bool Emulatron::env(unsigned cmd, void *data)
       break;
     case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
       std::cout<<"get log interface"<<std::endl;
-      //data = (void*)&logfun;
+      data = (void*)&logfun;
 
       break;//return true;
     case RETRO_ENVIRONMENT_GET_PERF_INTERFACE:
@@ -302,21 +303,44 @@ void Emulatron::vf(const void *data, unsigned width, unsigned height, size_t pit
 }
 bool Emulatron::draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr)
 {
-  if(!surf)
+  if(!console->video)
     return false;
-  patt = Cairo::SurfacePattern::create(surf);
+  int dw = alloc.get_width();
+  int dh = alloc.get_height();
+  float dr = (float)dw/dh;
+  console->video_lock.reader_lock();
+  Cairo::RefPtr<Cairo::ImageSurface> sur = console->video;
+  patt = Cairo::SurfacePattern::create(sur);
+  int sw = sur->get_width();
+  int sh = sur->get_height();
+  console->video_lock.reader_unlock();
+  float sr = (float)sw/sh;
+  float s;
+  int cornx, corny;
+  if(dr<sr)
+  {
+    s = (float)dw/sw;
+  }
+  else
+  {
+    s = (float)dh/sh;
+  }
+  cornx = -(dw-s*sw)/2;
+  corny = -(dh-s*sh)/2;
+  if(!s) {
+    s = 1;
+  }
+  mat = Cairo::identity_matrix();
+  mat.scale(1/s,1/s);
+  mat.translate(cornx, corny);
+  console->mouse->setMatrix(mat);
   patt->set_filter(Cairo::Filter::FILTER_NEAREST);
   patt->set_matrix(mat);
   cr->set_source(patt);
   cr->paint();
 
-  int x = 0, y = 0;
-  //TODO Replace deprecated get_pointer with get_device_position
-  gameCairoArea->get_pointer(x, y);
-  double tx = x, ty = y;
-  mat.transform_point(tx, ty);
-  px = tx;
-  py = ty;
+  console->mouse->update();
+
   return true;
 }
 void Emulatron::resize_cairo(Gtk::Allocation a)
@@ -395,6 +419,22 @@ int16_t Emulatron::is(unsigned port, unsigned device, unsigned index, unsigned i
   return 0;
 }
 
+
+void Emulatron::trigger_draw()
+{
+  gameCairoArea->queue_draw();
+}
+void Emulatron::trigger_audio()
+{
+  //console->audio_lock.reader_lock();
+  size_t frames = console->audioFrames;
+  if (frames > (AUDIO_CHUNK_SIZE_NONBLOCKING >> 1))
+    frames = AUDIO_CHUNK_SIZE_NONBLOCKING >> 1;
+  //This is blocking!
+  //audio_driver_flush(console->audioBuffer, console->audioFrames << 1);
+  //console->audio_lock.reader_unlock();
+}
+
 Emulatron::Emulatron(int& argc, char**& argv):
   Gtk::Application(argc, argv, "org.colinkinloch.emulatron", Gio::APPLICATION_FLAGS_NONE)
 {
@@ -414,17 +454,26 @@ Emulatron::Emulatron(int& argc, char**& argv):
     std::cerr<<SDL_GetError()<<std::endl;
   }
 
-  LibRetroCore* dinothwar = new LibRetroCore("./src/libretro-cores/Dinothawr/dinothawr_libretro");
-  LibRetroCore* bsnes = new LibRetroCore("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro");
-  LibRetroCore* vbaNext = new LibRetroCore("./src/libretro-cores/vba-next/vba_next_libretro");
-  LibRetroCore* snes9x = new LibRetroCore("./src/libretro-cores/snes9x/libretro/snes9x_libretro");
-  //LibRetroCore* mupen = new LibRetroCore("./src/libretro-cores/mupen64plus-libretro/mupen64plus_libretro");
+  Retro::Console* snes = new Retro::Console("./src/libretro-cores/snes9x/libretro/snes9x_libretro");
+
+  Retro::Core* dinothwar = new Retro::Core("./src/libretro-cores/Dinothawr/dinothawr_libretro");
+  Retro::Core* bsnes = new Retro::Core("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro");
+  Retro::Core* vbaNext = new Retro::Core("./src/libretro-cores/vba-next/vba_next_libretro");
+  Retro::Core* snes9x = new Retro::Core("./src/libretro-cores/snes9x/libretro/snes9x_libretro");
+  //Retro::Core* mupen = new Retro::Core("./src/libretro-cores/mupen64plus-libretro/mupen64plus_libretro");
+
+
+  //snes->loadGame(Gio::File::create_for_path("./mq.smc"));
 
   running = false;
 
-  core = vbaNext;
+  console = snes;
+  //core = snes9x;
 
-  core->loadSymbols();
+  console->m_signal_draw.connect(sigc::mem_fun(this, &Emulatron::trigger_draw));
+  //console->m_signal_audio.connect(sigc::mem_fun(this, &Emulatron::trigger_audio));
+
+  /*core->loadSymbols();
 
   core->signal_environment().connect(sigc::mem_fun(this, &Emulatron::env));
   core->signal_video_refresh().connect(sigc::mem_fun(this, &Emulatron::vf));
@@ -433,10 +482,11 @@ Emulatron::Emulatron(int& argc, char**& argv):
   core->signal_input_poll().connect(sigc::mem_fun(this, &Emulatron::ip));
   core->signal_input_state().connect(sigc::mem_fun(this, &Emulatron::is));
 
-  avInfo = core->getSystemAVInfo();
+  avInfo = core->getSystemAVInfo();*/
 
   Glib::RefPtr<Gio::Settings> audioSettings = settings->get_child("audio");
   audio = aud = new Audio(audioSettings);
+  console->audio = audio;
 
   Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path(settings->get_string("openvgdb-path"));
   OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
@@ -450,7 +500,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     //openVGDBFile->create_file()->splice(openVGDBUrl->read());
   }
 
-  core->init();
+  //core->init();
 
   refBuilder = Gtk::Builder::create();
   refBuilder->set_application(Glib::RefPtr<Emulatron>(this));
@@ -497,6 +547,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     refBuilder->get_widget("game_cairo_area", gameCairoArea);
     refBuilder->get_widget("emu_main_stack", emuMainStack);
     refBuilder->get_widget("volume_slider", volumeSlider);
+    refBuilder->get_widget("pause_button", pauseButton);
   }
   catch(const Gtk::BuilderError& ex)
   {
@@ -506,6 +557,8 @@ Emulatron::Emulatron(int& argc, char**& argv):
   {
     std::cerr << "runtime_error: " << ex.what() << std::endl;
   }
+
+  console->mouse = new Mouse(gameCairoArea);
 
   GtkWidget* glAreaWidget = gameArea->gobj();
   GtkGLArea* glArea = GTK_GL_AREA(glAreaWidget);
@@ -520,6 +573,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
   gameCairoArea->signal_size_allocate().connect(sigc::mem_fun(this, &Emulatron::resize_cairo));
   gameCairoArea->signal_draw().connect(sigc::mem_fun(this, &Emulatron::draw_cairo));
 
+  pauseButton->signal_toggled().connect(sigc::mem_fun(console, &Retro::Console::togglePlaying));
   volumeSlider->signal_value_changed().connect(sigc::mem_fun(audio, &Audio::setVolume));
   volumeSlider->set_value(audio->getVolume());
 
@@ -567,13 +621,17 @@ void Emulatron::startGame(const Gtk::TreeModel::Path& path)
   {
     Gtk::TreeModel::Row row = *iter;
     running = false;
-    if(gameThread)
-      gameThread->join();
-    core->unloadGame();
+    //if(gameThread)
+    //  gameThread->join();
+    //core->unloadGame();
     //core->reset();
-    core->loadGame(Gio::File::create_for_uri((Glib::ustring)row[store->col.filename]));
+    console->stop();
+    console->loadGame(Gio::File::create_for_uri((Glib::ustring)row[store->col.filename]));
+    //core->loadGame(Gio::File::create_for_uri((Glib::ustring)row[store->col.filename]));
     running = true;
-    gameThread = Glib::Threads::Thread::create(sigc::mem_fun(this, &Emulatron::stepGame));
+    console->start();
+    console->play();
+    //gameThread = Glib::Threads::Thread::create(sigc::mem_fun(this, &Emulatron::stepGame));
     view_gl();
   }
 }

@@ -7,7 +7,7 @@
 #include "emu-about-dialog.hh"
 #include "emu-preference-window.hh"
 
-#include "libretro-core.hh"
+#include "retro/console.hh"
 #include "audio.hh"
 
 class Emulatron: public Gtk::Application
@@ -39,6 +39,9 @@ protected:
   void startGame(const Gtk::TreeModel::Path& path);
   void stepGame();
 
+  void trigger_draw();
+  void trigger_audio();
+
   bool running;
 
   Glib::Threads::Thread* gameThread;
@@ -46,6 +49,7 @@ protected:
   Glib::RefPtr<Glib::TimeoutSource> retroClock;
 
 public:
+
   EmuWindow* emuWindow;
   EmuPreferenceWindow* prefWindow;
   EmuAboutDialog* aboutDialog;
@@ -54,6 +58,7 @@ public:
   Gtk::DrawingArea* gameCairoArea;
   Gtk::Stack* emuMainStack;
   Gtk::VolumeButton* volumeSlider;
+  Gtk::ToggleButton* pauseButton;
 
   Gtk::Allocation alloc;
   Cairo::RefPtr<Cairo::ImageSurface> surf;
@@ -61,7 +66,8 @@ public:
 
   Glib::RefPtr<Gio::Settings> settings;
 
-  LibRetroCore* core;
+  Retro::Core* core;
+  Retro::Console* console;
   Audio* audio;
 
   Emulatron(int& argc, char**& argv);

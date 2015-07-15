@@ -87,8 +87,10 @@ src_emulatron_CPPFLAGS = \
 src_emulatron_SOURCES = \
 	src/emulatron.cc \
 	src/emulatron.hh \
-	src/libretro-core.cc \
-	src/libretro-core.hh \
+	src/retro/core.cc \
+	src/retro/core.hh \
+	src/retro/console.cc \
+	src/retro/console.hh \
 	src/audio.cc \
 	src/audio.hh \
 	src/openvgdb.cc \
@@ -105,6 +107,8 @@ src_emulatron_SOURCES = \
 	src/console-store.cc \
 	src/console-store.hh \
 	src/console-model.hh \
+	src/mouse.cc \
+	src/mouse.hh \
 	src/controller.cc \
 	src/controller.hh \
 	src/collection-store.cc \
