@@ -537,7 +537,7 @@
                         <object class="GtkToolItem">
                           <property name="visible">True</property>
                           <child>
-                            <object class="GtkButton">
+                            <object class="GtkButton" id="reset_button">
                               <property name="visible">True</property>
                               <style>
                                 <class name="image-button"/>

@@ -41,6 +41,7 @@ protected:
 
   void trigger_draw();
   void trigger_audio();
+  void trigger_input_poll();
 
   bool running;
 
@@ -59,6 +60,7 @@ public:
   Gtk::Stack* emuMainStack;
   Gtk::VolumeButton* volumeSlider;
   Gtk::ToggleButton* pauseButton;
+  Gtk::Button* resetButton;
 
   Gtk::Allocation alloc;
   Cairo::RefPtr<Cairo::ImageSurface> surf;

@@ -22,6 +22,7 @@ namespace Retro
     void play();
     void pause();
     void togglePlaying();
+    void reset();
 
     bool loadGame(Glib::RefPtr<Gio::File> file);
 
@@ -38,6 +39,7 @@ namespace Retro
 
     Glib::Dispatcher m_signal_draw;
     Glib::Dispatcher m_signal_audio;
+    Glib::Dispatcher m_signal_input_poll;
 
     Glib::Threads::RWLock video_lock;
     Glib::Threads::RWLock audio_lock;

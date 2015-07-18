@@ -68,6 +68,10 @@ namespace Retro
   {
     playing = !playing;
   }
+  void Console::reset()
+  {
+    core->reset();
+  }
 
   bool Retro::Console::loadGame(Glib::RefPtr<Gio::File> file)
   {
@@ -143,6 +147,146 @@ namespace Retro
         std::cout<<var->description<<std::endl;
         break;
       }
+      case RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK:
+        std::cout<<"set keyboard callback"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE:
+        std::cout<<"set disk control interface"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_SET_HW_RENDER:
+        std::cout<<"set hw render"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_VARIABLE:
+      {
+        retro_variable* var = (retro_variable*)data;
+        std::cout<<"get variable: "<<var->key<<std::endl;
+        if(var->key != nullptr) {
+          std::cout<<"-"<<var->key<<": "<<var->value<<std::endl;
+          return true;
+        }
+        break;
+      }
+      case RETRO_ENVIRONMENT_SET_VARIABLES:
+      {
+          retro_variable* var = (retro_variable*)data;
+          std::cout<<"set variable:"<<std::endl;
+        if(var->key != nullptr) {
+          std::cout<<"-"<<var->key<<": "<<var->value<<std::endl;
+          return true;
+        }
+        else {
+          std::cout<<"null value"<<std::endl;
+          return false;
+        }
+        break;
+      }
+      case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
+      {
+        //std::cout<<"get variable update"<<std::endl;
+        return false;
+      }
+      case RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME:
+        std::cout<<"set support no game"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_LIBRETRO_PATH:
+      {
+        std::cout<<"get libretro path"<<std::endl;
+        const char* path = core->file->get_relative_path(Gio::File::create_for_path("/")).c_str();
+        data = &path;
+        return true;
+        break;
+      }
+      case RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK:
+        std::cout<<"set audio callback"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK:
+        std::cout<<"set frame time callback"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE:
+        std::cout<<"get rumble interface"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_INPUT_DEVICE_CAPABILITIES:
+        std::cout<<"get input device capabilities"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_SENSOR_INTERFACE:
+        std::cout<<"get sensor interface"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_CAMERA_INTERFACE:
+        std::cout<<"get camera interface"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
+        std::cout<<"get log interface"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_PERF_INTERFACE:
+        std::cout<<"get perf interface"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_LOCATION_INTERFACE:
+        std::cout<<"get location interface"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_CORE_ASSETS_DIRECTORY:
+        std::cout<<"get core assets directory"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
+        std::cout<<"get set directory"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO:
+        std::cout<<"set system av info"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_SET_PROC_ADDRESS_CALLBACK:
+        std::cout<<"set proc address callback"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO:
+      {
+        retro_subsystem_info* info = (retro_subsystem_info*)data;
+        std::cout<<"set subsystem info:"<<std::endl;
+        std::cout<<info->ident<<" ("<<info->desc<<")"<<std::endl;
+        for(int i=0; i<info->num_roms;i++) {
+          retro_subsystem_rom_info rominfo = info->roms[i];
+          std::cout<<rominfo.desc<<std::endl;
+        }
+        break;
+      }
+      case RETRO_ENVIRONMENT_SET_CONTROLLER_INFO:
+      {
+        retro_controller_info* info = (retro_controller_info*)data;
+        std::cout<<"set controller info:"<<std::endl;
+        for(int i=0; i < info->num_types; i++) {
+          retro_controller_description contdesc = info->types[i];
+          std::cout<<"-"<<contdesc.desc<<std::endl;
+        }
+        break;
+      }
+      case RETRO_ENVIRONMENT_SET_MEMORY_MAPS:
+      {
+        std::cout<<"set memory maps"<<std::endl;
+        retro_memory_map* maps = (retro_memory_map*)data;
+        for(int i=0; maps->num_descriptors; i++)
+        {
+          retro_memory_descriptor desc = maps->descriptors[i];
+          //std::cout<<desc.addrspace<<std::cout;
+        }
+        break;
+      }
+      case RETRO_ENVIRONMENT_SET_GEOMETRY:
+        std::cout<<"set geometry"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_USERNAME:
+      {
+        std::cout<<"get username"<<std::endl;
+        const char* uname = Glib::get_real_name().c_str();
+        data = &uname;
+        return true;
+      }
+      case RETRO_ENVIRONMENT_GET_LANGUAGE:
+        std::cout<<"get language"<<std::endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_CAN_DUPE:
+        std::cerr<<"get can dupe"<<std::endl;
+        *(bool*)data=true;
+        return true;
+      default:
+        std::cerr<<"Unknown"<<std::endl;
+        return false;
     }
     return false;
   }
@@ -161,7 +305,7 @@ namespace Retro
     audioBuffer[0] = left;
     audioBuffer[1] = right;
     //audio_lock.writer_unlock();
-    //m_signal_audio();
+    m_signal_audio();
     audio_driver_flush(audioBuffer, audioFrames << 1);
   }
   size_t Console::set_audio_sample_batch(const int16_t *data, size_t frames)
@@ -173,12 +317,13 @@ namespace Retro
     //audioBuffer = new int16_t[audioFrames];
     audioBuffer = (int16_t*)data;
     //audio_lock.writer_unlock();
-    //m_signal_audio();
+    m_signal_audio();
     audio_driver_flush(data, frames << 1);
     return frames;
   }
   void Console::set_input_poll()
   {
+    m_signal_input_poll();
     Controller::poll();
   }
   int16_t Console::set_input_state(unsigned port, unsigned device, unsigned index, unsigned id)
@@ -194,7 +339,7 @@ namespace Retro
           return cont->getButton(id);
         }
       }
-      case Retro::DeviceType::MOUSE:
+      /*case Retro::DeviceType::MOUSE:
       {
         switch(id)
         {
@@ -245,7 +390,7 @@ namespace Retro
             return mouse->getRight();
           }
         }
-      }
+      }*/
       case Retro::DeviceType::ANALOG:
       {
         Controller* cont = Controller::controllers[port];

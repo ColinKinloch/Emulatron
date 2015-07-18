@@ -434,6 +434,11 @@ void Emulatron::trigger_audio()
   //audio_driver_flush(console->audioBuffer, console->audioFrames << 1);
   //console->audio_lock.reader_unlock();
 }
+void Emulatron::trigger_input_poll()
+{
+  //TODO Fix, this happens many times per frame
+  //console->mouse->update();
+}
 
 Emulatron::Emulatron(int& argc, char**& argv):
   Gtk::Application(argc, argv, "org.colinkinloch.emulatron", Gio::APPLICATION_FLAGS_NONE)
@@ -455,6 +460,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
   }
 
   Retro::Console* snes = new Retro::Console("./src/libretro-cores/snes9x/libretro/snes9x_libretro");
+  Retro::Console* gba = new Retro::Console("./src/libretro-cores/vba-next/vba_next_libretro");
 
   Retro::Core* dinothwar = new Retro::Core("./src/libretro-cores/Dinothawr/dinothawr_libretro");
   Retro::Core* bsnes = new Retro::Core("./src/libretro-cores/bsnes-libretro/out/bsnes_accuracy_libretro");
@@ -467,11 +473,12 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   running = false;
 
-  console = snes;
+  console = gba;
   //core = snes9x;
 
   console->m_signal_draw.connect(sigc::mem_fun(this, &Emulatron::trigger_draw));
   //console->m_signal_audio.connect(sigc::mem_fun(this, &Emulatron::trigger_audio));
+  console->m_signal_audio.connect(sigc::mem_fun(this, &Emulatron::trigger_input_poll));
 
   /*core->loadSymbols();
 
@@ -548,6 +555,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
     refBuilder->get_widget("emu_main_stack", emuMainStack);
     refBuilder->get_widget("volume_slider", volumeSlider);
     refBuilder->get_widget("pause_button", pauseButton);
+    refBuilder->get_widget("reset_button", resetButton);
   }
   catch(const Gtk::BuilderError& ex)
   {
@@ -574,6 +582,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
   gameCairoArea->signal_draw().connect(sigc::mem_fun(this, &Emulatron::draw_cairo));
 
   pauseButton->signal_toggled().connect(sigc::mem_fun(console, &Retro::Console::togglePlaying));
+  resetButton->signal_clicked().connect(sigc::mem_fun(console, &Retro::Console::reset));
   volumeSlider->signal_value_changed().connect(sigc::mem_fun(audio, &Audio::setVolume));
   volumeSlider->set_value(audio->getVolume());
 
