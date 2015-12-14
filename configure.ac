@@ -20,31 +20,21 @@ AM_INIT_AUTOMAKE([foreign -Wall -Werror -Wno-portability subdir-objects])
 GETTEXT_PACKAGE=emulatron
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, ["$GETTEXT_PACKAGE"], [Define to the Gettext package name])
 AC_SUBST(GETTEXT_PACKAGE)
-#IT_PROG_INTLTOOL([0.40.0])
+
+IT_PROG_INTLTOOL([0.50.1])
+
+AM_GNU_GETTEXT_VERSION([0.19.6])
+AM_GNU_GETTEXT([external])
 
 GOBJECT_INTROSPECTION_CHECK([0.6.7])
 m4_define([glib_required_version], [2.23.0])
 AM_PATH_GLIB_2_0(glib_required_version)
 
-AC_PROG_CC(clang)
-AC_PROG_CXX(clang++)
-AC_PROG_LD(llvm-ld)
+AC_PROG_CC()
+AC_PROG_CXX()
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11
 AC_CANONICAL_HOST
-
-case $host_os in
-  darwin* )
-    CXXFLAGS+=" -stdlib=libc++ -std=c++11" 
-    CFLAGS+=" -stdlib=libc++"
-    LDFLAGS+=" -stdlib=libc++"
-    ;;
-esac
-
-
-AX_CHECK_GL
-
-AC_SUBST(ACLOCAL_AMFLAGS, "$ACLOCAL_FLAGS -I m4")
 
 # Initialize libtool
 LT_PREREQ([2.2])
@@ -64,6 +54,7 @@ GTK_REQS=3.16.0
 # Used in the pkg-config file for plugins
 AC_SUBST(GLIB_REQS)
 AC_SUBST(GTK_REQS)
+AC_SUBST(GIO_REQS)
 
 EMULATRON_VERSION_MAJOR=emulatron_version_major
 EMULATRON_VERSION_MINOR=emulatron_version_minor
@@ -77,32 +68,33 @@ AC_SUBST(EMULATRON_VERSION_MICRO)
 #PKG_CHECK_MODULES(LIBRETRO, $LIBRETRO_CORES)
 
 AC_SEARCH_LIBS([dlopen], [dl dld zrldsrl])
-PKG_CHECK_MODULES(PLAYER, gtkmm-3.0 libgdamm-5.0 sdl2 gl libpulse)
+PKG_CHECK_MODULES(PLAYER, gtkmm-3.0 giomm-2.4 libgdamm-5.0 epoxy sdl2 libpulse)
 
 AC_PATH_PROG(GLIB_COMPILE_RESOURCES, glib-compile-resources)
 
 if test "$os_osx" = "yes"; then
-	os_menus_ui=menus-osx.ui
-	os_style_css=emu-style-osx.css
+  os_menus_ui=menus-osx.ui
+  os_style_css=emu-style-osx.css
 else
-	os_menus_ui=menus-default.ui
-	os_style_css=
+  os_menus_ui=menus-default.ui
+  os_style_css=
 
-	OS_DEPENDENT_RESOURCE_FILES='<file compressed="true">gtk/menus-traditional.ui</file>'
+  OS_DEPENDENT_RESOURCE_FILES='<file compressed="true">gtk/menus-traditional.ui</file>'
 fi
 
 if test "x$os_style_css" != "x"; then
-	OS_DEPENDENT_RESOURCE_FILES+="<file>css/emu-style-os.css</file>"
-	AC_CONFIG_LINKS(src/resources/css/emu-style-os.css:src/resources/css/$os_style_css)
+  OS_DEPENDENT_RESOURCE_FILES+="<file>css/emu-style-os.css</file>"
+  AC_CONFIG_LINKS(src/resources/css/emu-style-os.css:src/resources/css/$os_style_css)
 fi
 
 AC_SUBST(OS_DEPENDENT_RESOURCE_FILES)
 AC_CONFIG_LINKS(src/resources/gtk/menus.ui:src/resources/gtk/$os_menus_ui)
 
 AC_CONFIG_FILES([
-	Makefile
-	data/org.colinkinloch.emulatron.gschema.xml
-	src/resources/emu.gresource.xml
+  Makefile
+  data/org.colinkinloch.emulatron.gschema.xml
+  src/resources/emu.gresource.xml
+  po/Makefile.in
 ])
 #	data/Makefile
 AC_OUTPUT

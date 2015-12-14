@@ -28,6 +28,7 @@ namespace Retro
 
     //core->setControllerPortDevice(0, RETRO_DEVICE_MOUSE);
 
+    info = core->getSystemInfo();
     avInfo = core->getSystemAVInfo();
     frameLength = 1000000/avInfo.timing.fps;
   }
@@ -36,7 +37,7 @@ namespace Retro
   {
     running = true;
     playing = false;
-    gameThread = Glib::Threads::Thread::create(sigc::mem_fun(this, &Retro::Console::run));
+    gameThread = std::thread(sigc::mem_fun(this, &Retro::Console::run));
   }
   void Console::run()
   {
@@ -54,7 +55,9 @@ namespace Retro
   void Console::stop()
   {
     running = false;
-    gameThread->join();
+    if(gameThread.joinable()) {
+      gameThread.join();
+    }
   }
   void Console::play()
   {
@@ -399,7 +402,7 @@ namespace Retro
           return cont->getAxis(id, index);
         }
       }
-      case Retro::DeviceType::POINTER:
+      /*case Retro::DeviceType::POINTER:
       {
         switch(id)
         {
@@ -416,7 +419,7 @@ namespace Retro
             return mouse->getLeft();
           }
         }
-      }
+      }*/
     }
     return 0;
   }
@@ -424,7 +427,6 @@ namespace Retro
   {
     size_t i;
     size_t outsize = sizeof(float);
-    unsigned int rate = audio->settings->get_uint("rate");
     float out[samples];
     float gain = 1.0 / 0x8000;
     for(i=0; i < samples; i++)

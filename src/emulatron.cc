@@ -1,20 +1,9 @@
 #include "config.h"
 
-#include <algorithm>
-#include <cmath>
-#include <random>
 #include <iostream>
 
+#include <epoxy/gl.h>
 #include <gtkmm.h>
-#include <gdkmm/pixbuf.h>
-
-#include <SDL.h>
-
-#if __APPLE__
-#include <GL/gl.h>
-#else
-#include <GLES3/gl3.h>
-#endif
 
 #include "emulatron.hh"
 #include "emu-window.hh"
@@ -37,18 +26,21 @@ int px, py;
 
 Cairo::Format pixFormat = Cairo::Format::FORMAT_RGB16_565;
 
-static gboolean
-render (GtkGLArea *area, GdkGLContext *context)
+static bool
+render (Glib::RefPtr<Gdk::GLContext> context)
 {
+  std::cout<<"render"<<std::endl;
+  context->make_current();
   glClearColor (0,0,0,0);
   glClear (GL_COLOR_BUFFER_BIT);
   return true;
 };
 
 static void
-resize (GtkGLArea *area, int width, int height)
+resize (int width, int height)
 {
-  gtk_gl_area_make_current(area);
+  std::cout<<"resize"<<std::endl;
+  //this.make_current();
   glViewport(0,0,width,height);
 };
 
@@ -159,7 +151,7 @@ bool Emulatron::env(unsigned cmd, void *data)
     case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
     {
       //std::cout<<"get variable update"<<std::endl;
-      return false;
+      break;
     }
     case RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME:
       std::cout<<"set support no game"<<std::endl;
@@ -193,8 +185,7 @@ bool Emulatron::env(unsigned cmd, void *data)
     case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
       std::cout<<"get log interface"<<std::endl;
       data = (void*)&logfun;
-
-      break;//return true;
+      break;
     case RETRO_ENVIRONMENT_GET_PERF_INTERFACE:
       std::cout<<"get perf interface"<<std::endl;
       break;
@@ -237,13 +228,15 @@ bool Emulatron::env(unsigned cmd, void *data)
     case RETRO_ENVIRONMENT_SET_MEMORY_MAPS:
     {
       std::cout<<"set memory maps"<<std::endl;
-      retro_memory_map* maps = (retro_memory_map*)data;
-      for(int i=0; maps->num_descriptors; i++)
+      //retro_memory_map* maps = (retro_memory_map*)data;
+      /*for(int i=0; maps->num_descriptors; i++)
       {
+      std::cout<<"map:"<<i<<std::endl;
         retro_memory_descriptor desc = maps->descriptors[i];
-        //std::cout<<desc.addrspace<<std::cout;
-      }
+        std::cout<<desc.addrspace<<std::endl;
+      }*/
       break;
+      //break;
     }
     case RETRO_ENVIRONMENT_SET_GEOMETRY:
       std::cout<<"set geometry"<<std::endl;
@@ -264,7 +257,7 @@ bool Emulatron::env(unsigned cmd, void *data)
       return true;
     default:
       std::cerr<<"Unknown"<<std::endl;
-      return false;
+      break;
 
   }
   return false;
@@ -308,12 +301,10 @@ bool Emulatron::draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr)
   int dw = alloc.get_width();
   int dh = alloc.get_height();
   float dr = (float)dw/dh;
-  console->video_lock.reader_lock();
   Cairo::RefPtr<Cairo::ImageSurface> sur = console->video;
   patt = Cairo::SurfacePattern::create(sur);
   int sw = sur->get_width();
   int sh = sur->get_height();
-  console->video_lock.reader_unlock();
   float sr = (float)sw/sh;
   float s;
   int cornx, corny;
@@ -333,13 +324,13 @@ bool Emulatron::draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr)
   mat = Cairo::identity_matrix();
   mat.scale(1/s,1/s);
   mat.translate(cornx, corny);
-  console->mouse->setMatrix(mat);
+  //console->mouse->setMatrix(mat);
   patt->set_filter(Cairo::Filter::FILTER_NEAREST);
   patt->set_matrix(mat);
   cr->set_source(patt);
   cr->paint();
 
-  console->mouse->update();
+  //console->mouse->update();
 
   return true;
 }
@@ -351,7 +342,6 @@ bool audio_driver_flush(const int16_t *data, size_t samples)
 {
   size_t i;
   size_t outsize = sizeof(float);
-  unsigned int rate = aud->settings->get_uint("rate");
   float out[samples];
   float gain = 1.0 / 0x8000;
   for(i=0; i < samples; i++)
@@ -459,7 +449,36 @@ Emulatron::Emulatron(int& argc, char**& argv):
     std::cerr<<SDL_GetError()<<std::endl;
   }
 
-  Retro::Console* snes = new Retro::Console("./src/libretro-cores/snes9x/libretro/snes9x_libretro");
+  Glib::RefPtr<Gio::Settings> audioSettings = settings->get_child("audio");
+  audio = aud = new Audio(audioSettings);
+
+  // Mouse* mouse = new Mouse(gameCairoArea);
+
+  Glib::RefPtr<Gio::File> retroDir = Gio::File::create_for_path(settings->get_string("libretro-path"));
+  Glib::RefPtr<Gio::FileEnumerator> retroFiles = retroDir->enumerate_children("*.so");
+  Glib::RefPtr<Gio::FileInfo> file;
+  while((file = retroFiles->next_file())) {
+    std::string path = retroDir->get_child(file->get_name())->get_path();
+    std::cout<<path<<std::endl;
+    Retro::Console* cons = new Retro::Console(path);
+    //cons->audio = audio;
+    //cons->mouse = mouse;
+    std::string extStr;
+    if(cons->info.valid_extensions)
+       extStr = cons->info.valid_extensions;
+    std::cout<<extStr<<std::endl;
+    //std::vector<std::string> exts;
+    int s;
+    while((s = extStr.find('|')) != -1)
+    {
+      std::string ext = extStr.substr(0, s);
+      extStr = extStr.substr(s + 1);
+      consoles.insert(std::pair<std::string, std::string>(ext, path));
+    }
+    delete cons;
+  }
+
+  /*Retro::Console* snes = new Retro::Console("./src/libretro-cores/snes9x/libretro/snes9x_libretro");
   Retro::Console* gba = new Retro::Console("./src/libretro-cores/vba-next/vba_next_libretro");
 
   Retro::Core* dinothwar = new Retro::Core("./src/libretro-cores/Dinothawr/dinothawr_libretro");
@@ -468,17 +487,12 @@ Emulatron::Emulatron(int& argc, char**& argv):
   Retro::Core* snes9x = new Retro::Core("./src/libretro-cores/snes9x/libretro/snes9x_libretro");
   //Retro::Core* mupen = new Retro::Core("./src/libretro-cores/mupen64plus-libretro/mupen64plus_libretro");
 
-
   //snes->loadGame(Gio::File::create_for_path("./mq.smc"));
 
   running = false;
 
-  console = gba;
+  console = snes;*/
   //core = snes9x;
-
-  console->m_signal_draw.connect(sigc::mem_fun(this, &Emulatron::trigger_draw));
-  //console->m_signal_audio.connect(sigc::mem_fun(this, &Emulatron::trigger_audio));
-  console->m_signal_audio.connect(sigc::mem_fun(this, &Emulatron::trigger_input_poll));
 
   /*core->loadSymbols();
 
@@ -491,9 +505,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   avInfo = core->getSystemAVInfo();*/
 
-  Glib::RefPtr<Gio::Settings> audioSettings = settings->get_child("audio");
-  audio = aud = new Audio(audioSettings);
-  console->audio = audio;
+  //console->audio = audio;
 
   Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path(settings->get_string("openvgdb-path"));
   OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
@@ -550,9 +562,10 @@ Emulatron::Emulatron(int& argc, char**& argv):
     refBuilder->get_widget_derived("emu_pref_window", prefWindow);
     refBuilder->get_widget_derived("emu_about_dialog", aboutDialog);
     refBuilder->get_widget("game_area", gameArea);
-    refBuilder->get_widget("game_image_area", gameImageArea);
+    // refBuilder->get_widget("game_image_area", gameImageArea);
     refBuilder->get_widget("game_cairo_area", gameCairoArea);
     refBuilder->get_widget("emu_main_stack", emuMainStack);
+    refBuilder->get_widget("gl_switcher", emuGameStack);
     refBuilder->get_widget("volume_slider", volumeSlider);
     refBuilder->get_widget("pause_button", pauseButton);
     refBuilder->get_widget("reset_button", resetButton);
@@ -566,17 +579,20 @@ Emulatron::Emulatron(int& argc, char**& argv):
     std::cerr << "runtime_error: " << ex.what() << std::endl;
   }
 
-  console->mouse = new Mouse(gameCairoArea);
+  //console->mouse = mouse;
 
-  GtkWidget* glAreaWidget = gameArea->gobj();
-  GtkGLArea* glArea = GTK_GL_AREA(glAreaWidget);
-  gtk_gl_area_make_current(glArea);
+  /*gameArea->signal_create_context().connect([]()-> Glib::RefPtr<Gdk::GLContext> {
+    std::cout<<"Creating area"<<std::endl;
+    return Gdk::GLContext::get_current();
+  });*/
+
+  gameArea->signal_render().connect(sigc::ptr_fun(render));
+  gameArea->signal_resize().connect(sigc::ptr_fun(resize));
+
+  gameArea->make_current();
 
   glClearColor(0,1,0,0);
   glClear(GL_COLOR_BUFFER_BIT);
-
-  g_signal_connect(glArea, "render", G_CALLBACK(render), NULL);
-  g_signal_connect(glArea, "resize", G_CALLBACK(resize), NULL);
 
   gameCairoArea->signal_size_allocate().connect(sigc::mem_fun(this, &Emulatron::resize_cairo));
   gameCairoArea->signal_draw().connect(sigc::mem_fun(this, &Emulatron::draw_cairo));
@@ -591,6 +607,8 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   add_action("view-gl",
     sigc::mem_fun(this, &Emulatron::view_gl));
+  add_action("view-game-area",
+    sigc::mem_fun(this, &Emulatron::view_game_area));
 
   add_action("fullscreen",
     sigc::mem_fun(emuWindow, &EmuWindow::fullscreen));
@@ -634,14 +652,45 @@ void Emulatron::startGame(const Gtk::TreeModel::Path& path)
     //  gameThread->join();
     //core->unloadGame();
     //core->reset();
-    console->stop();
-    console->loadGame(Gio::File::create_for_uri((Glib::ustring)row[store->col.filename]));
+    //console->stop();
+
+    if(console)
+      console->stop();
+
+    Glib::RefPtr<Gio::File> romFile = Gio::File::create_for_uri((Glib::ustring)row[store->col.filename]);
+    std::string name = romFile->get_basename();
+    std::string ext = name.substr(name.find('.') + 1);
+    std::cout<<"Loading extension:"<<ext<<std::endl;
+
+    Retro::Console* oldConsole = console;
+    std::string path;
+    try {
+      path = consoles.at(ext);
+    }
+    catch(std::exception& e) {
+      std::cerr<<"No core:"<<e.what()<<std::endl;
+      return;
+    }
+    std::cout<<"Loading core:"<<path<<std::endl;
+    console = new Retro::Console(path);
+    console->audio = aud;
+    console->m_signal_draw.connect(sigc::mem_fun(this, &Emulatron::trigger_draw));
+    //console->m_signal_audio.connect(sigc::mem_fun(this, &Emulatron::trigger_audio));
+    console->m_signal_audio.connect(sigc::mem_fun(this, &Emulatron::trigger_input_poll));
+    std::cout<<"With:"<<console->info.library_name<<std::endl;
+
+    delete oldConsole;
+
+    //console->stop();
+
+    console->loadGame(romFile);
+
     //core->loadGame(Gio::File::create_for_uri((Glib::ustring)row[store->col.filename]));
     running = true;
     console->start();
     console->play();
     //gameThread = Glib::Threads::Thread::create(sigc::mem_fun(this, &Emulatron::stepGame));
-    view_gl();
+    view_game_area();
   }
 }
 void Emulatron::stepGame()
@@ -652,9 +701,8 @@ void Emulatron::stepGame()
   }
 }
 
-void Emulatron::view_gl()
+void Emulatron::view_game_area()
 {
-  std::string child = "";
   if(emuMainStack->get_visible_child_name() == "game-selector") {
     emuMainStack->set_visible_child("game-view", Gtk::STACK_TRANSITION_TYPE_OVER_LEFT);
   }
@@ -662,10 +710,18 @@ void Emulatron::view_gl()
     emuMainStack->set_visible_child("game-selector", Gtk::STACK_TRANSITION_TYPE_UNDER_RIGHT);
   }
 }
+void Emulatron::view_gl()
+{
+  if(emuGameStack->get_visible_child_name() == "cairo-area") {
+    emuGameStack->set_visible_child("gl-area", Gtk::STACK_TRANSITION_TYPE_CROSSFADE);
+  }
+  else {
+    emuGameStack->set_visible_child("cairo-area", Gtk::STACK_TRANSITION_TYPE_CROSSFADE);
+  }
+}
 
 void Emulatron::setVolume(double val)
 {
-  std::cout<<"helo"<<val<<std::endl;
   audio->setVolume(val);
 }
 void Emulatron::on_open()

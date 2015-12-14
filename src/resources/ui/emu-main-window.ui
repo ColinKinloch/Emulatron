@@ -73,7 +73,7 @@
       <child>
         <object class="GtkButton" id="test_button">
           <property name="visible">True</property>
-          <property name="action-name">app.view-gl</property>
+          <property name="action-name">app.view-game-area</property>
           <child internal-child="accessible">
             <object class="AtkObject" id="test-button-atkobject">
               <property name="AtkObject::accessible-name" translatable="yes">Add</property>

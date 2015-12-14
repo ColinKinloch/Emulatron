@@ -42,7 +42,8 @@ namespace Retro
     retro_system_info info = getSystemInfo();
     name = info.library_name;
     version = info.library_version;
-    extensions = info.valid_extensions;
+    if(info.valid_extensions)
+      extensions = info.valid_extensions;
     std::cout<<"libRetro v"<<apiVersion()<<
     " Core: "<<name<<" "<<version<<" "<<extensions<<std::endl;
   }

@@ -1,12 +1,12 @@
-SUBDIRS += src/libretro-cores/Dinothawr
-SUBDIRS += src/libretro-cores/bsnes-libretro
-$(shell cp src/libretro-cores/vba-next/Makefile.libretro \
-	   src/libretro-cores/vba-next/Makefile)
-SUBDIRS += src/libretro-cores/vba-next
-SUBDIRS += src/libretro-cores/mupen64plus-libretro
-SUBDIRS += src/libretro-cores/snes9x/libretro
+#SUBDIRS += src/libretro-cores/Dinothawr
+#SUBDIRS += src/libretro-cores/bsnes-libretro
+#$(shell cp src/libretro-cores/vba-next/Makefile.libretro \
+#	   src/libretro-cores/vba-next/Makefile)
+#SUBDIRS += src/libretro-cores/vba-next
+#SUBDIRS += src/libretro-cores/mupen64plus-libretro
+#SUBDIRS += src/libretro-cores/snes9x/libretro
 
-bin_PROGRAMS += src/emulatron
+bin_PROGRAMS += emulatron
 
 
 EXTRA_DIST += src/resources/emu.gresource.xml.in
@@ -73,18 +73,20 @@ emu_dist_resource_deps = \
 EXTRA_DIST += \
 	$(emu_dist_resource_deps)
 
-src_emulatron_LDADD = \
+emulatron_LDADD = \
 	$(PLAYER_LIBS)
 
-src_emulatron_CFLAGS = \
-	$(PLAYER_CFLAGS) \
-	$(AM_CPPFLAGS)
-
-src_emulatron_CPPFLAGS = \
+emulatron_CFLAGS = \
 	$(PLAYER_CFLAGS) \
 	$(AM_CFLAGS)
 
-src_emulatron_SOURCES = \
+emulatron_CPPFLAGS = \
+	$(PLAYER_CFLAGS) \
+	$(PLAYER_CPPFLAGS) \
+	$(AM_CFLAGS) \
+	$(AM_CPPFLAGS)
+
+emulatron_SOURCES = \
 	src/emulatron.cc \
 	src/emulatron.hh \
 	src/retro/core.cc \
@@ -172,7 +174,7 @@ src_emulatron_SOURCES = \
 #	src/Default-system-resources.h
 #	$(addprefix src/,$(addsuffix -system-resources.h,$(notdir $(wildcard src/resources/systems/*))))
 
-$(info $(src_emulatron_SOURCES))
+$(info $(emulatron_SOURCES))
 
 BUILT_SOURCES += $(emu_built_sources) \
 	src/emu-resources.c \

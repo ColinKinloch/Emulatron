@@ -6,7 +6,8 @@
 #include "../audio.hh"
 
 #include <glibmm/dispatcher.h>
-#include <glibmm/threads.h>
+#include <thread>
+#include <mutex>
 #include <glibmm/timer.h>
 #include <cairomm/matrix.h>
 #include <cairomm/surface.h>
@@ -26,6 +27,7 @@ namespace Retro
 
     bool loadGame(Glib::RefPtr<Gio::File> file);
 
+    retro_system_info info;
     retro_system_av_info avInfo;
     unsigned long frameLength;
     unsigned long prevFrameLength;
@@ -41,8 +43,8 @@ namespace Retro
     Glib::Dispatcher m_signal_audio;
     Glib::Dispatcher m_signal_input_poll;
 
-    Glib::Threads::RWLock video_lock;
-    Glib::Threads::RWLock audio_lock;
+    std::mutex video_lock;
+    std::mutex audio_lock;
 
     Mouse* mouse;
 
@@ -60,7 +62,7 @@ namespace Retro
 
   private:
     Retro::Core* core;
-    Glib::Threads::Thread* gameThread;
+    std::thread gameThread;
 
     void run();
     bool running;

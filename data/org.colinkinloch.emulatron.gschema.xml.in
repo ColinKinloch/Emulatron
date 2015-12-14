@@ -7,6 +7,10 @@
       <default>'./openvgdb.sqlite'</default>
       <summary>Path to openvgdb database</summary>
     </key>
+    <key name="libretro-path" type="s">
+      <default>'./libretro-super/dist/unix/'</default>
+      <summary>Path to libRetro cores</summary>
+    </key>
   </schema>
   <schema id="org.colinkinloch.emulatron.audio" path="/org/colinkinloch/emulatron/audio/">
     <key name="latency" type="u">

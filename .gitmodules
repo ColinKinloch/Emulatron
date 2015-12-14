@@ -1,21 +1,9 @@
-[submodule "src/libretro-cores/Dinothawr"]
-	path = src/libretro-cores/Dinothawr
-	url = https://github.com/libretro/Dinothawr
 [submodule "src/libretro-common"]
 	path = src/libretro-common
 	url = git@github.com:libretro/libretro-common.git
 [submodule "src/libretro-arb"]
 	path = src/libretro-arb
 	url = git@github.com:libretro/libretro-arb.git
-[submodule "src/libretro-cores/bsnes-libretro"]
-	path = src/libretro-cores/bsnes-libretro
-	url = git@github.com:libretro/bsnes-libretro.git
-[submodule "src/libretro-cores/vba-next"]
-	path = src/libretro-cores/vba-next
-	url = git@github.com:libretro/vba-next.git
-[submodule "src/libretro-cores/mupen64plus-libretro"]
-	path = src/libretro-cores/mupen64plus-libretro
-	url = git@github.com:libretro/mupen64plus-libretro.git
-[submodule "src/libretro-cores/snes9x"]
-	path = src/libretro-cores/snes9x
-	url = git@github.com:libretro/snes9x.git
+[submodule "libretro-super"]
+	path = libretro-super
+	url = https://github.com/libretro/libretro-super.git

@@ -1,5 +1,6 @@
 #include "game-store.hh"
 #include <iostream>
+#include <thread>
 
 using namespace Gnome;
 
@@ -69,7 +70,8 @@ bool GameStore::add(std::string uri)
   spinClock->attach(Glib::MainContext::get_default());
   sigc::connection spin = spinClock->connect(sigc::bind<GameModel::Row>(sigc::mem_fun(this, &GameStore::onSpin), row));
 
-  Glib::Threads::Thread* thread = Glib::Threads::Thread::create(sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection >(sigc::mem_fun(this, &GameStore::gatherROMData), row, file, spin));
+  //Glib::Threads::Thread* thread = Glib::Threads::Thread::create(sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection >(sigc::mem_fun(this, &GameStore::gatherROMData), row, file, spin));
+  std::thread* th = new std::thread(sigc::bind<GameModel::Row, Glib::RefPtr<Gio::File>, sigc::connection >(sigc::mem_fun(this, &GameStore::gatherROMData), row, file, spin));
 
   return true;
 }

@@ -31,6 +31,9 @@ public:
 
   Glib::RefPtr<Gio::Settings> settings;
 
+  unsigned int rate;
+  unsigned int latency;
+
   size_t write(const void *buffer, size_t size);
   void setVolume(double volume);
   double getVolume();

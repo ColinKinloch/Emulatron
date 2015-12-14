@@ -1,4 +1,6 @@
-SUBDIRS = #src #data
+ACLOCAL_AMFLAGS = -I m4
+
+SUBDIRS = po #data
 
 EXTRA_DIST = \
 	BUGS \
@@ -69,7 +71,7 @@ DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
 
 bin_PROGRAMS =
 gsettings_SCHEMAS =
-BUILT_SOURCES = 
+BUILT_SOURCES =
 CLEANFILES = emulator.spec
 
 include data/Makefile.am
@@ -78,7 +80,6 @@ include src/Makefile.am
 #GSETTINGS_RULES@
 
 CLEANFILES += emulator.spec
-
 
 # Build ChangeLog from GIT history
 ChangeLog:

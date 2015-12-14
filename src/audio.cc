@@ -96,8 +96,8 @@ Audio::Audio(Glib::RefPtr<Gio::Settings> set)
 
   settings = set;
 
-  unsigned rate = settings->get_uint("rate");
-  unsigned latency = settings->get_uint("latency");
+  rate = settings->get_uint("rate");
+  latency = settings->get_uint("latency");
 
   pa_proplist *ctxProp = pa_proplist_new();
   //pa_proplist_sets(ctxProp, PA_PROP_APPLICATION_ICON_NAME, "input-gaming");

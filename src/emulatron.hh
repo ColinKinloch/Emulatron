@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <unordered_map>
+
 #include <pulse/pulseaudio.h>
 #include <gtkmm/builder.h>
 
@@ -16,6 +19,9 @@ protected:
   Glib::RefPtr<Gtk::Builder> refBuilder;
   Glib::RefPtr<Gtk::Settings> uiSettings;
 
+  std::unordered_map<std::string, std::string> consoles;
+
+  void view_game_area();
   void view_gl();
   bool draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr);
   void resize_cairo(Gtk::Allocation a);
@@ -45,8 +51,6 @@ protected:
 
   bool running;
 
-  Glib::Threads::Thread* gameThread;
-
   Glib::RefPtr<Glib::TimeoutSource> retroClock;
 
 public:
@@ -54,10 +58,11 @@ public:
   EmuWindow* emuWindow;
   EmuPreferenceWindow* prefWindow;
   EmuAboutDialog* aboutDialog;
-  Gtk::Widget* gameArea;
+  Gtk::GLArea* gameArea;
   Gtk::Image* gameImageArea;
   Gtk::DrawingArea* gameCairoArea;
   Gtk::Stack* emuMainStack;
+  Gtk::Stack* emuGameStack;
   Gtk::VolumeButton* volumeSlider;
   Gtk::ToggleButton* pauseButton;
   Gtk::Button* resetButton;
