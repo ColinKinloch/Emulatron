@@ -67,6 +67,11 @@ public:
   Gtk::ToggleButton* pauseButton;
   Gtk::Button* resetButton;
 
+  sigc::connection vidCon;
+  sigc::connection inpCon;
+  sigc::connection playCon;
+  sigc::connection resetCon;
+
   Gtk::Allocation alloc;
   Cairo::RefPtr<Cairo::ImageSurface> surf;
   Cairo::Matrix mat;

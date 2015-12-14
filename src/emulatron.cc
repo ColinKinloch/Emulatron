@@ -597,8 +597,6 @@ Emulatron::Emulatron(int& argc, char**& argv):
   gameCairoArea->signal_size_allocate().connect(sigc::mem_fun(this, &Emulatron::resize_cairo));
   gameCairoArea->signal_draw().connect(sigc::mem_fun(this, &Emulatron::draw_cairo));
 
-  pauseButton->signal_toggled().connect(sigc::mem_fun(console, &Retro::Console::togglePlaying));
-  resetButton->signal_clicked().connect(sigc::mem_fun(console, &Retro::Console::reset));
   volumeSlider->signal_value_changed().connect(sigc::mem_fun(audio, &Audio::setVolume));
   volumeSlider->set_value(audio->getVolume());
 
@@ -663,6 +661,11 @@ void Emulatron::startGame(const Gtk::TreeModel::Path& path)
     std::cout<<"Loading extension:"<<ext<<std::endl;
 
     Retro::Console* oldConsole = console;
+    vidCon.disconnect();
+    inpCon.disconnect();
+    playCon.disconnect();
+    resetCon.disconnect();
+
     std::string path;
     try {
       path = consoles.at(ext);
@@ -674,9 +677,11 @@ void Emulatron::startGame(const Gtk::TreeModel::Path& path)
     std::cout<<"Loading core:"<<path<<std::endl;
     console = new Retro::Console(path);
     console->audio = aud;
-    console->m_signal_draw.connect(sigc::mem_fun(this, &Emulatron::trigger_draw));
+    vidCon = console->m_signal_draw.connect(sigc::mem_fun(this, &Emulatron::trigger_draw));
     //console->m_signal_audio.connect(sigc::mem_fun(this, &Emulatron::trigger_audio));
-    console->m_signal_audio.connect(sigc::mem_fun(this, &Emulatron::trigger_input_poll));
+    inpCon = console->m_signal_audio.connect(sigc::mem_fun(this, &Emulatron::trigger_input_poll));
+    playCon = pauseButton->signal_toggled().connect(sigc::mem_fun(console, &Retro::Console::togglePlaying));
+    resetCon = resetButton->signal_clicked().connect(sigc::mem_fun(console, &Retro::Console::reset));
     std::cout<<"With:"<<console->info.library_name<<std::endl;
 
     delete oldConsole;
