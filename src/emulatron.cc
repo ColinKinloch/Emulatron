@@ -4,6 +4,7 @@
 
 #include <epoxy/gl.h>
 #include <gtkmm.h>
+#include <gsf/gsf.h>
 
 #include "emulatron.hh"
 #include "emu-window.hh"
@@ -247,6 +248,30 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   // Mouse* mouse = new Mouse(gameCairoArea);
 
+  Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path(settings->get_string("openvgdb-path"));
+  // TODO Display download
+  if(!openVGDBFile->query_exists())
+  {
+    std::cout<<"Downloading OpenVGDB"<<std::endl;
+    // TODO Github releases api and glib-json
+    //Glib::RefPtr<Gio::File> openVGDBUrl = Gio::File::create_for_uri("https://api.github.com/repos/OpenVGDB/OpenVGDB/releases/latest"); .assets[0].browser_download_url
+    Glib::RefPtr<Gio::File> openVGDBUrl = Gio::File::create_for_uri("https://github.com/OpenVGDB/OpenVGDB/releases/download/v22.0/openvgdb.zip");
+    GError* err = nullptr;
+    // TODO gsfmm?
+    GsfInput* gsfStream = gsf_input_gio_new(openVGDBUrl->gobj(), &err);
+    GsfInfile* gsfIn = gsf_infile_zip_new(gsfStream, &err);
+    if (err != nullptr) std::cerr<<"Failed to unzip: "<<err->message<<std::endl;
+    GsfInput* f = gsf_infile_child_by_name(gsfIn, "openvgdb.sqlite");
+    size_t bytes = f->size;
+    const guint8* data = gsf_input_read(f, bytes, nullptr);
+    try {
+      openVGDBFile->create_file()->write(data, bytes);
+    } catch(Gio::Error err) {
+      std::cout<<err.what()<<std::endl;
+    }
+  }
+  OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
+
   Glib::RefPtr<Gio::File> retroDir = Gio::File::create_for_path(settings->get_string("libretro-path"));
   Glib::RefPtr<Gio::FileEnumerator> retroFiles = retroDir->enumerate_children("*.so");
   Glib::RefPtr<Gio::FileInfo> file;
@@ -299,18 +324,6 @@ Emulatron::Emulatron(int& argc, char**& argv):
   avInfo = core->getSystemAVInfo();*/
 
   //console->audio = audio;
-
-  Glib::RefPtr<Gio::File> openVGDBFile = Gio::File::create_for_path(settings->get_string("openvgdb-path"));
-  OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
-  if(!openVGDBFile->query_exists())
-  {
-    std::cout<<"Downloading OpenVGDB"<<std::endl;
-    //TODO Github releases api and glib-json
-    //Glib::RefPtr<Gio::File> openVGDBUrl = Gio::File::create_for_uri("https://github.com/OpenVGDB/OpenVGDB/releases/latest");
-    Glib::RefPtr<Gio::File> openVGDBUrl = Gio::File::create_for_uri("https://github.com/OpenVGDB/OpenVGDB/releases/download/v21.0/openvgdb.zip");
-    //TODO Deal with zip
-    //openVGDBFile->create_file()->splice(openVGDBUrl->read());
-  }
 
   //core->init();
 

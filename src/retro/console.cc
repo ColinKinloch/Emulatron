@@ -52,8 +52,7 @@ namespace Retro
     while(running)
     {
       //frameTimer.start();
-      if(playing)
-        core->run();
+      if(playing) core->run();
       /*frameTimer.stop();
       frameTimer.elapsed(prevFrameLength);
       frameTimer.reset();
@@ -126,9 +125,7 @@ namespace Retro
       case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
       {
         std::cout<<"get system directory"<<std::endl;
-        const char* dir = *(const char**)data;
-        dir = nullptr;
-        // dir = Gio::File::create_for_path("./")->get_path().c_str();
+        *(const char**)data = nullptr; // "./"; // Gio::File::create_for_path("./")->get_path().c_str();
         return true;
       }
       case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
@@ -195,7 +192,7 @@ namespace Retro
         if(var->key != nullptr) {
           std::cout<<var->key;
           // var->value = ???;
-          //<<"="<<var->value
+          //std::cout<<"="<<var->valfue
           std::cout<<std::endl;
         }
         break;
@@ -263,9 +260,7 @@ namespace Retro
       case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
       {
         std::cout<<"get save directory"<<std::endl;
-        const char* dir = *(const char**)data;
-        dir = nullptr;
-        dir = Gio::File::create_for_path("./")->get_path().c_str();
+        *(const char**)data = nullptr; // Gio::File::create_for_path("./")->get_path().c_str();
         return true;
         break;
       }

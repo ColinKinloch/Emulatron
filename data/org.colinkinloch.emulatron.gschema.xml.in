@@ -3,6 +3,10 @@
   <schema id="org.colinkinloch.emulatron" path="/org/colinkinloch/emulatron/" gettext-domain="@GETTEXT_PACKAGE@">
     <child schema="org.colinkinloch.emulatron.audio" name="audio"/>
     <child schema="org.colinkinloch.emulatron.video" name="video"/>
+    <key name="openvgdb-github" type="s">
+      <default>'OpenVGDB/OpenVGDB'</default>
+      <summary>Github user and repo for OpenVGDB</summary>
+    </key>
     <key name="openvgdb-path" type="s">
       <default>'./openvgdb.sqlite'</default>
       <summary>Path to openvgdb database</summary>

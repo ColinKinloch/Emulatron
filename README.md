@@ -23,7 +23,7 @@ Build
 ```bash
 yum groupinstall "Development Tools"
 yum install autoconf automake gcc-c++ autoconf-archive
-yum install pulseaudio-libs-devel gtkmm30-devel libgda-sqlite libgdamm-devel SDL2-devel gobject-introspection-devel
+yum install pulseaudio-libs-devel gtkmm30-devel libgda-sqlite libgdamm-devel SDL2-devel gobject-introspection-devel libgsf-devel
 autoreconf --install
 ./configure
 make
