@@ -54,214 +54,6 @@ static int latency = 64;//pow(2, 6);// start latency in micro seconds
 static int sampleoffs = 0;
 static int16_t sampledata[20000];
 
-void logfun(enum retro_log_level level, const char *fmt, ...)
-{
-  std::cout<<"log"<<std::endl;
-}
-
-bool Emulatron::env(unsigned cmd, void *data)
-{
-  switch(cmd) {
-    case RETRO_ENVIRONMENT_SET_ROTATION:
-      std::cout<<"set rotation"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_OVERSCAN:
-      std::cout<<"get overscan"<<std::endl;
-      return false;
-    case RETRO_ENVIRONMENT_SET_MESSAGE:
-      std::cout<<"set message"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_SHUTDOWN:
-      std::cout<<"shutdown"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL:
-    {
-      const unsigned *perf = (const unsigned *)data;
-      std::cout<<"set performance level:"<<*perf<<std::endl;
-      break;
-    }
-    case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
-      std::cout<<"get system directory"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
-    {
-      switch(*(retro_pixel_format*)data)
-      {
-        case RETRO_PIXEL_FORMAT_RGB565:
-        {
-          pixFormat = Cairo::Format::FORMAT_RGB16_565;
-          break;
-        }
-        case RETRO_PIXEL_FORMAT_0RGB1555:
-        {
-          break;
-        }
-        case RETRO_PIXEL_FORMAT_XRGB8888:
-        {
-          pixFormat = Cairo::Format::FORMAT_ARGB32;
-          break;
-        }
-        case RETRO_PIXEL_FORMAT_UNKNOWN:
-        {
-          break;
-        }
-      }
-      return true;
-    }
-    case RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS:
-    {
-      std::cout<<"set input descriptors"<<std::endl;
-      retro_input_descriptor* var = (retro_input_descriptor*)data;
-      std::cout<<var->description<<std::endl;
-      break;
-    }
-    case RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK:
-      std::cout<<"set keyboard callback"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE:
-      std::cout<<"set disk control interface"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_SET_HW_RENDER:
-      std::cout<<"set hw render"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_VARIABLE:
-    {
-      retro_variable* var = (retro_variable*)data;
-      std::cout<<"get variable: "<<var->key<<std::endl;
-      if(var->key != nullptr) {
-        std::cout<<"-"<<var->key<<": "<<var->value<<std::endl;
-        return true;
-      }
-      break;
-    }
-    case RETRO_ENVIRONMENT_SET_VARIABLES:
-    {
-        retro_variable* var = (retro_variable*)data;
-        std::cout<<"set variable:"<<std::endl;
-      if(var->key != nullptr) {
-        std::cout<<"-"<<var->key<<": "<<var->value<<std::endl;
-        return true;
-      }
-      else {
-        std::cout<<"null value"<<std::endl;
-        return false;
-      }
-      break;
-    }
-    case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
-    {
-      //std::cout<<"get variable update"<<std::endl;
-      break;
-    }
-    case RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME:
-      std::cout<<"set support no game"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_LIBRETRO_PATH:
-    {
-      std::cout<<"get libretro path"<<std::endl;
-      const char* path = core->file->get_relative_path(Gio::File::create_for_path("/")).c_str();
-      data = &path;
-      return true;
-      break;
-    }
-    case RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK:
-      std::cout<<"set audio callback"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK:
-      std::cout<<"set frame time callback"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE:
-      std::cout<<"get rumble interface"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_INPUT_DEVICE_CAPABILITIES:
-      std::cout<<"get input device capabilities"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_SENSOR_INTERFACE:
-      std::cout<<"get sensor interface"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_CAMERA_INTERFACE:
-      std::cout<<"get camera interface"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
-      std::cout<<"get log interface"<<std::endl;
-      data = (void*)&logfun;
-      break;
-    case RETRO_ENVIRONMENT_GET_PERF_INTERFACE:
-      std::cout<<"get perf interface"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_LOCATION_INTERFACE:
-      std::cout<<"get location interface"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_CORE_ASSETS_DIRECTORY:
-      std::cout<<"get core assets directory"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
-      std::cout<<"get set directory"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO:
-      std::cout<<"set system av info"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_SET_PROC_ADDRESS_CALLBACK:
-      std::cout<<"set proc address callback"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO:
-    {
-      retro_subsystem_info* info = (retro_subsystem_info*)data;
-      std::cout<<"set subsystem info:"<<std::endl;
-      std::cout<<info->ident<<" ("<<info->desc<<")"<<std::endl;
-      for(int i=0; i<info->num_roms;i++) {
-        retro_subsystem_rom_info rominfo = info->roms[i];
-        std::cout<<rominfo.desc<<std::endl;
-      }
-      break;
-    }
-    case RETRO_ENVIRONMENT_SET_CONTROLLER_INFO:
-    {
-      retro_controller_info* info = (retro_controller_info*)data;
-      std::cout<<"set controller info:"<<std::endl;
-      for(int i=0; i < info->num_types; i++) {
-        retro_controller_description contdesc = info->types[i];
-        std::cout<<"-"<<contdesc.desc<<std::endl;
-      }
-      break;
-    }
-    case RETRO_ENVIRONMENT_SET_MEMORY_MAPS:
-    {
-      std::cout<<"set memory maps"<<std::endl;
-      //retro_memory_map* maps = (retro_memory_map*)data;
-      /*for(int i=0; maps->num_descriptors; i++)
-      {
-      std::cout<<"map:"<<i<<std::endl;
-        retro_memory_descriptor desc = maps->descriptors[i];
-        std::cout<<desc.addrspace<<std::endl;
-      }*/
-      break;
-      //break;
-    }
-    case RETRO_ENVIRONMENT_SET_GEOMETRY:
-      std::cout<<"set geometry"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_USERNAME:
-    {
-      std::cout<<"get username"<<std::endl;
-      const char* uname = Glib::get_real_name().c_str();
-      data = &uname;
-      return true;
-    }
-    case RETRO_ENVIRONMENT_GET_LANGUAGE:
-      std::cout<<"get language"<<std::endl;
-      break;
-    case RETRO_ENVIRONMENT_GET_CAN_DUPE:
-      std::cerr<<"get can dupe"<<std::endl;
-      *(bool*)data=true;
-      return true;
-    default:
-      std::cerr<<"Unknown"<<std::endl;
-      break;
-
-  }
-  return false;
-}
 void Emulatron::vf(const void *data, unsigned width, unsigned height, size_t pitch)
 {
   int sw = width;
@@ -294,8 +86,10 @@ void Emulatron::vf(const void *data, unsigned width, unsigned height, size_t pit
 
   gameCairoArea->queue_draw();
 }
+
 bool Emulatron::draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr)
 {
+  std::lock_guard<std::mutex> lock(console->video_lock);
   if(!console->video)
     return false;
   int dw = alloc.get_width();
@@ -416,13 +210,12 @@ void Emulatron::trigger_draw()
 }
 void Emulatron::trigger_audio()
 {
-  //console->audio_lock.reader_lock();
+  std::lock_guard<std::mutex> lock(console->audio_lock);
   size_t frames = console->audioFrames;
   if (frames > (AUDIO_CHUNK_SIZE_NONBLOCKING >> 1))
     frames = AUDIO_CHUNK_SIZE_NONBLOCKING >> 1;
   //This is blocking!
   //audio_driver_flush(console->audioBuffer, console->audioFrames << 1);
-  //console->audio_lock.reader_unlock();
 }
 void Emulatron::trigger_input_poll()
 {

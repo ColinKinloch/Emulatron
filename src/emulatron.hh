@@ -26,7 +26,6 @@ protected:
   bool draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr);
   void resize_cairo(Gtk::Allocation a);
 
-  bool env(unsigned cmd, void *data);
   void vf(const void *d, unsigned w, unsigned h, size_t p);
   void as(int16_t left, int16_t right);
   size_t asb(const int16_t *data, size_t frames);

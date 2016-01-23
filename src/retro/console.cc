@@ -3,6 +3,14 @@
 
 #include <iostream>
 
+void logfun(enum retro_log_level level, const char *fmt, ...)
+{
+  va_list args;
+  va_start( args, fmt );
+  vfprintf( stderr, fmt, args );
+  va_end( args );
+}
+
 namespace Retro
 {
   Console::Console(std::string path)
@@ -102,7 +110,7 @@ namespace Retro
         break;
       case RETRO_ENVIRONMENT_GET_OVERSCAN:
         std::cout<<"get overscan"<<std::endl;
-        return false;
+        break;
       case RETRO_ENVIRONMENT_SET_MESSAGE:
         std::cout<<"set message"<<std::endl;
         break;
@@ -116,8 +124,13 @@ namespace Retro
         break;
       }
       case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
+      {
         std::cout<<"get system directory"<<std::endl;
-        break;
+        const char* dir = *(const char**)data;
+        dir = nullptr;
+        // dir = Gio::File::create_for_path("./")->get_path().c_str();
+        return true;
+      }
       case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
       {
         switch(*(retro_pixel_format*)data)
@@ -125,23 +138,24 @@ namespace Retro
           case RETRO_PIXEL_FORMAT_RGB565:
           {
             vFormat = Cairo::Format::FORMAT_RGB16_565;
-            break;
+            return true;
           }
           case RETRO_PIXEL_FORMAT_0RGB1555:
           {
-            break;
+            // HACK Incorrect format
+            vFormat = Cairo::Format::FORMAT_RGB16_565;
+            return true;
           }
           case RETRO_PIXEL_FORMAT_XRGB8888:
           {
             vFormat = Cairo::Format::FORMAT_ARGB32;
-            break;
+            return true;
           }
           case RETRO_PIXEL_FORMAT_UNKNOWN:
           {
             break;
           }
         }
-        return true;
       }
       case RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS:
       {
@@ -157,36 +171,51 @@ namespace Retro
         std::cout<<"set disk control interface"<<std::endl;
         break;
       case RETRO_ENVIRONMENT_SET_HW_RENDER:
+      {
         std::cout<<"set hw render"<<std::endl;
+        retro_hw_render_callback* render = (retro_hw_render_callback*)data;
+        switch(render->context_type) {
+          case RETRO_HW_CONTEXT_NONE:
+            break;
+          case RETRO_HW_CONTEXT_OPENGL:
+          case RETRO_HW_CONTEXT_OPENGLES2:
+          case RETRO_HW_CONTEXT_OPENGL_CORE:
+          case RETRO_HW_CONTEXT_OPENGLES3:
+          case RETRO_HW_CONTEXT_OPENGLES_VERSION:
+            break;
+          case RETRO_HW_CONTEXT_DUMMY:
+            break;
+        }
         break;
+      }
       case RETRO_ENVIRONMENT_GET_VARIABLE:
       {
+        std::cout<<"get variable: "<<std::endl;
         retro_variable* var = (retro_variable*)data;
-        std::cout<<"get variable: "<<var->key<<std::endl;
         if(var->key != nullptr) {
-          std::cout<<"-"<<var->key<<": "<<var->value<<std::endl;
-          return true;
+          std::cout<<var->key;
+          // var->value = ???;
+          //<<"="<<var->value
+          std::cout<<std::endl;
         }
         break;
       }
       case RETRO_ENVIRONMENT_SET_VARIABLES:
       {
-          retro_variable* var = (retro_variable*)data;
-          std::cout<<"set variable:"<<std::endl;
-        if(var->key != nullptr) {
-          std::cout<<"-"<<var->key<<": "<<var->value<<std::endl;
+        std::cout<<"set varible: "<<std::endl;
+        retro_variable* var = (retro_variable*)data;
+        if(var->key != nullptr || var->key != nullptr) {
+          std::cout<<var->key<<"="<<var->value<<std::endl;
           return true;
         }
-        else {
-          std::cout<<"null value"<<std::endl;
-          return false;
-        }
+        std::cout<<"null value"<<std::endl;
         break;
       }
       case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
       {
-        //std::cout<<"get variable update"<<std::endl;
-        return false;
+        // std::cout<<"get variable update: "<<std::endl;
+        // *(bool*)data = false;
+        break;
       }
       case RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME:
         std::cout<<"set support no game"<<std::endl;
@@ -194,10 +223,10 @@ namespace Retro
       case RETRO_ENVIRONMENT_GET_LIBRETRO_PATH:
       {
         std::cout<<"get libretro path"<<std::endl;
-        const char* path = core->file->get_relative_path(Gio::File::create_for_path("/")).c_str();
-        data = &path;
+        //const char* path = core->file->get_path().c_str();
+        //data = &path;
+        data = nullptr;
         return true;
-        break;
       }
       case RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK:
         std::cout<<"set audio callback"<<std::endl;
@@ -219,6 +248,8 @@ namespace Retro
         break;
       case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
         std::cout<<"get log interface"<<std::endl;
+        ((struct retro_log_callback *) data)->log = logfun;
+        return true;
         break;
       case RETRO_ENVIRONMENT_GET_PERF_INTERFACE:
         std::cout<<"get perf interface"<<std::endl;
@@ -230,8 +261,14 @@ namespace Retro
         std::cout<<"get core assets directory"<<std::endl;
         break;
       case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
-        std::cout<<"get set directory"<<std::endl;
+      {
+        std::cout<<"get save directory"<<std::endl;
+        const char* dir = *(const char**)data;
+        dir = nullptr;
+        dir = Gio::File::create_for_path("./")->get_path().c_str();
+        return true;
         break;
+      }
       case RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO:
         std::cout<<"set system av info"<<std::endl;
         break;
@@ -289,25 +326,22 @@ namespace Retro
         return true;
       default:
         std::cerr<<"Unknown"<<std::endl;
-        return false;
     }
     return false;
   }
   void Console::set_video_refresh(const void *data, unsigned width, unsigned height, size_t pitch)
   {
-    //video_lock.writer_lock();
+    std::lock_guard<std::mutex> lock(video_lock);
     video = Cairo::ImageSurface::create((unsigned char*)data, vFormat, width, height, pitch);
-    //video_lock.writer_unlock();
     m_signal_draw();
   }
   void Console::set_audio_sample(int16_t left, int16_t right)
   {
     audioFrames = 2;
-    //audio_lock.writer_lock();
+    std::lock_guard<std::mutex> lock(audio_lock);
     audioBuffer = new int16_t[audioFrames];
     audioBuffer[0] = left;
     audioBuffer[1] = right;
-    //audio_lock.writer_unlock();
     m_signal_audio();
     audio_driver_flush(audioBuffer, audioFrames << 1);
   }
@@ -315,11 +349,10 @@ namespace Retro
   {
     if (frames > (AUDIO_CHUNK_SIZE_NONBLOCKING >> 1))
       frames = AUDIO_CHUNK_SIZE_NONBLOCKING >> 1;
-    //audio_lock.writer_lock();
+    std::lock_guard<std::mutex> lock(audio_lock);
     audioFrames = frames;
     //audioBuffer = new int16_t[audioFrames];
     audioBuffer = (int16_t*)data;
-    //audio_lock.writer_unlock();
     m_signal_audio();
     audio_driver_flush(data, frames << 1);
     return frames;
