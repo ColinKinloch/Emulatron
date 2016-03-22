@@ -87,25 +87,29 @@ Glib::RefPtr<GameStore> GameStore::create()
 
 void GameStore::gatherROMData(GameModel::Row row, Glib::RefPtr<Gio::File> file, sigc::connection spin)
 {
-  char* contents;
-  gsize size;
-  Glib::RefPtr<Gio::Cancellable> cancel;
-  file->load_contents(cancel, contents, size);
+  auto romStream = file->read();
+  auto md5 = new Glib::Checksum(Glib::Checksum::CHECKSUM_MD5);
+  auto sha1 = new Glib::Checksum(Glib::Checksum::CHECKSUM_SHA1);
+  std::vector<uint8_t> chunk(1e+6);
+  size_t size;
+  while((size = romStream->read(chunk.data(), chunk.size()))) {
+    md5->update(chunk.data(), size);
+    sha1->update(chunk.data(), size);
+  }
 
-  Glib::ustring md5 = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_MD5, (guchar*)contents, size);
-  Glib::ustring sha1 = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_SHA1, (guchar*)contents, size);
-  delete contents;
+  Glib::ustring md5String = md5->get_string();
+  Glib::ustring sha1String = sha1->get_string();
 
-  row[col.md5] = md5;
-  row[col.sha1] = sha1;
+  row[col.md5] = md5String;
+  row[col.sha1] = sha1String;
 
   auto statement = builder->get_statement();
 
   Glib::RefPtr<Gda::Set> params;
   statement->get_parameters(params);
 
-  params->get_holder("md5")->set_value<Glib::ustring>(md5.uppercase());
-  params->get_holder("sha1")->set_value<Glib::ustring>(sha1.uppercase());
+  params->get_holder("md5")->set_value<Glib::ustring>(md5String.uppercase());
+  params->get_holder("sha1")->set_value<Glib::ustring>(sha1String.uppercase());
 
   Glib::RefPtr<Gda::DataModel> data;
   try
