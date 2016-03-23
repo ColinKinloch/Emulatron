@@ -90,7 +90,7 @@ void GameStore::gatherROMData(GameModel::Row row, Glib::RefPtr<Gio::File> file, 
   auto romStream = file->read();
   auto md5 = new Glib::Checksum(Glib::Checksum::CHECKSUM_MD5);
   auto sha1 = new Glib::Checksum(Glib::Checksum::CHECKSUM_SHA1);
-  std::vector<uint8_t> chunk(1e+6);
+  std::vector<uint8_t> chunk(4e+3);
   size_t size;
   while((size = romStream->read(chunk.data(), chunk.size()))) {
     md5->update(chunk.data(), size);

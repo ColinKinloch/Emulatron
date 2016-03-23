@@ -117,6 +117,7 @@ namespace Retro
   }
   retro_system_av_info Core::getSystemAVInfo()
   {
+    /*
     if(pretro_get_system_av_info == nullptr) {
       void (*func)(retro_system_av_info*) = nullptr;
       get_symbol("retro_get_system_av_info", (void *&)func);
@@ -125,10 +126,10 @@ namespace Retro
       return info;
     }
     else {
-      retro_system_av_info info;
-      pretro_get_system_av_info(&info);
-      return info;
-    }
+    */
+    retro_system_av_info info;
+    pretro_get_system_av_info(&info);
+    return info;
   }
 
   bool Core::on_environment(unsigned cmd, void *data)

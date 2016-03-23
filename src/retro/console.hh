@@ -28,9 +28,6 @@ namespace Retro
     bool loadGame(Glib::RefPtr<Gio::File> file);
 
     retro_system_info info;
-    retro_system_av_info avInfo;
-    unsigned long frameLength;
-    unsigned long prevFrameLength;
     Glib::Timer frameTimer;
 
     Cairo::Format vFormat;

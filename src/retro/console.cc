@@ -2,6 +2,10 @@
 #include "device.hh"
 
 #include <iostream>
+#include <regex>
+#include <cstring>
+
+#include <gsf/gsf.h>
 
 void logfun(enum retro_log_level level, const char *fmt, ...)
 {
@@ -35,10 +39,10 @@ namespace Retro
     core->init();
 
     //core->setControllerPortDevice(0, RETRO_DEVICE_MOUSE);
+    vFormat = Cairo::Format::FORMAT_RGB16_565;
 
     info = core->getSystemInfo();
-    avInfo = core->getSystemAVInfo();
-    frameLength = 1000000/avInfo.timing.fps;
+    // avInfo = core->getSystemAVInfo();
   }
 
   void Console::start()
@@ -51,12 +55,7 @@ namespace Retro
   {
     while(running)
     {
-      //frameTimer.start();
       if(playing) core->run();
-      /*frameTimer.stop();
-      frameTimer.elapsed(prevFrameLength);
-      frameTimer.reset();
-      Glib::usleep(frameLength-prevFrameLength);*/
     }
   }
   void Console::stop()
@@ -85,6 +84,24 @@ namespace Retro
 
   bool Retro::Console::loadGame(Glib::RefPtr<Gio::File> file)
   {
+    std::cout<<file->query_info()->get_content_type()<<std::endl;
+    // Test archive/zip; mimetype? magic? regexp?
+    /*std::regex regZip ("*.zip$");
+    GError* err = nullptr;
+    // TODO gsfmm?
+    GsfInput* gsfStream = gsf_input_gio_new(file->gobj(), &err);
+    GsfInfile* gsfIn = gsf_infile_zip_new(gsfStream, &err);
+    if (err != nullptr) std::cerr<<"Failed to unzip: "<<err->message<<std::endl;
+    int nFiles = gsf_infile_num_children(gsfIn);
+    GsfInput* f = nullptr;
+    for (int i = 0; i < nFiles; ++i) {
+      GsfInput* f = gsf_infile_child_by_index(gsfIn, i);
+      if (std::regex_match(f->name, regZip)) break;
+    }
+    std::cout<<f.name<<std::endl;
+    size_t size = f->size;
+    const guint8* data = gsf_input_read(f, bytes, nullptr);
+    */
     char* contents;
     size_t size;
     retro_game_info game;
@@ -132,24 +149,24 @@ namespace Retro
       {
         switch(*(retro_pixel_format*)data)
         {
-          case RETRO_PIXEL_FORMAT_RGB565:
-          {
-            vFormat = Cairo::Format::FORMAT_RGB16_565;
-            return true;
-          }
           case RETRO_PIXEL_FORMAT_0RGB1555:
           {
-            // HACK Incorrect format
-            vFormat = Cairo::Format::FORMAT_RGB16_565;
-            return true;
+            // Unsupported
+            break;
           }
           case RETRO_PIXEL_FORMAT_XRGB8888:
           {
             vFormat = Cairo::Format::FORMAT_ARGB32;
             return true;
           }
+          case RETRO_PIXEL_FORMAT_RGB565:
+          {
+            vFormat = Cairo::Format::FORMAT_RGB16_565;
+            return true;
+          }
           case RETRO_PIXEL_FORMAT_UNKNOWN:
           {
+            std::cout<<"Unkown"<<std::endl;
             break;
           }
         }
@@ -326,8 +343,9 @@ namespace Retro
   }
   void Console::set_video_refresh(const void *data, unsigned width, unsigned height, size_t pitch)
   {
-    std::lock_guard<std::mutex> lock(video_lock);
+    video_lock.lock();
     video = Cairo::ImageSurface::create((unsigned char*)data, vFormat, width, height, pitch);
+    video_lock.unlock();
     m_signal_draw();
   }
   void Console::set_audio_sample(int16_t left, int16_t right)

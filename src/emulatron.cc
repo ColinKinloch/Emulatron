@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <iostream>
+#include <regex>
 
 #include <epoxy/gl.h>
 #include <gtkmm.h>
@@ -90,12 +91,12 @@ void Emulatron::vf(const void *data, unsigned width, unsigned height, size_t pit
 
 bool Emulatron::draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr)
 {
-  std::lock_guard<std::mutex> lock(console->video_lock);
   if(!console->video)
     return false;
   int dw = alloc.get_width();
   int dh = alloc.get_height();
   float dr = (float)dw/dh;
+  console->video_lock.lock();
   Cairo::RefPtr<Cairo::ImageSurface> sur = console->video;
   patt = Cairo::SurfacePattern::create(sur);
   int sw = sur->get_width();
@@ -124,6 +125,7 @@ bool Emulatron::draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr)
   patt->set_matrix(mat);
   cr->set_source(patt);
   cr->paint();
+  console->video_lock.unlock();
 
   //console->mouse->update();
 
@@ -230,6 +232,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   Glib::init();
   Gio::init();
+  gsf_init();
 
   Gtk::Window::set_default_icon_list({
     Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/dino_down.png"),
@@ -262,10 +265,10 @@ Emulatron::Emulatron(int& argc, char**& argv):
     GsfInfile* gsfIn = gsf_infile_zip_new(gsfStream, &err);
     if (err != nullptr) std::cerr<<"Failed to unzip: "<<err->message<<std::endl;
     GsfInput* f = gsf_infile_child_by_name(gsfIn, "openvgdb.sqlite");
-    size_t bytes = f->size;
-    const guint8* data = gsf_input_read(f, bytes, nullptr);
+    size_t size = f->size;
+    const guint8* data = gsf_input_read(f, size, nullptr);
     try {
-      openVGDBFile->create_file()->write(data, bytes);
+      openVGDBFile->create_file()->write(data, size);
     } catch(Gio::Error err) {
       std::cout<<err.what()<<std::endl;
     }
@@ -273,27 +276,29 @@ Emulatron::Emulatron(int& argc, char**& argv):
   OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
 
   Glib::RefPtr<Gio::File> retroDir = Gio::File::create_for_path(settings->get_string("libretro-path"));
-  Glib::RefPtr<Gio::FileEnumerator> retroFiles = retroDir->enumerate_children("*.so");
+  Glib::RefPtr<Gio::FileEnumerator> retroFiles = retroDir->enumerate_children();
   Glib::RefPtr<Gio::FileInfo> file;
+  std::regex regCore (".*\\.(so|dll|dylib)$");
   while((file = retroFiles->next_file())) {
+    // Test if libRetro core
+    if (!std::regex_match(file->get_name(), regCore)) continue;
     std::string path = retroDir->get_child(file->get_name())->get_path();
     std::cout<<path<<std::endl;
-    Retro::Console* cons = new Retro::Console(path);
+    Retro::Console cons(path);
     //cons->audio = audio;
     //cons->mouse = mouse;
     std::string extStr;
-    if(cons->info.valid_extensions)
-       extStr = cons->info.valid_extensions;
+    if(cons.info.valid_extensions)
+       extStr = cons.info.valid_extensions;
     std::cout<<extStr<<std::endl;
-    //std::vector<std::string> exts;
-    int s;
-    while((s = extStr.find('|')) != -1)
-    {
+    int e;
+    do {
+      int s = extStr.find('|');
       std::string ext = extStr.substr(0, s);
-      extStr = extStr.substr(s + 1);
       consoles.insert(std::pair<std::string, std::string>(ext, path));
-    }
-    delete cons;
+      if (s == -1) e = extStr.length();
+      else e = s + 1;
+    } while ((extStr = extStr.substr(e)).length() > 0);
   }
 
   /*Retro::Console* snes = new Retro::Console("./src/libretro-cores/snes9x/libretro/snes9x_libretro");

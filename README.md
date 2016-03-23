@@ -32,4 +32,4 @@ sudo glib-compile-schemas /usr/share/glib-2.0/schemas
 ./src/emulatron
 ```
 
-(c) Colin Kinloch - colin@kinlo.ch - 2014
+(c) Colin Kinloch - colin@kinlo.ch - 2016
