@@ -91,7 +91,7 @@ void Emulatron::vf(const void *data, unsigned width, unsigned height, size_t pit
 
 bool Emulatron::draw_cairo(const Cairo::RefPtr<Cairo::Context>& cr)
 {
-  if(!console->video)
+  if(!console || !console->video)
     return false;
   int dw = alloc.get_width();
   int dh = alloc.get_height();
@@ -542,7 +542,20 @@ void Emulatron::setVolume(double val)
 }
 void Emulatron::on_open()
 {
-  std::cout<<"Open rom!"<<std::endl;
+  Gtk::FileChooserDialog dialog(*emuWindow, "Open ROM file.", Gtk::FILE_CHOOSER_ACTION_OPEN);
+
+  dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dialog.add_button("Select", Gtk::RESPONSE_OK);
+
+  int res = dialog.run();
+  switch(res) {
+    case Gtk::RESPONSE_OK:
+      //std::cout<<dialog.get_file()->get_uri()<<std::endl;
+      emuWindow->gameIconView->get_model()->add(dialog.get_file());
+      break;
+    case Gtk::RESPONSE_CANCEL:
+      break;
+  }
 }
 
 void Emulatron::on_preferences()

@@ -4,6 +4,13 @@
 
 <menu id="app-menu">
   <section>
+    <item>
+      <attribute name="label" translatable="yes">Add ROM…</attribute>
+      <attribute name="action">app.open</attribute>
+      <attribute name="accel">&lt;Ctrl&gt;O</attribute>
+    </item>
+  </section>
+  <section>
     <attribute name="id">preferencen-section</attribute>
     <item>
       <attribute name="label" translatable="yes">_Preferences</attribute>

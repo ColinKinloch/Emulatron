@@ -55,11 +55,14 @@ GameStore::~GameStore()
 
 bool GameStore::add(std::string uri)
 {
-  GameModel::Row row = *append();
-
   Glib::RefPtr<Gio::File> file = Gio::File::create_for_uri(uri);
+  return add(file);
+}
 
-  row[col.filename] = uri;
+bool GameStore::add(Glib::RefPtr<Gio::File> file)
+{
+  GameModel::Row row = *append();
+  row[col.filename] = file->get_uri();
   row[col.title] = file->get_basename();
   //row[col.cover] = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");
   //row[col.thumbnail] = Gdk::Pixbuf::create_from_resource("/org/colinkinloch/emulatron/img/missing_artwork.png");

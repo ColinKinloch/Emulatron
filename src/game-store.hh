@@ -15,6 +15,7 @@ public:
   static Glib::RefPtr<GameStore> create();
   
   bool add(std::string uri);
+  bool add(Glib::RefPtr<Gio::File> file);
   
   GameModel::ColumnRecord col;
 protected:
