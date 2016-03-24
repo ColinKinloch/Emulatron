@@ -19,6 +19,7 @@ namespace Retro
     Console(std::string path);
 
     void init();
+    void deinit();
 
     void start();
     void stop();
@@ -43,6 +44,8 @@ namespace Retro
 
     std::mutex video_lock;
     std::mutex audio_lock;
+
+    retro_game_info game;
 
     Mouse* mouse;
 

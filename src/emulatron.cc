@@ -498,6 +498,7 @@ void Emulatron::startGame(const Gtk::TreeModel::Path& path)
     resetCon = resetButton->signal_clicked().connect(sigc::mem_fun(console, &Retro::Console::reset));
     cout<<"With:"<<console->info.library_name<<endl;
 
+    if(oldConsole != nullptr) oldConsole->deinit();
     delete oldConsole;
 
     //console->stop();

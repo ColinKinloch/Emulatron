@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../libretro-arb/libretro.h"
+#include "libretro.h"
 
 namespace Retro
 {

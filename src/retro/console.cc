@@ -10,12 +10,29 @@
 
 using namespace std;
 
+// TODO Move callbacks
 void logfun(enum retro_log_level level, const char *fmt, ...)
 {
   va_list args;
   va_start( args, fmt );
   vfprintf( stderr, fmt, args );
   va_end( args );
+}
+
+retro_time_t perfGetTimeUsec() {
+  return chrono::duration_cast<chrono::microseconds>(
+      chrono::system_clock::now().time_since_epoch()
+    ).count();
+}
+
+/*uint64_t getCpuFeatures() {
+  return 0;
+}*/
+
+retro_perf_tick_t perfGetCounter() {
+  return chrono::duration_cast<chrono::nanoseconds>(
+      chrono::system_clock::now().time_since_epoch()
+    ).count();
 }
 
 namespace Retro
@@ -53,6 +70,11 @@ namespace Retro
     //core->setControllerPortDevice(0, RETRO_DEVICE_MOUSE);
   }
 
+  void Console::deinit()
+  {
+    core->deinit();
+  }
+
   void Console::start()
   {
     running = true;
@@ -68,7 +90,10 @@ namespace Retro
       //video_lock.lock();
       tick = std::chrono::system_clock::now();
       retro_usec_t t = (std::chrono::duration_cast<std::chrono::microseconds>(tick - tock)).count();
-      if(frameTimeCallback != nullptr) frameTimeCallback(t);
+      if(frameTimeCallback != nullptr) {
+        frameTimeCallback(t);
+        cout<<t<<endl;
+        }
       if(playing) core->run();
       tock = tick;
       //video_lock.unlock();
@@ -120,8 +145,8 @@ namespace Retro
     */
     char* contents;
     size_t size;
-    retro_game_info game;
-    game.path = file->get_path().c_str();
+    string path = file->get_path();
+    game.path = path.c_str();
     try {
       file->load_contents(contents, size);
     }
@@ -142,7 +167,12 @@ namespace Retro
         break;
       case RETRO_ENVIRONMENT_GET_OVERSCAN:
         std::cout<<"get overscan"<<std::endl;
-        break;
+        *((bool*)data) = true;
+        return true;
+      case RETRO_ENVIRONMENT_GET_CAN_DUPE:
+        std::cerr<<"get can dupe"<<std::endl;
+        *(bool*)data=true;
+        return true;
       case RETRO_ENVIRONMENT_SET_MESSAGE:
         std::cout<<"set message"<<std::endl;
         break;
@@ -168,6 +198,7 @@ namespace Retro
           case RETRO_PIXEL_FORMAT_0RGB1555:
           {
             // Unsupported
+            std::cout<<"Pixel format unsupported"<<std::endl;
             break;
           }
           case RETRO_PIXEL_FORMAT_XRGB8888:
@@ -182,7 +213,7 @@ namespace Retro
           }
           case RETRO_PIXEL_FORMAT_UNKNOWN:
           {
-            std::cout<<"Unkown"<<std::endl;
+            std::cout<<"Pixel format Unkown"<<std::endl;
             break;
           }
         }
@@ -212,6 +243,7 @@ namespace Retro
           case RETRO_HW_CONTEXT_OPENGL_CORE:
           case RETRO_HW_CONTEXT_OPENGLES3:
           case RETRO_HW_CONTEXT_OPENGLES_VERSION:
+          case RETRO_HW_CONTEXT_VULKAN:
             break;
           case RETRO_HW_CONTEXT_DUMMY:
             break;
@@ -253,9 +285,9 @@ namespace Retro
       case RETRO_ENVIRONMENT_GET_LIBRETRO_PATH:
       {
         std::cout<<"get libretro path"<<std::endl;
-        //const char* path = core->file->get_path().c_str();
-        //data = &path;
-        data = nullptr;
+        const char* path = core->file->get_path().c_str();
+        //(const char**)data = path;
+        std::memcpy(&path, data, sizeof(path));
         return true;
       }
       case RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK:
@@ -281,10 +313,15 @@ namespace Retro
         std::cout<<"get log interface"<<std::endl;
         ((struct retro_log_callback *) data)->log = logfun;
         return true;
-        break;
       case RETRO_ENVIRONMENT_GET_PERF_INTERFACE:
+      {
         std::cout<<"get perf interface"<<std::endl;
+        retro_perf_callback* pcb = (retro_perf_callback*)data;
+        pcb->get_time_usec = perfGetTimeUsec;
+        //pcb->get_cpu_features = getCpuFeatures;
+        pcb->get_perf_counter = perfGetCounter;
         break;
+      }
       case RETRO_ENVIRONMENT_GET_LOCATION_INTERFACE:
         std::cout<<"get location interface"<<std::endl;
         break;
@@ -294,9 +331,10 @@ namespace Retro
       case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
       {
         std::cout<<"get save directory"<<std::endl;
+        /*string path = Gio::File::create_for_path("./")->get_path();
+        *(const char**)data = path.c_str();*/
         *(const char**)data = nullptr; // Gio::File::create_for_path("./")->get_path().c_str();
         return true;
-        break;
       }
       case RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO:
         std::cout<<"set system av info"<<std::endl;
@@ -370,12 +408,14 @@ namespace Retro
           return true;
         }
       }
-      case RETRO_ENVIRONMENT_GET_CAN_DUPE:
-        std::cerr<<"get can dupe"<<std::endl;
-        *(bool*)data=true;
-        return true;
+      case RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER:
+        cout<<"get Software Framebuffer"<<endl;
+        break;
+      case RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE:
+        cout<<"get hw render interface"<<endl;
+        break;
       default:
-        std::cerr<<"Unknown"<<std::endl;
+        cerr<<"Unknown command:"<<cmd<<std::endl;
     }
     return false;
   }

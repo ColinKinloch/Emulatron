@@ -3,7 +3,7 @@
 #include <giomm/file.h>
 #include <sigc++/signal.h>
 #include <glibmm/module.h>
-#include "../libretro-arb/libretro.h"
+#include "libretro.h"
 
 namespace Retro {
   class Core: public Glib::Module

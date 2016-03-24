@@ -2,7 +2,7 @@
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_gamecontroller.h>
-#include "libretro-arb/libretro.h"
+#include "retro/libretro.h"
 #include <map>
 
 class Controller
