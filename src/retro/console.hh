@@ -18,6 +18,8 @@ namespace Retro
   public:
     Console(std::string path);
 
+    void init();
+
     void start();
     void stop();
     void play();
@@ -32,7 +34,6 @@ namespace Retro
 
     Cairo::Format vFormat;
     Cairo::RefPtr<Cairo::ImageSurface> video;
-
     int16_t *audioBuffer;
     size_t audioFrames;
 
@@ -46,6 +47,8 @@ namespace Retro
     Mouse* mouse;
 
     Audio* audio;
+
+    void (*frameTimeCallback)(retro_usec_t usec);
 
   protected:
     bool set_environment(unsigned cmd, void *data);

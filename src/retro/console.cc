@@ -4,8 +4,11 @@
 #include <iostream>
 #include <regex>
 #include <cstring>
+#include <chrono>
 
 #include <gsf/gsf.h>
+
+using namespace std;
 
 void logfun(enum retro_log_level level, const char *fmt, ...)
 {
@@ -17,10 +20,19 @@ void logfun(enum retro_log_level level, const char *fmt, ...)
 
 namespace Retro
 {
-  Console::Console(std::string path)
+  Console::Console(std::string path):
+    frameTimeCallback(nullptr)
   {
     core = new Retro::Core(path);
 
+    info = core->getSystemInfo();
+    // avInfo = core->getSystemAVInfo();
+    vFormat = Cairo::Format::FORMAT_RGB16_565;
+
+  }
+
+  void Console::init()
+  {
     core->loadSymbols();
 
     core->signal_environment()
@@ -39,10 +51,6 @@ namespace Retro
     core->init();
 
     //core->setControllerPortDevice(0, RETRO_DEVICE_MOUSE);
-    vFormat = Cairo::Format::FORMAT_RGB16_565;
-
-    info = core->getSystemInfo();
-    // avInfo = core->getSystemAVInfo();
   }
 
   void Console::start()
@@ -53,9 +61,17 @@ namespace Retro
   }
   void Console::run()
   {
+    auto tick = std::chrono::system_clock::now();
+    auto tock = tick;
     while(running)
     {
+      //video_lock.lock();
+      tick = std::chrono::system_clock::now();
+      retro_usec_t t = (std::chrono::duration_cast<std::chrono::microseconds>(tick - tock)).count();
+      if(frameTimeCallback != nullptr) frameTimeCallback(t);
       if(playing) core->run();
+      tock = tick;
+      //video_lock.unlock();
     }
   }
   void Console::stop()
@@ -247,7 +263,8 @@ namespace Retro
         break;
       case RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK:
         std::cout<<"set frame time callback"<<std::endl;
-        break;
+        frameTimeCallback = ((retro_frame_time_callback*) data)->callback;
+        return true;
       case RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE:
         std::cout<<"get rumble interface"<<std::endl;
         break;
@@ -330,8 +347,29 @@ namespace Retro
         return true;
       }
       case RETRO_ENVIRONMENT_GET_LANGUAGE:
+      {
         std::cout<<"get language"<<std::endl;
-        break;
+        const gchar * const * localeStrings = g_get_language_names();
+        retro_language* language = (retro_language*)data;
+        for(int i = 0; i < sizeof(localeStrings); ++i) {
+          std::string locale = localeStrings[i];
+          if(locale == "en") *language = RETRO_LANGUAGE_ENGLISH;
+          else if(locale == "ja") *language = RETRO_LANGUAGE_JAPANESE;
+          else if(locale == "fr") *language = RETRO_LANGUAGE_FRENCH;
+          else if(locale == "es") *language = RETRO_LANGUAGE_SPANISH;
+          else if(locale == "de") *language = RETRO_LANGUAGE_GERMAN;
+          else if(locale == "it") *language = RETRO_LANGUAGE_ITALIAN;
+          else if(locale == "nl") *language = RETRO_LANGUAGE_DUTCH;
+          else if(locale == "pt") *language = RETRO_LANGUAGE_PORTUGUESE;
+          else if(locale == "ru") *language = RETRO_LANGUAGE_RUSSIAN;
+          else if(locale == "ko") *language = RETRO_LANGUAGE_KOREAN;
+          else if(locale == "zh_tw") *language = RETRO_LANGUAGE_CHINESE_TRADITIONAL;
+          else if(locale == "zh_cn") *language = RETRO_LANGUAGE_CHINESE_SIMPLIFIED;
+          //else if(locale == "eo") *language = RETRO_LANGUAGE_ESPERANTO;
+          //else if(locale == "pl") *language = RETRO_LANGUAGE_POLISH;
+          return true;
+        }
+      }
       case RETRO_ENVIRONMENT_GET_CAN_DUPE:
         std::cerr<<"get can dupe"<<std::endl;
         *(bool*)data=true;
@@ -344,7 +382,26 @@ namespace Retro
   void Console::set_video_refresh(const void *data, unsigned width, unsigned height, size_t pitch)
   {
     video_lock.lock();
-    video = Cairo::ImageSurface::create((unsigned char*)data, vFormat, width, height, pitch);
+    video = Cairo::ImageSurface::create(vFormat, width, height);
+    auto ctx = Cairo::Context::create(video);
+
+    auto source = Cairo::ImageSurface::create((uint8_t*)data, vFormat, width, height, pitch);
+    ctx->set_source(source, 0, 0);
+    ctx->paint();
+
+    //Debug capture :)
+    /*auto dir = Gio::File::create_for_path("./screenshots/");
+    if(!dir->query_exists()) dir->make_directory();
+    int i = 0;
+    Glib::RefPtr<Gio::File> file;
+    std::string filename;
+    do {
+      filename = std::to_string(++i);
+      filename += ".png";
+      file = dir->get_child(filename);
+    } while (file->query_exists());
+    video->write_to_png(file->get_path());*/
+
     video_lock.unlock();
     m_signal_draw();
   }

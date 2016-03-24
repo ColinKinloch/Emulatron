@@ -204,4 +204,7 @@ namespace Retro
   {
     pretro_unload_game();
   }
+  unsigned Core::getRegion() {
+    return pretro_get_region();
+  }
 };

@@ -20,6 +20,8 @@
 #include "controller.hh"
 #include "mouse.hh"
 
+using namespace std;
+
 retro_system_av_info avInfo;
 
 Audio* aud;
@@ -31,7 +33,7 @@ Cairo::Format pixFormat = Cairo::Format::FORMAT_RGB16_565;
 static bool
 render (Glib::RefPtr<Gdk::GLContext> context)
 {
-  std::cout<<"render"<<std::endl;
+  cout<<"render"<<endl;
   context->make_current();
   glClearColor (0,0,0,0);
   glClear (GL_COLOR_BUFFER_BIT);
@@ -41,7 +43,7 @@ render (Glib::RefPtr<Gdk::GLContext> context)
 static void
 resize (int width, int height)
 {
-  std::cout<<"resize"<<std::endl;
+  cout<<"resize"<<endl;
   //this.make_current();
   glViewport(0,0,width,height);
 };
@@ -148,7 +150,7 @@ bool audio_driver_flush(const int16_t *data, size_t samples)
 }
 void Emulatron::as(int16_t left, int16_t right)
 {
-  std::cout<<"audio sample"<<std::endl;
+  cout<<"audio sample"<<endl;
   int16_t out[2];
   out[0] = left;
   out[1] = right;
@@ -213,7 +215,7 @@ void Emulatron::trigger_draw()
 }
 void Emulatron::trigger_audio()
 {
-  std::lock_guard<std::mutex> lock(console->audio_lock);
+  lock_guard<mutex> lock(console->audio_lock);
   size_t frames = console->audioFrames;
   if (frames > (AUDIO_CHUNK_SIZE_NONBLOCKING >> 1))
     frames = AUDIO_CHUNK_SIZE_NONBLOCKING >> 1;
@@ -243,7 +245,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
 
   if(SDL_Init(SDL_INIT_HAPTIC|SDL_INIT_GAMECONTROLLER) != 0)
   {
-    std::cerr<<SDL_GetError()<<std::endl;
+    cerr<<SDL_GetError()<<endl;
   }
 
   Glib::RefPtr<Gio::Settings> audioSettings = settings->get_child("audio");
@@ -255,7 +257,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
   // TODO Display download
   if(!openVGDBFile->query_exists())
   {
-    std::cout<<"Downloading OpenVGDB"<<std::endl;
+    cout<<"Downloading OpenVGDB"<<endl;
     // TODO Github releases api and glib-json
     //Glib::RefPtr<Gio::File> openVGDBUrl = Gio::File::create_for_uri("https://api.github.com/repos/OpenVGDB/OpenVGDB/releases/latest"); .assets[0].browser_download_url
     Glib::RefPtr<Gio::File> openVGDBUrl = Gio::File::create_for_uri("https://github.com/OpenVGDB/OpenVGDB/releases/download/v22.0/openvgdb.zip");
@@ -263,14 +265,14 @@ Emulatron::Emulatron(int& argc, char**& argv):
     // TODO gsfmm?
     GsfInput* gsfStream = gsf_input_gio_new(openVGDBUrl->gobj(), &err);
     GsfInfile* gsfIn = gsf_infile_zip_new(gsfStream, &err);
-    if (err != nullptr) std::cerr<<"Failed to unzip: "<<err->message<<std::endl;
+    if (err != nullptr) cerr<<"Failed to unzip: "<<err->message<<endl;
     GsfInput* f = gsf_infile_child_by_name(gsfIn, "openvgdb.sqlite");
     size_t size = f->size;
     const guint8* data = gsf_input_read(f, size, nullptr);
     try {
       openVGDBFile->create_file()->write(data, size);
     } catch(Gio::Error err) {
-      std::cout<<err.what()<<std::endl;
+      cout<<err.what()<<endl;
     }
   }
   OpenVGDB openVGDB = OpenVGDB(openVGDBFile);
@@ -278,24 +280,24 @@ Emulatron::Emulatron(int& argc, char**& argv):
   Glib::RefPtr<Gio::File> retroDir = Gio::File::create_for_path(settings->get_string("libretro-path"));
   Glib::RefPtr<Gio::FileEnumerator> retroFiles = retroDir->enumerate_children();
   Glib::RefPtr<Gio::FileInfo> file;
-  std::regex regCore (".*\\.(so|dll|dylib)$");
+  regex regCore (".*\\.(so|dll|dylib)$");
   while((file = retroFiles->next_file())) {
     // Test if libRetro core
-    if (!std::regex_match(file->get_name(), regCore)) continue;
-    std::string path = retroDir->get_child(file->get_name())->get_path();
-    std::cout<<path<<std::endl;
+    if (!regex_match(file->get_name(), regCore)) continue;
+    string path = retroDir->get_child(file->get_name())->get_path();
+    cout<<path<<endl;
     Retro::Console cons(path);
     //cons->audio = audio;
     //cons->mouse = mouse;
-    std::string extStr;
+    string extStr;
     if(cons.info.valid_extensions)
        extStr = cons.info.valid_extensions;
-    std::cout<<extStr<<std::endl;
+    cout<<extStr<<endl;
     int e;
     do {
       int s = extStr.find('|');
-      std::string ext = extStr.substr(0, s);
-      consoles.insert(std::pair<std::string, std::string>(ext, path));
+      string ext = extStr.substr(0, s);
+      consoles.insert(pair<string, string>(ext, path));
       if (s == -1) e = extStr.length();
       else e = s + 1;
     } while ((extStr = extStr.substr(e)).length() > 0);
@@ -356,15 +358,15 @@ Emulatron::Emulatron(int& argc, char**& argv):
   }
   catch(const Gio::ResourceError& ex)
   {
-    std::cerr<<"ResourceError: "<< ex.what() <<std::endl;
+    cerr<<"ResourceError: "<< ex.what() <<endl;
   }
   catch(const Glib::MarkupError& ex)
   {
-    std::cerr<<"MarkupError: "<< ex.what() <<std::endl;
+    cerr<<"MarkupError: "<< ex.what() <<endl;
   }
   catch(const Gtk::BuilderError& ex)
   {
-    std::cerr << "BuilderError: " << ex.what() << std::endl;
+    cerr<< "BuilderError: " << ex.what() <<endl;
   }
 
   try
@@ -383,17 +385,17 @@ Emulatron::Emulatron(int& argc, char**& argv):
   }
   catch(const Gtk::BuilderError& ex)
   {
-    std::cerr << "BuilderError: " << ex.what() << std::endl;
+    cerr << "BuilderError: " << ex.what() << endl;
   }
-  catch(std::runtime_error &ex)
+  catch(runtime_error &ex)
   {
-    std::cerr << "runtime_error: " << ex.what() << std::endl;
+    cerr << "runtime_error: " << ex.what() << endl;
   }
 
   //console->mouse = mouse;
 
   /*gameArea->signal_create_context().connect([]()-> Glib::RefPtr<Gdk::GLContext> {
-    std::cout<<"Creating area"<<std::endl;
+    cout<<"Creating area"<<endl;
     return Gdk::GLContext::get_current();
   });*/
 
@@ -445,7 +447,7 @@ Emulatron::Emulatron(int& argc, char**& argv):
   
   auto actions = list_actions();
   for(auto it : actions)
-   std::cout<<it<<std::endl;
+   cout<<it<<endl;
 }
 
 void Emulatron::startGame(const Gtk::TreeModel::Path& path)
@@ -467,9 +469,9 @@ void Emulatron::startGame(const Gtk::TreeModel::Path& path)
       console->stop();
 
     Glib::RefPtr<Gio::File> romFile = Gio::File::create_for_uri((Glib::ustring)row[store->col.filename]);
-    std::string name = romFile->get_basename();
-    std::string ext = name.substr(name.find('.') + 1);
-    std::cout<<"Loading extension:"<<ext<<std::endl;
+    string name = romFile->get_basename();
+    string ext = name.substr(name.find('.') + 1);
+    cout<<"Loading extension:"<<ext<<endl;
 
     Retro::Console* oldConsole = console;
     vidCon.disconnect();
@@ -477,23 +479,24 @@ void Emulatron::startGame(const Gtk::TreeModel::Path& path)
     playCon.disconnect();
     resetCon.disconnect();
 
-    std::string path;
+    string path;
     try {
       path = consoles.at(ext);
     }
-    catch(std::exception& e) {
-      std::cerr<<"No core:"<<e.what()<<std::endl;
+    catch(exception& e) {
+      cerr<<"No core:"<<e.what()<<endl;
       return;
     }
-    std::cout<<"Loading core:"<<path<<std::endl;
+    cout<<"Loading core:"<<path<<endl;
     console = new Retro::Console(path);
+    console->init();
     console->audio = aud;
     vidCon = console->m_signal_draw.connect(sigc::mem_fun(this, &Emulatron::trigger_draw));
     //console->m_signal_audio.connect(sigc::mem_fun(this, &Emulatron::trigger_audio));
     inpCon = console->m_signal_audio.connect(sigc::mem_fun(this, &Emulatron::trigger_input_poll));
     playCon = pauseButton->signal_toggled().connect(sigc::mem_fun(console, &Retro::Console::togglePlaying));
     resetCon = resetButton->signal_clicked().connect(sigc::mem_fun(console, &Retro::Console::reset));
-    std::cout<<"With:"<<console->info.library_name<<std::endl;
+    cout<<"With:"<<console->info.library_name<<endl;
 
     delete oldConsole;
 
@@ -550,7 +553,7 @@ void Emulatron::on_open()
   int res = dialog.run();
   switch(res) {
     case Gtk::RESPONSE_OK:
-      //std::cout<<dialog.get_file()->get_uri()<<std::endl;
+      //cout<<dialog.get_file()->get_uri()<<endl;
       emuWindow->gameIconView->get_model()->add(dialog.get_file());
       break;
     case Gtk::RESPONSE_CANCEL:
@@ -569,7 +572,7 @@ void Emulatron::on_about()
 }
 void Emulatron::on_quit()
 {
-  std::cout << "Goodbye!" << std::endl;
+  cout << "Goodbye!" << endl;
   quit();
 }
 
